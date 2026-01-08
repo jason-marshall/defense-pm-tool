@@ -46,3 +46,21 @@ docker-compose.override.yml
 # Project specific
 *.log
 logs/
+
+# Alembic
+alembic/versions/*.pyc
+
+# Coverage reports
+coverage.xml
+.coverage.*
+
+# Ruff cache
+.ruff_cache/
+
+# Web build
+web/dist/
+
+# Secrets (never commit)
+*.pem
+*.key
+credentials.json
