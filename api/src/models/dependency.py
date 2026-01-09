@@ -4,7 +4,8 @@ from enum import Enum
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy import ForeignKey, Index, Integer, UniqueConstraint, text
+from sqlalchemy.dialects.postgresql import ENUM as PgEnum
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -18,16 +19,32 @@ class DependencyType(str, Enum):
     """
     Types of dependencies between activities.
 
-    FS (Finish-to-Start): Successor starts after predecessor finishes
-    SS (Start-to-Start): Successor starts after predecessor starts
-    FF (Finish-to-Finish): Successor finishes after predecessor finishes
-    SF (Start-to-Finish): Successor finishes after predecessor starts
+    These dependency types determine how activities are linked in CPM:
+    - FS (Finish-to-Start): Successor starts after predecessor finishes
+      Formula: successor.ES = predecessor.EF + lag
+    - SS (Start-to-Start): Successor starts after predecessor starts
+      Formula: successor.ES = predecessor.ES + lag
+    - FF (Finish-to-Finish): Successor finishes after predecessor finishes
+      Formula: successor.EF = predecessor.EF + lag
+    - SF (Start-to-Finish): Successor finishes after predecessor starts
+      Formula: successor.EF = predecessor.ES + lag
     """
 
-    FS = "FS"  # Finish-to-Start (most common)
+    FS = "FS"  # Finish-to-Start (most common, ~90% of dependencies)
     SS = "SS"  # Start-to-Start
     FF = "FF"  # Finish-to-Finish
     SF = "SF"  # Start-to-Finish (rare)
+
+    @property
+    def description(self) -> str:
+        """Get human-readable description of dependency type."""
+        descriptions = {
+            DependencyType.FS: "Finish-to-Start",
+            DependencyType.SS: "Start-to-Start",
+            DependencyType.FF: "Finish-to-Finish",
+            DependencyType.SF: "Start-to-Finish",
+        }
+        return descriptions[self]
 
 
 class Dependency(Base):
@@ -36,56 +53,144 @@ class Dependency(Base):
 
     Dependencies define the logical relationships between activities
     and are used by the CPM engine to calculate schedule dates.
+    Each dependency has a type (FS, SS, FF, SF) and optional lag/lead.
+
+    Attributes:
+        predecessor_id: FK to the activity that must occur first
+        successor_id: FK to the activity that depends on predecessor
+        dependency_type: Type of dependency relationship
+        lag_days: Delay in days (positive) or lead (negative)
+
+    Example:
+        # Activity B starts 2 days after Activity A finishes
+        dep = Dependency(
+            predecessor_id=activity_a.id,
+            successor_id=activity_b.id,
+            dependency_type=DependencyType.FS,
+            lag_days=2
+        )
     """
 
     __tablename__ = "dependencies"
 
-    # Foreign keys
+    # Foreign keys to activities
     predecessor_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
         ForeignKey("activities.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
+        comment="FK to predecessor activity",
     )
+
     successor_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
         ForeignKey("activities.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
+        comment="FK to successor activity",
     )
 
-    # Dependency attributes
-    dependency_type: Mapped[str] = mapped_column(
-        String(2),
+    # Dependency type using PostgreSQL enum
+    dependency_type: Mapped[DependencyType] = mapped_column(
+        PgEnum(DependencyType, name="dependency_type", create_type=True),
+        default=DependencyType.FS,
         nullable=False,
-        default=DependencyType.FS.value,
+        comment="Type of dependency (FS, SS, FF, SF)",
     )
-    lag: Mapped[int] = mapped_column(
+
+    # Lag/lead in working days
+    lag_days: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
         default=0,
-        comment="Lag in working days (positive=delay, negative=lead)",
+        comment="Lag (positive) or lead (negative) in working days",
     )
 
     # Relationships
     predecessor: Mapped["Activity"] = relationship(
         "Activity",
         foreign_keys=[predecessor_id],
-        back_populates="successor_dependencies",
+        back_populates="successor_links",
     )
+
     successor: Mapped["Activity"] = relationship(
         "Activity",
         foreign_keys=[successor_id],
-        back_populates="predecessor_dependencies",
+        back_populates="predecessor_links",
     )
 
-    @property
-    def type_enum(self) -> DependencyType:
-        """Get the dependency type as enum."""
-        return DependencyType(self.dependency_type)
+    # Table-level configuration
+    __table_args__ = (
+        # Unique constraint: only one dependency between any two activities
+        UniqueConstraint(
+            "predecessor_id",
+            "successor_id",
+            name="uq_dependencies_predecessor_successor",
+        ),
+        # Index for finding all dependencies for an activity
+        Index(
+            "ix_dependencies_activities",
+            "predecessor_id",
+            "successor_id",
+        ),
+        # Partial index for active dependencies only
+        Index(
+            "ix_dependencies_active",
+            "predecessor_id",
+            "successor_id",
+            postgresql_where=text("deleted_at IS NULL"),
+        ),
+        {"comment": "Activity dependencies for CPM scheduling"},
+    )
 
     def __repr__(self) -> str:
-        """Return string representation."""
+        """Return string representation for debugging."""
         return (
-            f"<Dependency(predecessor={self.predecessor_id}, "
-            f"successor={self.successor_id}, type={self.dependency_type}, "
-            f"lag={self.lag})>"
+            f"<Dependency(id={self.id}, "
+            f"pred={self.predecessor_id}, succ={self.successor_id}, "
+            f"type={self.dependency_type.value}, lag={self.lag_days})>"
         )
+
+    @property
+    def has_lag(self) -> bool:
+        """Check if dependency has non-zero lag."""
+        return self.lag_days != 0
+
+    @property
+    def has_lead(self) -> bool:
+        """Check if dependency has lead time (negative lag)."""
+        return self.lag_days < 0
+
+    def calculate_successor_constraint(
+        self,
+        predecessor_es: int,
+        predecessor_ef: int,
+    ) -> int:
+        """
+        Calculate the constraint date for successor based on dependency type.
+
+        Args:
+            predecessor_es: Predecessor's early start (in days from project start)
+            predecessor_ef: Predecessor's early finish (in days from project start)
+
+        Returns:
+            The earliest date (in days) the successor can start or finish
+            depending on the dependency type.
+
+        Note:
+            For FS/SS types, returns constraint for successor's ES
+            For FF/SF types, returns constraint for successor's EF
+        """
+        match self.dependency_type:
+            case DependencyType.FS:
+                # Successor ES = Predecessor EF + lag
+                return predecessor_ef + self.lag_days
+            case DependencyType.SS:
+                # Successor ES = Predecessor ES + lag
+                return predecessor_es + self.lag_days
+            case DependencyType.FF:
+                # Successor EF = Predecessor EF + lag
+                return predecessor_ef + self.lag_days
+            case DependencyType.SF:
+                # Successor EF = Predecessor ES + lag
+                return predecessor_es + self.lag_days

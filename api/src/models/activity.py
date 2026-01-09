@@ -1,11 +1,24 @@
-"""Activity model representing a schedulable task."""
+"""Activity model for schedule management with CPM support."""
 
 from datetime import date
 from decimal import Decimal
+from enum import Enum
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import Date, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Date,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    text,
+)
+from sqlalchemy.dialects.postgresql import ENUM as PgEnum
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -13,98 +26,326 @@ from src.models.base import Base
 
 if TYPE_CHECKING:
     from src.models.dependency import Dependency
-    from src.models.program import Program
     from src.models.wbs import WBSElement
+
+
+class ConstraintType(str, Enum):
+    """
+    Activity scheduling constraint types.
+
+    These constraints affect how the CPM engine calculates dates:
+    - ASAP: As Soon As Possible (default, forward-scheduled)
+    - ALAP: As Late As Possible (backward-scheduled)
+    - SNET: Start No Earlier Than (constraint_date is minimum start)
+    - SNLT: Start No Later Than (constraint_date is maximum start)
+    - FNET: Finish No Earlier Than (constraint_date is minimum finish)
+    - FNLT: Finish No Later Than (constraint_date is maximum finish)
+    """
+
+    ASAP = "asap"  # As Soon As Possible (default)
+    ALAP = "alap"  # As Late As Possible
+    SNET = "snet"  # Start No Earlier Than
+    SNLT = "snlt"  # Start No Later Than
+    FNET = "fnet"  # Finish No Earlier Than
+    FNLT = "fnlt"  # Finish No Later Than
+
+    @property
+    def requires_date(self) -> bool:
+        """Check if this constraint type requires a constraint_date."""
+        return self not in (ConstraintType.ASAP, ConstraintType.ALAP)
 
 
 class Activity(Base):
     """
-    Represents a schedulable activity within a program.
+    Represents a schedulable activity within a WBS element.
 
     Activities are the fundamental units of work in CPM scheduling.
-    They have durations, dependencies, and are assigned to WBS elements.
+    They have durations, dependencies, and calculated dates from
+    forward/backward pass calculations.
+
+    CPM Fields:
+    - early_start, early_finish: Earliest possible dates (forward pass)
+    - late_start, late_finish: Latest possible dates (backward pass)
+    - total_float: Time activity can slip without delaying project
+    - free_float: Time activity can slip without delaying successors
+    - is_critical: True if on critical path (total_float = 0)
+
+    Attributes:
+        wbs_id: FK to parent WBS element
+        name: Activity name/description
+        duration: Duration in working days
+        planned_start/finish: Baseline planned dates
+        actual_start/finish: Actual execution dates
+        constraint_type: Scheduling constraint
+        constraint_date: Date for constraint (if applicable)
+        percent_complete: Progress percentage (0-100)
+        is_milestone: Whether this is a zero-duration milestone
     """
 
+    # Override auto-generated table name
     __tablename__ = "activities"
 
-    # Foreign keys
-    program_id: Mapped[UUID] = mapped_column(
+    # Foreign key to WBS element
+    wbs_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
-        ForeignKey("programs.id", ondelete="CASCADE"),
+        ForeignKey("wbs_elements.id", ondelete="CASCADE"),
         nullable=False,
-    )
-    wbs_element_id: Mapped[UUID | None] = mapped_column(
-        PGUUID(as_uuid=True),
-        ForeignKey("wbs_elements.id", ondelete="SET NULL"),
-        nullable=True,
+        index=True,
+        comment="FK to parent WBS element",
     )
 
     # Basic information
-    name: Mapped[str] = mapped_column(String(255), nullable=False)
-    code: Mapped[str] = mapped_column(String(50), nullable=False)
-    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    name: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        index=True,
+        comment="Activity name/description",
+    )
 
-    # Duration (in working days)
-    duration: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    remaining_duration: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    description: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+        comment="Detailed description",
+    )
 
-    # Schedule dates (calculated by CPM engine)
-    early_start: Mapped[date | None] = mapped_column(Date, nullable=True)
-    early_finish: Mapped[date | None] = mapped_column(Date, nullable=True)
-    late_start: Mapped[date | None] = mapped_column(Date, nullable=True)
-    late_finish: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # Duration in working days (0 for milestones)
+    duration: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+        comment="Duration in working days",
+    )
 
-    # Actual dates
-    actual_start: Mapped[date | None] = mapped_column(Date, nullable=True)
-    actual_finish: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # Planned baseline dates
+    planned_start: Mapped[date | None] = mapped_column(
+        Date,
+        nullable=True,
+        index=True,
+        comment="Baseline planned start date",
+    )
 
-    # Float/slack (calculated by CPM engine)
-    total_float: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    free_float: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    planned_finish: Mapped[date | None] = mapped_column(
+        Date,
+        nullable=True,
+        index=True,
+        comment="Baseline planned finish date",
+    )
 
-    # Progress
+    # Actual execution dates
+    actual_start: Mapped[date | None] = mapped_column(
+        Date,
+        nullable=True,
+        index=True,
+        comment="Actual start date",
+    )
+
+    actual_finish: Mapped[date | None] = mapped_column(
+        Date,
+        nullable=True,
+        index=True,
+        comment="Actual finish date",
+    )
+
+    # CPM calculated dates (from forward pass)
+    early_start: Mapped[date | None] = mapped_column(
+        Date,
+        nullable=True,
+        comment="Early start from CPM forward pass",
+    )
+
+    early_finish: Mapped[date | None] = mapped_column(
+        Date,
+        nullable=True,
+        comment="Early finish from CPM forward pass",
+    )
+
+    # CPM calculated dates (from backward pass)
+    late_start: Mapped[date | None] = mapped_column(
+        Date,
+        nullable=True,
+        comment="Late start from CPM backward pass",
+    )
+
+    late_finish: Mapped[date | None] = mapped_column(
+        Date,
+        nullable=True,
+        comment="Late finish from CPM backward pass",
+    )
+
+    # Float/slack values
+    total_float: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+        index=True,
+        comment="Total float in days (LS - ES)",
+    )
+
+    free_float: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+        comment="Free float in days",
+    )
+
+    # Critical path flag
+    is_critical: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+        index=True,
+        comment="True if on critical path (total_float = 0)",
+    )
+
+    # Scheduling constraints
+    constraint_type: Mapped[ConstraintType] = mapped_column(
+        PgEnum(ConstraintType, name="constraint_type", create_type=True),
+        default=ConstraintType.ASAP,
+        nullable=False,
+        comment="Scheduling constraint type",
+    )
+
+    constraint_date: Mapped[date | None] = mapped_column(
+        Date,
+        nullable=True,
+        comment="Date for scheduling constraint",
+    )
+
+    # Progress tracking
     percent_complete: Mapped[Decimal] = mapped_column(
         Numeric(precision=5, scale=2),
         nullable=False,
         default=Decimal("0.00"),
+        comment="Progress percentage (0-100)",
     )
 
-    # EVMS values (using Decimal for financial accuracy)
+    # Milestone flag (zero duration)
+    is_milestone: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+        index=True,
+        comment="True if this is a milestone (duration=0)",
+    )
+
+    # EVMS cost tracking
     budgeted_cost: Mapped[Decimal] = mapped_column(
         Numeric(precision=15, scale=2),
         nullable=False,
         default=Decimal("0.00"),
+        comment="Budgeted cost (BCWS at completion)",
     )
+
     actual_cost: Mapped[Decimal] = mapped_column(
         Numeric(precision=15, scale=2),
         nullable=False,
         default=Decimal("0.00"),
+        comment="Actual cost incurred (ACWP)",
     )
 
     # Relationships
-    program: Mapped["Program"] = relationship("Program", back_populates="activities")
-    wbs_element: Mapped["WBSElement | None"] = relationship(
+    wbs_element: Mapped["WBSElement"] = relationship(
         "WBSElement",
         back_populates="activities",
     )
-    predecessor_dependencies: Mapped[list["Dependency"]] = relationship(
+
+    # Dependencies where this activity is the successor (predecessors)
+    predecessor_links: Mapped[list["Dependency"]] = relationship(
         "Dependency",
         foreign_keys="Dependency.successor_id",
         back_populates="successor",
         cascade="all, delete-orphan",
     )
-    successor_dependencies: Mapped[list["Dependency"]] = relationship(
+
+    # Dependencies where this activity is the predecessor (successors)
+    successor_links: Mapped[list["Dependency"]] = relationship(
         "Dependency",
         foreign_keys="Dependency.predecessor_id",
         back_populates="predecessor",
         cascade="all, delete-orphan",
     )
 
-    @property
-    def is_critical(self) -> bool:
-        """Check if activity is on the critical path (zero total float)."""
-        return self.total_float == 0
+    # Table-level configuration
+    __table_args__ = (
+        # Check constraint for percent_complete range
+        CheckConstraint(
+            "percent_complete >= 0 AND percent_complete <= 100",
+            name="ck_activities_percent_complete",
+        ),
+        # Check constraint for non-negative duration
+        CheckConstraint(
+            "duration >= 0",
+            name="ck_activities_duration",
+        ),
+        # Index for critical path queries
+        Index(
+            "ix_activities_critical",
+            "wbs_id",
+            "is_critical",
+            postgresql_where=text("is_critical = true AND deleted_at IS NULL"),
+        ),
+        # Index for milestone lookup
+        Index(
+            "ix_activities_milestones",
+            "wbs_id",
+            "is_milestone",
+            postgresql_where=text("is_milestone = true AND deleted_at IS NULL"),
+        ),
+        # Index for date range queries
+        Index(
+            "ix_activities_dates",
+            "early_start",
+            "early_finish",
+        ),
+        # Index for incomplete activities
+        Index(
+            "ix_activities_incomplete",
+            "wbs_id",
+            "percent_complete",
+            postgresql_where=text("percent_complete < 100 AND deleted_at IS NULL"),
+        ),
+        {"comment": "Schedule activities with CPM support"},
+    )
 
     def __repr__(self) -> str:
-        """Return string representation."""
-        return f"<Activity(id={self.id}, code={self.code}, name={self.name})>"
+        """Return string representation for debugging."""
+        return (
+            f"<Activity(id={self.id}, name={self.name!r}, "
+            f"duration={self.duration}, is_critical={self.is_critical})>"
+        )
+
+    @property
+    def is_started(self) -> bool:
+        """Check if activity has started."""
+        return self.actual_start is not None
+
+    @property
+    def is_completed(self) -> bool:
+        """Check if activity is completed."""
+        return self.percent_complete >= Decimal("100.00") or self.actual_finish is not None
+
+    @property
+    def is_in_progress(self) -> bool:
+        """Check if activity is in progress."""
+        return self.is_started and not self.is_completed
+
+    @property
+    def remaining_duration(self) -> int:
+        """Calculate remaining duration based on percent complete."""
+        if self.is_completed:
+            return 0
+        remaining_pct = (Decimal("100.00") - self.percent_complete) / Decimal("100.00")
+        return int(self.duration * float(remaining_pct))
+
+    @property
+    def earned_value(self) -> Decimal:
+        """Calculate earned value (BCWP) based on percent complete."""
+        return self.budgeted_cost * self.percent_complete / Decimal("100.00")
+
+    def calculate_float(self) -> None:
+        """
+        Calculate total and free float from CPM dates.
+
+        Call this after forward and backward passes are complete.
+        """
+        if self.late_start is not None and self.early_start is not None:
+            self.total_float = (self.late_start - self.early_start).days
+            self.is_critical = self.total_float == 0
