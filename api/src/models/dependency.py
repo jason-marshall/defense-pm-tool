@@ -1,6 +1,5 @@
 """Dependency model representing relationships between activities."""
 
-from enum import Enum
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -10,41 +9,10 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.models.base import Base
+from src.models.enums import DependencyType
 
 if TYPE_CHECKING:
     from src.models.activity import Activity
-
-
-class DependencyType(str, Enum):
-    """
-    Types of dependencies between activities.
-
-    These dependency types determine how activities are linked in CPM:
-    - FS (Finish-to-Start): Successor starts after predecessor finishes
-      Formula: successor.ES = predecessor.EF + lag
-    - SS (Start-to-Start): Successor starts after predecessor starts
-      Formula: successor.ES = predecessor.ES + lag
-    - FF (Finish-to-Finish): Successor finishes after predecessor finishes
-      Formula: successor.EF = predecessor.EF + lag
-    - SF (Start-to-Finish): Successor finishes after predecessor starts
-      Formula: successor.EF = predecessor.ES + lag
-    """
-
-    FS = "FS"  # Finish-to-Start (most common, ~90% of dependencies)
-    SS = "SS"  # Start-to-Start
-    FF = "FF"  # Finish-to-Finish
-    SF = "SF"  # Start-to-Finish (rare)
-
-    @property
-    def description(self) -> str:
-        """Get human-readable description of dependency type."""
-        descriptions = {
-            DependencyType.FS: "Finish-to-Start",
-            DependencyType.SS: "Start-to-Start",
-            DependencyType.FF: "Finish-to-Finish",
-            DependencyType.SF: "Start-to-Finish",
-        }
-        return descriptions[self]
 
 
 class Dependency(Base):

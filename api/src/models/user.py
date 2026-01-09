@@ -1,52 +1,16 @@
 """User model for authentication and authorization."""
 
-from enum import Enum
 from typing import TYPE_CHECKING
-from uuid import UUID
 
 from sqlalchemy import Boolean, Index, String, text
 from sqlalchemy.dialects.postgresql import ENUM as PgEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.models.base import Base
+from src.models.enums import UserRole
 
 if TYPE_CHECKING:
     from src.models.program import Program
-
-
-class UserRole(str, Enum):
-    """
-    User roles for role-based access control (RBAC).
-
-    Roles are hierarchical - higher roles include permissions of lower roles:
-    - VIEWER: Read-only access to assigned programs
-    - ANALYST: Can view and analyze data, run reports
-    - SCHEDULER: Can create/modify activities and dependencies
-    - PROGRAM_MANAGER: Full control over assigned programs
-    - ADMIN: System-wide administration
-    """
-
-    VIEWER = "viewer"
-    ANALYST = "analyst"
-    SCHEDULER = "scheduler"
-    PROGRAM_MANAGER = "program_manager"
-    ADMIN = "admin"
-
-    @classmethod
-    def get_hierarchy(cls) -> dict["UserRole", int]:
-        """Get role hierarchy levels (higher = more permissions)."""
-        return {
-            cls.VIEWER: 1,
-            cls.ANALYST: 2,
-            cls.SCHEDULER: 3,
-            cls.PROGRAM_MANAGER: 4,
-            cls.ADMIN: 5,
-        }
-
-    def has_permission(self, required_role: "UserRole") -> bool:
-        """Check if this role has at least the permissions of required_role."""
-        hierarchy = self.get_hierarchy()
-        return hierarchy[self] >= hierarchy[required_role]
 
 
 class User(Base):

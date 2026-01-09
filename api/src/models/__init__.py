@@ -11,37 +11,47 @@ Models:
     - Activity: Schedulable activities with CPM support
     - Dependency: Activity dependencies for CPM calculations
 
-Enums:
+Enums (from src.models.enums):
     - UserRole: Role-based access control levels
     - ProgramStatus: Program lifecycle status
     - ConstraintType: Activity scheduling constraint types
     - DependencyType: Types of dependencies (FS, SS, FF, SF)
+    - ActivityStatus: Activity execution status
 """
 
 from src.models.base import Base, SoftDeleteMixin
-from src.models.user import User, UserRole
-from src.models.program import Program, ProgramStatus
+
+# Import enums from centralized location
+from src.models.enums import (
+    ActivityStatus,
+    ConstraintType,
+    DependencyType,
+    ProgramStatus,
+    UserRole,
+)
+
+# Import models
+from src.models.user import User
+from src.models.program import Program
 from src.models.wbs import WBSElement, LtreeType
-from src.models.activity import Activity, ConstraintType
-from src.models.dependency import Dependency, DependencyType
+from src.models.activity import Activity
+from src.models.dependency import Dependency
 
 __all__ = [
     # Base classes
     "Base",
     "SoftDeleteMixin",
-    # User model and enums
-    "User",
+    # Enums
     "UserRole",
-    # Program model and enums
-    "Program",
     "ProgramStatus",
-    # WBS model and types
+    "ConstraintType",
+    "DependencyType",
+    "ActivityStatus",
+    # Models
+    "User",
+    "Program",
     "WBSElement",
     "LtreeType",
-    # Activity model and enums
     "Activity",
-    "ConstraintType",
-    # Dependency model and enums
     "Dependency",
-    "DependencyType",
 ]

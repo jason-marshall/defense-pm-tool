@@ -12,7 +12,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from src.models.program import ProgramStatus
+from src.models.enums import ProgramStatus
 from src.schemas.user import UserBriefResponse
 
 

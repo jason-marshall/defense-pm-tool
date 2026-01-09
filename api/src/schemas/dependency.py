@@ -11,7 +11,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from src.models.dependency import DependencyType
+from src.models.enums import DependencyType
 from src.schemas.activity import ActivityBriefResponse
 
 

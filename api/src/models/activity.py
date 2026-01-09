@@ -2,7 +2,6 @@
 
 from datetime import date
 from decimal import Decimal
-from enum import Enum
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -23,36 +22,11 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.models.base import Base
+from src.models.enums import ConstraintType
 
 if TYPE_CHECKING:
     from src.models.dependency import Dependency
     from src.models.wbs import WBSElement
-
-
-class ConstraintType(str, Enum):
-    """
-    Activity scheduling constraint types.
-
-    These constraints affect how the CPM engine calculates dates:
-    - ASAP: As Soon As Possible (default, forward-scheduled)
-    - ALAP: As Late As Possible (backward-scheduled)
-    - SNET: Start No Earlier Than (constraint_date is minimum start)
-    - SNLT: Start No Later Than (constraint_date is maximum start)
-    - FNET: Finish No Earlier Than (constraint_date is minimum finish)
-    - FNLT: Finish No Later Than (constraint_date is maximum finish)
-    """
-
-    ASAP = "asap"  # As Soon As Possible (default)
-    ALAP = "alap"  # As Late As Possible
-    SNET = "snet"  # Start No Earlier Than
-    SNLT = "snlt"  # Start No Later Than
-    FNET = "fnet"  # Finish No Earlier Than
-    FNLT = "fnlt"  # Finish No Later Than
-
-    @property
-    def requires_date(self) -> bool:
-        """Check if this constraint type requires a constraint_date."""
-        return self not in (ConstraintType.ASAP, ConstraintType.ALAP)
 
 
 class Activity(Base):

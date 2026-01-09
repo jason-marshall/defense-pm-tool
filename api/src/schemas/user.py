@@ -12,7 +12,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
-from src.models.user import UserRole
+from src.models.enums import UserRole
 
 
 class UserBase(BaseModel):

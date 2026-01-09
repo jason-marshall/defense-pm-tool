@@ -13,7 +13,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from src.models.activity import ConstraintType
+from src.models.enums import ConstraintType
 from src.schemas.wbs import WBSBriefResponse
 
 

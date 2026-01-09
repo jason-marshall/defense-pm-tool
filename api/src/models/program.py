@@ -2,7 +2,6 @@
 
 from datetime import date
 from decimal import Decimal
-from enum import Enum
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -12,34 +11,11 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.models.base import Base
+from src.models.enums import ProgramStatus
 
 if TYPE_CHECKING:
     from src.models.user import User
     from src.models.wbs import WBSElement
-
-
-class ProgramStatus(str, Enum):
-    """
-    Program lifecycle status.
-
-    Tracks the current phase of a program from initial planning
-    through completion or hold.
-    """
-
-    PLANNING = "planning"  # Initial setup and planning phase
-    ACTIVE = "active"  # Program is actively being executed
-    COMPLETE = "complete"  # Program has been completed
-    ON_HOLD = "on_hold"  # Program is temporarily suspended
-
-    @property
-    def is_editable(self) -> bool:
-        """Check if program can be edited in this status."""
-        return self in (ProgramStatus.PLANNING, ProgramStatus.ACTIVE)
-
-    @property
-    def is_active(self) -> bool:
-        """Check if program is in an active state."""
-        return self in (ProgramStatus.PLANNING, ProgramStatus.ACTIVE)
 
 
 class Program(Base):
