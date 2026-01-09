@@ -1,35 +1,220 @@
+# =============================================================================
+# Defense PM Tool - Docker Compose Configuration
+# =============================================================================
+# Local development environment with PostgreSQL, Redis, and API services.
+#
+# Usage:
+#   docker-compose up -d              # Start all services in background
+#   docker-compose up -d postgres redis  # Start only databases
+#   docker-compose logs -f api        # Follow API logs
+#   docker-compose down               # Stop all services
+#   docker-compose down -v            # Stop and remove volumes (data loss!)
+#
+# For development overrides, see docker-compose.override.yml
+# =============================================================================
+
 services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Database
+  # ---------------------------------------------------------------------------
+  # Primary database for storing all application data including:
+  # - Programs, Activities, Dependencies, WBS elements
+  # - User accounts and authentication data
+  # - EVMS metrics and calculations
+  #
+  # Uses the ltree extension for efficient WBS hierarchy queries.
+  # ---------------------------------------------------------------------------
   postgres:
     image: postgres:15-alpine
     container_name: defense-pm-tool-postgres
+
+    # Restart policy - always restart unless explicitly stopped
+    restart: unless-stopped
+
+    # Environment variables for PostgreSQL initialization
+    # These are only used on first run when the data volume is empty
     environment:
+      # Database name created on first initialization
       POSTGRES_DB: defense_pm_dev
+      # Superuser username (avoid 'postgres' for security)
       POSTGRES_USER: dev_user
+      # Superuser password - CHANGE IN PRODUCTION!
       POSTGRES_PASSWORD: dev_password
+      # Set timezone for consistent timestamps
+      TZ: UTC
+
+    # Port mapping: host:container
+    # Access PostgreSQL at localhost:5432
     ports:
       - "5432:5432"
+
+    # Volume mounts for data persistence and initialization
     volumes:
+      # Named volume for persistent data storage
+      # Data survives container restarts and rebuilds
       - postgres_data:/var/lib/postgresql/data
-      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      # Initialization scripts run on first startup (alphabetical order)
+      # Creates extensions (ltree, uuid-ossp) and test database
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+    # Health check to verify PostgreSQL is ready to accept connections
+    # Used by dependent services (api) to wait for database availability
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U dev_user -d defense_pm_dev"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 10s      # Check every 10 seconds
+      timeout: 5s        # Timeout after 5 seconds
+      retries: 5         # Mark unhealthy after 5 failures
+      start_period: 10s  # Wait 10s before first check
 
+    # Resource limits (optional, uncomment for production-like testing)
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 512M
+    #       cpus: '0.5'
+
+    # Network configuration
+    networks:
+      - defense-pm-network
+
+  # ---------------------------------------------------------------------------
+  # Redis Cache
+  # ---------------------------------------------------------------------------
+  # In-memory data store used for:
+  # - Session caching
+  # - Rate limiting
+  # - Real-time notifications (pub/sub)
+  # - Temporary data caching (CPM results, etc.)
+  #
+  # Data is persisted to disk using RDB snapshots.
+  # ---------------------------------------------------------------------------
   redis:
     image: redis:7-alpine
     container_name: defense-pm-tool-redis
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Redis command with persistence and memory settings
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 128mb
+      --maxmemory-policy allkeys-lru
+
+    # Port mapping: host:container
+    # Access Redis at localhost:6379
     ports:
       - "6379:6379"
+
+    # Volume for data persistence
     volumes:
+      # Named volume for Redis data (RDB snapshots and AOF logs)
       - redis_data:/data
+
+    # Health check to verify Redis is responding
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 5s
 
+    # Network configuration
+    networks:
+      - defense-pm-network
+
+  # ---------------------------------------------------------------------------
+  # FastAPI Application (Backend API)
+  # ---------------------------------------------------------------------------
+  # The main application server providing REST API endpoints for:
+  # - Program management
+  # - Activity and dependency CRUD
+  # - CPM schedule calculations
+  # - EVMS metrics
+  #
+  # Note: For development, consider running the API locally with uvicorn
+  # for faster iteration. Use this service for integration testing.
+  # ---------------------------------------------------------------------------
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+      # Build arguments (can be overridden)
+      args:
+        PYTHON_VERSION: "3.11"
+
+    container_name: defense-pm-tool-api
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Port mapping: host:container
+    # Access API at http://localhost:8000
+    ports:
+      - "8000:8000"
+
+    # Environment variables loaded from .env file
+    # These override any defaults in the application
+    env_file:
+      - .env
+
+    # Additional environment variables for Docker networking
+    # Override DATABASE_URL and REDIS_URL to use container names
+    environment:
+      # Use container name 'postgres' instead of 'localhost'
+      DATABASE_URL: postgresql://dev_user:dev_password@postgres:5432/defense_pm_dev
+      # Use container name 'redis' instead of 'localhost'
+      REDIS_URL: redis://redis:6379
+      # Ensure we're in development mode
+      ENVIRONMENT: development
+
+    # Volume mounts for development
+    volumes:
+      # Mount source code for hot reload (development only)
+      - ./api/src:/app/src:ro
+      # Mount alembic for migrations
+      - ./api/alembic:/app/alembic:ro
+
+    # Wait for dependencies to be healthy before starting
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    # Health check for the API
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Network configuration
+    networks:
+      - defense-pm-network
+
+# =============================================================================
+# Named Volumes
+# =============================================================================
+# Persistent storage that survives container restarts and rebuilds.
+# Use 'docker-compose down -v' to remove volumes (will delete all data!)
+# =============================================================================
 volumes:
+  # PostgreSQL data directory
   postgres_data:
+    driver: local
+  # Redis data directory (RDB snapshots and AOF logs)
   redis_data:
+    driver: local
+
+# =============================================================================
+# Networks
+# =============================================================================
+# Custom bridge network for service communication.
+# Services can reach each other using container names as hostnames.
+# =============================================================================
+networks:
+  defense-pm-network:
+    driver: bridge

@@ -1,45 +1,12 @@
-"""FastAPI dependencies."""
+"""FastAPI dependencies for dependency injection."""
 
-from typing import Annotated, AsyncGenerator
+from typing import Annotated
 
 from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.config import settings
+from src.core.database import get_db
 
-# Create async engine
-engine = create_async_engine(
-    str(settings.DATABASE_URL).replace("postgresql://", "postgresql+asyncpg://"),
-    pool_size=settings.DATABASE_POOL_SIZE,
-    max_overflow=settings.DATABASE_MAX_OVERFLOW,
-    echo=settings.DEBUG,
-)
-
-# Create session factory
-async_session_maker = async_sessionmaker(
-    engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-    autocommit=False,
-    autoflush=False,
-)
-
-
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """
-    Dependency that provides a database session.
-
-    Yields a new session for each request and handles cleanup.
-    """
-    async with async_session_maker() as session:
-        try:
-            yield session
-        except Exception:
-            await session.rollback()
-            raise
-        finally:
-            await session.close()
-
-
-# Type alias for dependency injection
+# Type alias for database session dependency injection
+# Usage: async def endpoint(db: DbSession): ...
 DbSession = Annotated[AsyncSession, Depends(get_db)]
