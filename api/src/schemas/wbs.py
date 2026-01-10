@@ -13,6 +13,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from src.schemas.common import PaginatedResponse
+
 
 class WBSBase(BaseModel):
     """
@@ -403,3 +405,11 @@ class WBSSummaryResponse(WBSResponse):
         description="Weighted completion percentage",
         examples=["45.50"],
     )
+
+
+# Type aliases for backwards compatibility and endpoint usage
+WBSElementCreate = WBSCreate
+WBSElementUpdate = WBSUpdate
+WBSElementResponse = WBSResponse
+WBSElementTreeResponse = WBSTreeResponse
+WBSListResponse = PaginatedResponse[WBSResponse]

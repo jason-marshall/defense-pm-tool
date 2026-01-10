@@ -195,6 +195,14 @@ def upgrade() -> None:
             server_default=sa.text("uuid_generate_v4()"),
             comment="Unique identifier (UUID v4)",
         ),
+        # Unique program code
+        sa.Column(
+            "code",
+            sa.String(50),
+            nullable=False,
+            unique=True,
+            comment="Unique program code identifier",
+        ),
         # Basic information
         sa.Column(
             "name",
@@ -278,6 +286,7 @@ def upgrade() -> None:
     )
 
     # Programs indexes
+    op.create_index("ix_programs_code", "programs", ["code"], unique=True)
     op.create_index("ix_programs_name", "programs", ["name"])
     op.create_index("ix_programs_contract_number", "programs", ["contract_number"])
     op.create_index("ix_programs_start_date", "programs", ["start_date"])
@@ -435,6 +444,14 @@ def upgrade() -> None:
             server_default=sa.text("uuid_generate_v4()"),
             comment="Unique identifier (UUID v4)",
         ),
+        # Foreign key to Program (for direct program queries)
+        sa.Column(
+            "program_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("programs.id", ondelete="CASCADE"),
+            nullable=False,
+            comment="FK to parent program",
+        ),
         # Foreign key to WBS
         sa.Column(
             "wbs_id",
@@ -442,6 +459,13 @@ def upgrade() -> None:
             sa.ForeignKey("wbs_elements.id", ondelete="CASCADE"),
             nullable=False,
             comment="FK to parent WBS element",
+        ),
+        # Unique activity code within program
+        sa.Column(
+            "code",
+            sa.String(50),
+            nullable=False,
+            comment="Unique activity code within program",
         ),
         # Basic information
         sa.Column(
@@ -613,11 +637,19 @@ def upgrade() -> None:
             "duration >= 0",
             name="ck_activities_duration",
         ),
+        # Unique constraint: activity code must be unique within a program
+        sa.UniqueConstraint(
+            "program_id",
+            "code",
+            name="uq_activities_program_code",
+        ),
         comment="Schedule activities with CPM support",
     )
 
     # Activities indexes
+    op.create_index("ix_activities_program_id", "activities", ["program_id"])
     op.create_index("ix_activities_wbs_id", "activities", ["wbs_id"])
+    op.create_index("ix_activities_code", "activities", ["code"])
     op.create_index("ix_activities_name", "activities", ["name"])
     op.create_index("ix_activities_planned_start", "activities", ["planned_start"])
     op.create_index("ix_activities_planned_finish", "activities", ["planned_finish"])
@@ -630,7 +662,7 @@ def upgrade() -> None:
     op.create_index(
         "ix_activities_critical",
         "activities",
-        ["wbs_id", "is_critical"],
+        ["program_id", "is_critical"],
         postgresql_where=sa.text("is_critical = true AND deleted_at IS NULL"),
     )
     op.create_index(
@@ -693,7 +725,7 @@ def upgrade() -> None:
         ),
         # Lag/lead
         sa.Column(
-            "lag_days",
+            "lag",
             sa.Integer,
             nullable=False,
             server_default="0",

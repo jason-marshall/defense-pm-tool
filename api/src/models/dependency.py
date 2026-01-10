@@ -27,7 +27,7 @@ class Dependency(Base):
         predecessor_id: FK to the activity that must occur first
         successor_id: FK to the activity that depends on predecessor
         dependency_type: Type of dependency relationship
-        lag_days: Delay in days (positive) or lead (negative)
+        lag: Delay in days (positive) or lead (negative)
 
     Example:
         # Activity B starts 2 days after Activity A finishes
@@ -35,7 +35,7 @@ class Dependency(Base):
             predecessor_id=activity_a.id,
             successor_id=activity_b.id,
             dependency_type=DependencyType.FS,
-            lag_days=2
+            lag=2
         )
     """
 
@@ -67,7 +67,7 @@ class Dependency(Base):
     )
 
     # Lag/lead in working days
-    lag_days: Mapped[int] = mapped_column(
+    lag: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
         default=0,
@@ -116,18 +116,18 @@ class Dependency(Base):
         return (
             f"<Dependency(id={self.id}, "
             f"pred={self.predecessor_id}, succ={self.successor_id}, "
-            f"type={self.dependency_type.value}, lag={self.lag_days})>"
+            f"type={self.dependency_type.value}, lag={self.lag})>"
         )
 
     @property
     def has_lag(self) -> bool:
         """Check if dependency has non-zero lag."""
-        return self.lag_days != 0
+        return self.lag != 0
 
     @property
     def has_lead(self) -> bool:
         """Check if dependency has lead time (negative lag)."""
-        return self.lag_days < 0
+        return self.lag < 0
 
     def calculate_successor_constraint(
         self,
@@ -152,13 +152,13 @@ class Dependency(Base):
         match self.dependency_type:
             case DependencyType.FS:
                 # Successor ES = Predecessor EF + lag
-                return predecessor_ef + self.lag_days
+                return predecessor_ef + self.lag
             case DependencyType.SS:
                 # Successor ES = Predecessor ES + lag
-                return predecessor_es + self.lag_days
+                return predecessor_es + self.lag
             case DependencyType.FF:
                 # Successor EF = Predecessor EF + lag
-                return predecessor_ef + self.lag_days
+                return predecessor_ef + self.lag
             case DependencyType.SF:
                 # Successor EF = Predecessor ES + lag
-                return predecessor_es + self.lag_days
+                return predecessor_es + self.lag

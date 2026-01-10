@@ -79,6 +79,12 @@ async def create_wbs_element(
 
     wbs_repo = WBSElementRepository(db)
 
+    # Get wbs_code - required for path building
+    wbs_code = element_in.wbs_code
+    if not wbs_code:
+        # TODO: Auto-generate wbs_code if not provided
+        raise ValueError("wbs_code is required")
+
     # Build path based on parent
     if element_in.parent_id:
         parent = await wbs_repo.get_by_id(element_in.parent_id)
@@ -87,10 +93,10 @@ async def create_wbs_element(
                 f"Parent WBS element {element_in.parent_id} not found",
                 "PARENT_WBS_NOT_FOUND",
             )
-        path = f"{parent.path}.{element_in.code}"
+        path = f"{parent.path}.{wbs_code}"
         level = parent.level + 1
     else:
-        path = element_in.code
+        path = wbs_code
         level = 1
 
     element_data = element_in.model_dump()

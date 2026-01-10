@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from src.models.enums import DependencyType
 from src.schemas.activity import ActivityBriefResponse
+from src.schemas.common import PaginatedResponse
 
 
 class DependencyBase(BaseModel):
@@ -27,7 +28,7 @@ class DependencyBase(BaseModel):
         description="Type of dependency relationship",
         examples=["FS", "SS", "FF", "SF"],
     )
-    lag_days: int = Field(
+    lag: int = Field(
         default=0,
         description="Lag (positive) or lead (negative) in working days",
         examples=[0, 2, -1],
@@ -47,7 +48,7 @@ class DependencyCreate(DependencyBase):
                 "predecessor_id": "770e8400-e29b-41d4-a716-446655440003",
                 "successor_id": "880e8400-e29b-41d4-a716-446655440004",
                 "dependency_type": "FS",
-                "lag_days": 0,
+                "lag": 0,
             }
         }
     )
@@ -80,7 +81,7 @@ class DependencyUpdate(BaseModel):
     """
     Schema for updating dependency details.
 
-    Only dependency_type and lag_days can be updated.
+    Only dependency_type and lag can be updated.
     Predecessor/successor cannot be changed - delete and recreate instead.
     """
 
@@ -88,7 +89,7 @@ class DependencyUpdate(BaseModel):
         json_schema_extra={
             "example": {
                 "dependency_type": "SS",
-                "lag_days": 2,
+                "lag": 2,
             }
         }
     )
@@ -98,7 +99,7 @@ class DependencyUpdate(BaseModel):
         description="Type of dependency relationship",
         examples=["FS", "SS", "FF", "SF"],
     )
-    lag_days: int | None = Field(
+    lag: int | None = Field(
         default=None,
         description="Lag (positive) or lead (negative) in working days",
         examples=[0, 2, -1],
@@ -121,7 +122,7 @@ class DependencyResponse(BaseModel):
                 "predecessor_id": "770e8400-e29b-41d4-a716-446655440003",
                 "successor_id": "880e8400-e29b-41d4-a716-446655440004",
                 "dependency_type": "FS",
-                "lag_days": 0,
+                "lag": 0,
                 "predecessor": {
                     "id": "770e8400-e29b-41d4-a716-446655440003",
                     "name": "Design Review Meeting",
@@ -158,7 +159,7 @@ class DependencyResponse(BaseModel):
         description="Type of dependency relationship",
         examples=["FS", "SS", "FF", "SF"],
     )
-    lag_days: int = Field(
+    lag: int = Field(
         ...,
         description="Lag (positive) or lead (negative) in working days",
     )
@@ -184,12 +185,12 @@ class DependencyResponse(BaseModel):
     @property
     def has_lag(self) -> bool:
         """Check if dependency has non-zero lag."""
-        return self.lag_days != 0
+        return self.lag != 0
 
     @property
     def has_lead(self) -> bool:
         """Check if dependency has lead time (negative lag)."""
-        return self.lag_days < 0
+        return self.lag < 0
 
     @property
     def dependency_description(self) -> str:
@@ -205,10 +206,10 @@ class DependencyResponse(BaseModel):
         }
 
         lag_desc = ""
-        if self.lag_days > 0:
-            lag_desc = f" with {self.lag_days} day lag"
-        elif self.lag_days < 0:
-            lag_desc = f" with {abs(self.lag_days)} day lead"
+        if self.lag > 0:
+            lag_desc = f" with {self.lag} day lag"
+        elif self.lag < 0:
+            lag_desc = f" with {abs(self.lag)} day lead"
 
         return f"{pred_name} {type_desc[self.dependency_type]} {succ_name}{lag_desc}"
 
@@ -228,7 +229,7 @@ class DependencyBriefResponse(BaseModel):
                 "predecessor_id": "770e8400-e29b-41d4-a716-446655440003",
                 "successor_id": "880e8400-e29b-41d4-a716-446655440004",
                 "dependency_type": "FS",
-                "lag_days": 0,
+                "lag": 0,
             }
         }
     )
@@ -249,7 +250,7 @@ class DependencyBriefResponse(BaseModel):
         ...,
         description="Type of dependency relationship",
     )
-    lag_days: int = Field(
+    lag: int = Field(
         ...,
         description="Lag/lead in working days",
     )
@@ -270,13 +271,13 @@ class BulkDependencyCreate(BaseModel):
                         "predecessor_id": "770e8400-e29b-41d4-a716-446655440003",
                         "successor_id": "880e8400-e29b-41d4-a716-446655440004",
                         "dependency_type": "FS",
-                        "lag_days": 0,
+                        "lag": 0,
                     },
                     {
                         "predecessor_id": "880e8400-e29b-41d4-a716-446655440004",
                         "successor_id": "990e8400-e29b-41d4-a716-446655440005",
                         "dependency_type": "FS",
-                        "lag_days": 2,
+                        "lag": 2,
                     },
                 ]
             }
@@ -330,3 +331,7 @@ class DependencyValidationResult(BaseModel):
         default=None,
         description="Description of validation error",
     )
+
+
+# Type alias for paginated dependency lists
+DependencyListResponse = PaginatedResponse[DependencyResponse]

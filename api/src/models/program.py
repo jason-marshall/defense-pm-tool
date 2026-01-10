@@ -14,6 +14,7 @@ from src.models.base import Base
 from src.models.enums import ProgramStatus
 
 if TYPE_CHECKING:
+    from src.models.activity import Activity
     from src.models.user import User
     from src.models.wbs import WBSElement
 
@@ -27,6 +28,7 @@ class Program(Base):
     has an owner (User) responsible for its management.
 
     Attributes:
+        code: Unique program code identifier (e.g., "F35-INT")
         name: Display name of the program
         description: Detailed description of the program
         contract_number: Associated contract identifier
@@ -39,6 +41,15 @@ class Program(Base):
 
     # Override auto-generated table name
     __tablename__ = "programs"
+
+    # Unique program code (e.g., "F35-INT", "NGAD-001")
+    code: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        unique=True,
+        index=True,
+        comment="Unique program code identifier",
+    )
 
     # Basic information
     name: Mapped[str] = mapped_column(
@@ -119,6 +130,14 @@ class Program(Base):
         order_by="WBSElement.path",
     )
 
+    activities: Mapped[list["Activity"]] = relationship(
+        "Activity",
+        back_populates="program",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+        order_by="Activity.code",
+    )
+
     # Table-level configuration
     __table_args__ = (
         # Index for active programs lookup
@@ -140,7 +159,7 @@ class Program(Base):
     def __repr__(self) -> str:
         """Return string representation for debugging."""
         return (
-            f"<Program(id={self.id}, name={self.name!r}, "
+            f"<Program(id={self.id}, code={self.code!r}, name={self.name!r}, "
             f"status={self.status.value})>"
         )
 

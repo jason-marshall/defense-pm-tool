@@ -42,7 +42,7 @@ class WBSElementRepository(BaseRepository[WBSElement]):
                 WBSElement.program_id == program_id,
                 WBSElement.parent_id.is_(None),
             )
-            .order_by(WBSElement.code)
+            .order_by(WBSElement.wbs_code)
         )
         return list(result.scalars().all())
 
@@ -51,7 +51,7 @@ class WBSElementRepository(BaseRepository[WBSElement]):
         result = await self.session.execute(
             select(WBSElement)
             .where(WBSElement.parent_id == parent_id)
-            .order_by(WBSElement.code)
+            .order_by(WBSElement.wbs_code)
         )
         return list(result.scalars().all())
 
@@ -73,7 +73,7 @@ class WBSElementRepository(BaseRepository[WBSElement]):
                 WBSElement.parent_id.is_(None),
             )
             .options(selectinload(WBSElement.children, recursion_depth=10))
-            .order_by(WBSElement.code)
+            .order_by(WBSElement.wbs_code)
         )
         return list(result.scalars().all())
 
@@ -86,7 +86,7 @@ class WBSElementRepository(BaseRepository[WBSElement]):
         result = await self.session.execute(
             select(WBSElement).where(
                 WBSElement.program_id == program_id,
-                WBSElement.code == code,
+                WBSElement.wbs_code == code,
             )
         )
         return result.scalar_one_or_none()

@@ -14,6 +14,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from src.models.enums import ConstraintType
+from src.schemas.common import PaginatedResponse
 from src.schemas.wbs import WBSBriefResponse
 
 
@@ -53,7 +54,9 @@ class ActivityCreate(ActivityBase):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
+                "program_id": "550e8400-e29b-41d4-a716-446655440000",
                 "wbs_id": "660e8400-e29b-41d4-a716-446655440001",
+                "code": "A001",
                 "name": "Design Review Meeting",
                 "description": "Conduct preliminary design review",
                 "duration": 5,
@@ -65,10 +68,22 @@ class ActivityCreate(ActivityBase):
         }
     )
 
+    program_id: UUID = Field(
+        ...,
+        description="ID of the parent program",
+        examples=["550e8400-e29b-41d4-a716-446655440000"],
+    )
     wbs_id: UUID = Field(
         ...,
         description="ID of the parent WBS element",
         examples=["660e8400-e29b-41d4-a716-446655440001"],
+    )
+    code: str = Field(
+        ...,
+        min_length=1,
+        max_length=50,
+        description="Unique activity code within program",
+        examples=["A001", "TASK-100"],
     )
     duration: int = Field(
         default=0,
@@ -353,7 +368,9 @@ class ActivityResponse(BaseModel):
         json_schema_extra={
             "example": {
                 "id": "770e8400-e29b-41d4-a716-446655440003",
+                "program_id": "550e8400-e29b-41d4-a716-446655440000",
                 "wbs_id": "660e8400-e29b-41d4-a716-446655440001",
+                "code": "A001",
                 "name": "Design Review Meeting",
                 "description": "Conduct preliminary design review",
                 "duration": 5,
@@ -385,9 +402,18 @@ class ActivityResponse(BaseModel):
         description="Unique activity identifier",
         examples=["770e8400-e29b-41d4-a716-446655440003"],
     )
+    program_id: UUID = Field(
+        ...,
+        description="ID of the parent program",
+    )
     wbs_id: UUID = Field(
         ...,
         description="ID of the parent WBS element",
+    )
+    code: str = Field(
+        ...,
+        description="Unique activity code within program",
+        examples=["A001"],
     )
     wbs_element: WBSBriefResponse | None = Field(
         default=None,
@@ -526,6 +552,7 @@ class ActivityBriefResponse(BaseModel):
         json_schema_extra={
             "example": {
                 "id": "770e8400-e29b-41d4-a716-446655440003",
+                "code": "A001",
                 "name": "Design Review Meeting",
                 "is_milestone": False,
                 "is_critical": False,
@@ -536,6 +563,10 @@ class ActivityBriefResponse(BaseModel):
     id: UUID = Field(
         ...,
         description="Unique activity identifier",
+    )
+    code: str = Field(
+        ...,
+        description="Unique activity code within program",
     )
     name: str = Field(
         ...,
@@ -566,10 +597,10 @@ class CriticalPathResponse(BaseModel):
                 "critical_activities": [
                     {
                         "id": "770e8400-e29b-41d4-a716-446655440003",
+                        "code": "A001",
                         "name": "Design Review",
-                        "duration": 5,
-                        "early_start": "2026-02-01",
-                        "early_finish": "2026-02-05",
+                        "is_milestone": False,
+                        "is_critical": True,
                     }
                 ],
                 "total_activities": 50,
@@ -597,3 +628,7 @@ class CriticalPathResponse(BaseModel):
         description="Number of critical activities",
         examples=[12],
     )
+
+
+# Type alias for paginated activity lists
+ActivityListResponse = PaginatedResponse[ActivityResponse]

@@ -13,6 +13,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from src.models.enums import ProgramStatus
+from src.schemas.common import PaginatedResponse
 from src.schemas.user import UserBriefResponse
 
 
@@ -55,6 +56,7 @@ class ProgramCreate(ProgramBase):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
+                "code": "F35-INT",
                 "name": "F-35 Lightning II Integration",
                 "description": "Joint strike fighter integration program",
                 "contract_number": "FA8611-20-C-1234",
@@ -65,6 +67,13 @@ class ProgramCreate(ProgramBase):
         }
     )
 
+    code: str = Field(
+        ...,
+        min_length=1,
+        max_length=50,
+        description="Unique program code identifier",
+        examples=["F35-INT", "NGAD-001"],
+    )
     start_date: date = Field(
         ...,
         description="Planned program start date",
@@ -188,6 +197,7 @@ class ProgramResponse(BaseModel):
         json_schema_extra={
             "example": {
                 "id": "550e8400-e29b-41d4-a716-446655440000",
+                "code": "F35-INT",
                 "name": "F-35 Lightning II Integration",
                 "description": "Joint strike fighter integration program",
                 "contract_number": "FA8611-20-C-1234",
@@ -210,6 +220,11 @@ class ProgramResponse(BaseModel):
         ...,
         description="Unique program identifier",
         examples=["550e8400-e29b-41d4-a716-446655440000"],
+    )
+    code: str = Field(
+        ...,
+        description="Unique program code identifier",
+        examples=["F35-INT"],
     )
     name: str = Field(
         ...,
@@ -281,6 +296,7 @@ class ProgramBriefResponse(BaseModel):
         json_schema_extra={
             "example": {
                 "id": "550e8400-e29b-41d4-a716-446655440000",
+                "code": "F35-INT",
                 "name": "F-35 Lightning II Integration",
                 "status": "active",
             }
@@ -290,6 +306,10 @@ class ProgramBriefResponse(BaseModel):
     id: UUID = Field(
         ...,
         description="Unique program identifier",
+    )
+    code: str = Field(
+        ...,
+        description="Unique program code identifier",
     )
     name: str = Field(
         ...,
@@ -332,3 +352,7 @@ class ProgramSummaryResponse(ProgramResponse):
         description="Overall program completion percentage",
         examples=["45.50"],
     )
+
+
+# Type alias for paginated program lists
+ProgramListResponse = PaginatedResponse[ProgramResponse]

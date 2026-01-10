@@ -40,8 +40,8 @@ class ActivityRepository(BaseRepository[Activity]):
             select(Activity)
             .where(Activity.id == id)
             .options(
-                selectinload(Activity.predecessor_dependencies),
-                selectinload(Activity.successor_dependencies),
+                selectinload(Activity.predecessor_links),
+                selectinload(Activity.successor_links),
             )
         )
         return result.scalar_one_or_none()
@@ -55,8 +55,8 @@ class ActivityRepository(BaseRepository[Activity]):
             select(Activity)
             .where(Activity.program_id == program_id)
             .options(
-                selectinload(Activity.predecessor_dependencies),
-                selectinload(Activity.successor_dependencies),
+                selectinload(Activity.predecessor_links),
+                selectinload(Activity.successor_links),
             )
         )
         return list(result.scalars().all())

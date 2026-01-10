@@ -15,6 +15,7 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
+    UniqueConstraint,
     text,
 )
 from sqlalchemy.dialects.postgresql import ENUM as PgEnum
@@ -26,6 +27,7 @@ from src.models.enums import ConstraintType
 
 if TYPE_CHECKING:
     from src.models.dependency import Dependency
+    from src.models.program import Program
     from src.models.wbs import WBSElement
 
 
@@ -45,7 +47,9 @@ class Activity(Base):
     - is_critical: True if on critical path (total_float = 0)
 
     Attributes:
+        program_id: FK to parent program (for direct program queries)
         wbs_id: FK to parent WBS element
+        code: Unique activity code within program (e.g., "A001")
         name: Activity name/description
         duration: Duration in working days
         planned_start/finish: Baseline planned dates
@@ -59,6 +63,15 @@ class Activity(Base):
     # Override auto-generated table name
     __tablename__ = "activities"
 
+    # Foreign key to Program (for direct program queries)
+    program_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("programs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+        comment="FK to parent program",
+    )
+
     # Foreign key to WBS element
     wbs_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
@@ -66,6 +79,14 @@ class Activity(Base):
         nullable=False,
         index=True,
         comment="FK to parent WBS element",
+    )
+
+    # Unique activity code within program (e.g., "A001", "TASK-100")
+    code: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        index=True,
+        comment="Unique activity code within program",
     )
 
     # Basic information
@@ -216,6 +237,11 @@ class Activity(Base):
     )
 
     # Relationships
+    program: Mapped["Program"] = relationship(
+        "Program",
+        back_populates="activities",
+    )
+
     wbs_element: Mapped["WBSElement"] = relationship(
         "WBSElement",
         back_populates="activities",
@@ -239,6 +265,12 @@ class Activity(Base):
 
     # Table-level configuration
     __table_args__ = (
+        # Unique constraint: activity code must be unique within a program
+        UniqueConstraint(
+            "program_id",
+            "code",
+            name="uq_activities_program_code",
+        ),
         # Check constraint for percent_complete range
         CheckConstraint(
             "percent_complete >= 0 AND percent_complete <= 100",
@@ -249,10 +281,15 @@ class Activity(Base):
             "duration >= 0",
             name="ck_activities_duration",
         ),
+        # Index for program activities lookup
+        Index(
+            "ix_activities_program_id",
+            "program_id",
+        ),
         # Index for critical path queries
         Index(
             "ix_activities_critical",
-            "wbs_id",
+            "program_id",
             "is_critical",
             postgresql_where=text("is_critical = true AND deleted_at IS NULL"),
         ),
@@ -282,7 +319,7 @@ class Activity(Base):
     def __repr__(self) -> str:
         """Return string representation for debugging."""
         return (
-            f"<Activity(id={self.id}, name={self.name!r}, "
+            f"<Activity(id={self.id}, code={self.code!r}, name={self.name!r}, "
             f"duration={self.duration}, is_critical={self.is_critical})>"
         )
 

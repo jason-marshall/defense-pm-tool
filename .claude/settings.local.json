@@ -2,7 +2,23 @@
   "permissions": {
     "allow": [
       "Bash(mkdir:*)",
-      "Bash(del \"C:\\\\Users\\\\sbbjp\\\\OneDrive\\\\Desktop\\\\defense-pm-tool\\\\api\\\\alembic\\\\versions\\\\.gitkeep\")"
+      "Bash(del \"C:\\\\Users\\\\sbbjp\\\\OneDrive\\\\Desktop\\\\defense-pm-tool\\\\api\\\\alembic\\\\versions\\\\.gitkeep\")",
+      "Bash(python -m py_compile:*)",
+      "Bash(python -m mypy:*)",
+      "Bash(if [ -d \"venv\" ])",
+      "Bash(then source venv/Scripts/activate)",
+      "Bash(elif [ -d \".venv\" ])",
+      "Bash(then source .venv/Scripts/activate)",
+      "Bash(else echo \"No venv found, trying pip install\")",
+      "Bash(pip install:*)",
+      "Bash(fi)",
+      "Bash(/c/Users/sbbjp/AppData/Local/Python/pythoncore-3.14-64/python.exe -m pip install:*)",
+      "Bash(/c/Users/sbbjp/AppData/Local/Python/pythoncore-3.14-64/python.exe -m mypy:*)",
+      "Bash(/c/Users/sbbjp/AppData/Local/Python/pythoncore-3.14-64/python.exe -c \"from src.schemas.dependency import DependencyResponse\")",
+      "Bash(/c/Users/sbbjp/AppData/Local/Python/pythoncore-3.14-64/python.exe -m pytest tests/ -v)",
+      "Bash(DATABASE_URL=\"postgresql+asyncpg://test:test@localhost/test\" REDIS_URL=\"redis://localhost\" SECRET_KEY=\"test-secret-key\" /c/Users/sbbjp/AppData/Local/Python/pythoncore-3.14-64/python.exe:*)",
+      "Bash(DATABASE_URL=\"postgresql+asyncpg://test:test@localhost/test\" REDIS_URL=\"redis://localhost\" SECRET_KEY=\"test-secret-key\" /c/Users/sbbjp/AppData/Local/Python/pythoncore-3.14-64/python.exe -m pytest:*)",
+      "Bash(DATABASE_URL=\"postgresql+asyncpg://test:test@localhost/test\" REDIS_URL=\"redis://localhost\" SECRET_KEY=\"test-secret-key-that-is-at-least-32-characters-long\" /c/Users/sbbjp/AppData/Local/Python/pythoncore-3.14-64/python.exe -m pytest:*)"
     ]
   }
 }
