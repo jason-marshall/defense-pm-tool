@@ -19,7 +19,9 @@ Enums (from src.models.enums):
     - ActivityStatus: Activity execution status
 """
 
+from src.models.activity import Activity
 from src.models.base import Base, SoftDeleteMixin
+from src.models.dependency import Dependency
 
 # Import enums from centralized location
 from src.models.enums import (
@@ -29,13 +31,11 @@ from src.models.enums import (
     ProgramStatus,
     UserRole,
 )
+from src.models.program import Program
 
 # Import models
 from src.models.user import User
-from src.models.program import Program
-from src.models.wbs import WBSElement, LtreeType
-from src.models.activity import Activity
-from src.models.dependency import Dependency
+from src.models.wbs import LtreeType, WBSElement
 
 __all__ = [
     # Base classes

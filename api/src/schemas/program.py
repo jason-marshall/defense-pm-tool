@@ -10,7 +10,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from src.models.enums import ProgramStatus
 from src.schemas.common import PaginatedResponse

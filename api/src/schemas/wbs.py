@@ -8,10 +8,9 @@ This module provides schemas for:
 
 from datetime import datetime
 from decimal import Decimal
-from typing import ForwardRef
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from src.schemas.common import PaginatedResponse
 

@@ -1,5 +1,7 @@
 """Pytest configuration and fixtures."""
 
+import os
+import tempfile
 from collections.abc import AsyncGenerator
 from decimal import Decimal
 from uuid import uuid4
@@ -10,16 +12,18 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from src.config import Settings
+from src.core.auth import hash_password
 from src.core.deps import get_db
 from src.main import app
-from src.models.base import Base
 from src.models.activity import Activity
+from src.models.base import Base
 from src.models.dependency import Dependency, DependencyType
+from src.models.enums import UserRole
 from src.models.program import Program
+from src.models.user import User
 
-
-# Test database URL (use SQLite for tests)
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+# Test secret key (32+ characters required)
+TEST_SECRET_KEY = "test-secret-key-for-testing-purposes-only-32chars"
 
 
 @pytest.fixture(scope="session")
@@ -28,7 +32,7 @@ def test_settings() -> Settings:
     return Settings(
         DATABASE_URL="postgresql://test:test@localhost:5432/test",
         REDIS_URL="redis://localhost:6379/1",
-        SECRET_KEY="test-secret-key-do-not-use-in-production",
+        SECRET_KEY=TEST_SECRET_KEY,
         ENVIRONMENT="development",
         DEBUG=True,
     )
@@ -36,18 +40,26 @@ def test_settings() -> Settings:
 
 @pytest_asyncio.fixture(scope="function")
 async def async_engine():
-    """Create async engine for testing."""
-    engine = create_async_engine(TEST_DATABASE_URL, echo=False)
+    """Create async engine for testing using a unique temp file database."""
+    # Create a unique temp file for each test to avoid state issues
+    db_fd, db_path = tempfile.mkstemp(suffix=".db")
+    os.close(db_fd)  # Close the file descriptor, SQLite will handle the file
+
+    db_url = f"sqlite+aiosqlite:///{db_path}"
+    engine = create_async_engine(db_url, echo=False)
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
     yield engine
 
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-
     await engine.dispose()
+
+    # Clean up the temp file
+    try:
+        os.unlink(db_path)
+    except OSError:
+        pass  # File may already be deleted
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -166,3 +178,54 @@ def sample_dependencies(sample_activities: list[Activity]) -> list[Dependency]:
             lag=0,
         ),
     ]
+
+
+# User fixtures for authentication testing
+
+@pytest.fixture
+def sample_user_data() -> dict:
+    """Sample user data for testing registration."""
+    return {
+        "email": "test@example.com",
+        "password": "SecurePassword123!",
+        "full_name": "Test User",
+    }
+
+
+@pytest.fixture
+def sample_user() -> User:
+    """Create a sample user instance (not saved to database)."""
+    return User(
+        id=uuid4(),
+        email="test@example.com",
+        hashed_password=hash_password("SecurePassword123!"),
+        full_name="Test User",
+        is_active=True,
+        role=UserRole.VIEWER,
+    )
+
+
+@pytest.fixture
+def sample_admin_user() -> User:
+    """Create a sample admin user instance (not saved to database)."""
+    return User(
+        id=uuid4(),
+        email="admin@example.com",
+        hashed_password=hash_password("AdminPassword123!"),
+        full_name="Admin User",
+        is_active=True,
+        role=UserRole.ADMIN,
+    )
+
+
+@pytest.fixture
+def inactive_user() -> User:
+    """Create an inactive user instance (not saved to database)."""
+    return User(
+        id=uuid4(),
+        email="inactive@example.com",
+        hashed_password=hash_password("InactivePassword123!"),
+        full_name="Inactive User",
+        is_active=False,
+        role=UserRole.VIEWER,
+    )

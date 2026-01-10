@@ -3,9 +3,9 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Query
 
-from src.core.deps import get_db, DbSession
+from src.core.deps import DbSession
 from src.core.exceptions import ConflictError, NotFoundError
 from src.repositories.program import ProgramRepository
 from src.schemas.program import (

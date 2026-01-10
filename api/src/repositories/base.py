@@ -3,7 +3,7 @@
 from typing import Any, Generic, TypeVar
 from uuid import UUID
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.base import Base

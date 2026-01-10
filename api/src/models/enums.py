@@ -11,7 +11,6 @@ Categories:
 """
 
 from enum import Enum
-from typing import Self
 
 
 class UserRole(str, Enum):

@@ -1,6 +1,6 @@
 """Authentication utilities."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import bcrypt
@@ -67,7 +67,7 @@ def create_access_token(subject: str, extra_claims: dict[str, Any] | None = None
     Returns:
         Encoded JWT token string
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     expire = now + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
     payload = {
@@ -93,7 +93,7 @@ def create_refresh_token(subject: str) -> str:
     Returns:
         Encoded JWT token string
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     expire = now + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
 
     payload = {

@@ -1,8 +1,7 @@
 """FastAPI application entry point."""
 
-import logging
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 import structlog
 from fastapi import FastAPI, Request

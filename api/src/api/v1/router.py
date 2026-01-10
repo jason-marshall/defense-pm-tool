@@ -2,9 +2,16 @@
 
 from fastapi import APIRouter
 
-from src.api.v1.endpoints import activities, dependencies, programs, schedule, wbs
+from src.api.v1.endpoints import activities, auth, dependencies, programs, schedule, wbs
 
 api_router = APIRouter()
+
+# Authentication endpoints (no prefix needed, auth is the prefix)
+api_router.include_router(
+    auth.router,
+    prefix="/auth",
+    tags=["Authentication"],
+)
 
 api_router.include_router(
     programs.router,

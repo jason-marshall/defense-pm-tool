@@ -281,11 +281,7 @@ class Activity(Base):
             "duration >= 0",
             name="ck_activities_duration",
         ),
-        # Index for program activities lookup
-        Index(
-            "ix_activities_program_id",
-            "program_id",
-        ),
+        # Note: program_id index is created by index=True on the column
         # Index for critical path queries
         Index(
             "ix_activities_critical",

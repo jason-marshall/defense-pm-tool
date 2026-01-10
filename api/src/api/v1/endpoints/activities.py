@@ -3,7 +3,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Query
 
 from src.core.deps import DbSession
 from src.core.exceptions import NotFoundError

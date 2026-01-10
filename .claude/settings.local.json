@@ -18,7 +18,11 @@
       "Bash(/c/Users/sbbjp/AppData/Local/Python/pythoncore-3.14-64/python.exe -m pytest tests/ -v)",
       "Bash(DATABASE_URL=\"postgresql+asyncpg://test:test@localhost/test\" REDIS_URL=\"redis://localhost\" SECRET_KEY=\"test-secret-key\" /c/Users/sbbjp/AppData/Local/Python/pythoncore-3.14-64/python.exe:*)",
       "Bash(DATABASE_URL=\"postgresql+asyncpg://test:test@localhost/test\" REDIS_URL=\"redis://localhost\" SECRET_KEY=\"test-secret-key\" /c/Users/sbbjp/AppData/Local/Python/pythoncore-3.14-64/python.exe -m pytest:*)",
-      "Bash(DATABASE_URL=\"postgresql+asyncpg://test:test@localhost/test\" REDIS_URL=\"redis://localhost\" SECRET_KEY=\"test-secret-key-that-is-at-least-32-characters-long\" /c/Users/sbbjp/AppData/Local/Python/pythoncore-3.14-64/python.exe -m pytest:*)"
+      "Bash(DATABASE_URL=\"postgresql+asyncpg://test:test@localhost/test\" REDIS_URL=\"redis://localhost\" SECRET_KEY=\"test-secret-key-that-is-at-least-32-characters-long\" /c/Users/sbbjp/AppData/Local/Python/pythoncore-3.14-64/python.exe -m pytest:*)",
+      "Bash(/c/Users/sbbjp/AppData/Local/Python/pythoncore-3.14-64/python.exe -m ruff:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(DATABASE_URL=\"postgresql://test:test@localhost:5432/test\" REDIS_URL=\"redis://localhost:6379/1\" SECRET_KEY=\"test-secret-key-for-testing-purposes-only-32chars\" python -m pytest:*)",
+      "Bash(python -m pip install:*)"
     ]
   }
 }

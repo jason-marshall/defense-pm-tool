@@ -364,3 +364,62 @@ class TokenPayload(BaseModel):
         ...,
         description="Expiration timestamp (Unix epoch)",
     )
+
+
+class RefreshTokenRequest(BaseModel):
+    """
+    Schema for refresh token request.
+
+    Used to exchange a refresh token for a new access token.
+    """
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            }
+        }
+    )
+
+    refresh_token: str = Field(
+        ...,
+        description="Refresh token to exchange for new access token",
+    )
+
+
+class TokenPairResponse(BaseModel):
+    """
+    Schema for token pair response (access + refresh).
+
+    Returned after successful login.
+    """
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                "token_type": "bearer",
+                "expires_in": 900,
+            }
+        }
+    )
+
+    access_token: str = Field(
+        ...,
+        description="JWT access token for API authentication",
+    )
+    refresh_token: str = Field(
+        ...,
+        description="JWT refresh token for obtaining new access tokens",
+    )
+    token_type: str = Field(
+        default="bearer",
+        description="Token type (always 'bearer')",
+        examples=["bearer"],
+    )
+    expires_in: int = Field(
+        ...,
+        description="Access token expiration time in seconds",
+        examples=[900],
+    )

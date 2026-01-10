@@ -1,6 +1,6 @@
 """Async SQLAlchemy database configuration and session management."""
 
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import structlog
 from sqlalchemy.ext.asyncio import (

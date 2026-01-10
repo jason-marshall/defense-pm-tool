@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from sqlalchemy import select, or_
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.dependency import Dependency
