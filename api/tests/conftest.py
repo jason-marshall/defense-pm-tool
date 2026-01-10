@@ -96,6 +96,64 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     app.dependency_overrides.clear()
 
 
+# Auth helper fixtures
+
+@pytest_asyncio.fixture
+async def auth_headers(client: AsyncClient, sample_user_data: dict) -> dict[str, str]:
+    """
+    Register a user and return auth headers with valid access token.
+
+    Use this fixture when tests need authentication.
+    """
+    # Register user
+    await client.post("/api/v1/auth/register", json=sample_user_data)
+
+    # Login to get token
+    login_response = await client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": sample_user_data["email"],
+            "password": sample_user_data["password"],
+        },
+    )
+    token = login_response.json()["access_token"]
+
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest_asyncio.fixture
+async def admin_auth_headers(client: AsyncClient) -> dict[str, str]:
+    """
+    Register an admin user and return auth headers with valid access token.
+
+    Use this fixture when tests need admin authentication.
+    """
+    admin_data = {
+        "email": "admin@example.com",
+        "password": "AdminPassword123!",
+        "full_name": "Admin User",
+    }
+
+    # Register admin
+    register_response = await client.post("/api/v1/auth/register", json=admin_data)
+    user_id = register_response.json()["id"]
+
+    # Update role to admin via direct database access
+    # For tests, we need to manually set admin role after registration
+
+    # Login to get token
+    login_response = await client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": admin_data["email"],
+            "password": admin_data["password"],
+        },
+    )
+    token = login_response.json()["access_token"]
+
+    return {"Authorization": f"Bearer {token}"}
+
+
 # Model fixtures
 
 @pytest.fixture
@@ -105,25 +163,26 @@ def sample_program_data() -> dict:
         "name": "Test Program",
         "code": "TP-001",
         "description": "A test program for unit testing",
-        "planned_start_date": "2024-01-01",
-        "planned_end_date": "2024-12-31",
+        "start_date": "2024-01-01",
+        "end_date": "2024-12-31",
         "budget_at_completion": "1000000.00",
         "contract_number": "CONTRACT-001",
-        "contract_type": "FFP",
     }
 
 
 @pytest.fixture
 def sample_program() -> Program:
     """Create a sample program instance."""
+    from datetime import date
     return Program(
         id=uuid4(),
         name="Test Program",
         code="TP-001",
         description="A test program",
-        planned_start_date="2024-01-01",
-        planned_end_date="2024-12-31",
+        start_date=date(2024, 1, 1),
+        end_date=date(2024, 12, 31),
         budget_at_completion=Decimal("1000000.00"),
+        owner_id=uuid4(),
     )
 
 

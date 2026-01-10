@@ -1,12 +1,13 @@
-"""Program endpoints."""
+"""Program endpoints with authentication and authorization."""
 
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
-from src.core.deps import DbSession
-from src.core.exceptions import ConflictError, NotFoundError
+from src.core.deps import DbSession, get_current_user
+from src.core.exceptions import AuthorizationError, ConflictError, NotFoundError
+from src.models.user import User
 from src.repositories.program import ProgramRepository
 from src.schemas.program import (
     ProgramCreate,
@@ -21,15 +22,25 @@ router = APIRouter()
 @router.get("", response_model=ProgramListResponse)
 async def list_programs(
     db: DbSession,
+    current_user: Annotated[User, Depends(get_current_user)],
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 20,
 ) -> ProgramListResponse:
-    """List all programs with pagination."""
+    """
+    List programs accessible to the current user.
+
+    - Admins can see all programs
+    - Regular users only see programs they own
+    """
     repo = ProgramRepository(db)
     skip = (page - 1) * page_size
 
-    programs = await repo.get_all(skip=skip, limit=page_size)
-    total = await repo.count()
+    programs, total = await repo.get_accessible_programs(
+        user_id=current_user.id,
+        is_admin=current_user.is_admin,
+        skip=skip,
+        limit=page_size,
+    )
 
     return ProgramListResponse(
         items=[ProgramResponse.model_validate(p) for p in programs],
@@ -43,13 +54,25 @@ async def list_programs(
 async def get_program(
     program_id: UUID,
     db: DbSession,
+    current_user: Annotated[User, Depends(get_current_user)],
 ) -> ProgramResponse:
-    """Get a single program by ID."""
+    """
+    Get a single program by ID.
+
+    Users can only view programs they own or if they are admins.
+    """
     repo = ProgramRepository(db)
     program = await repo.get_by_id(program_id)
 
     if not program:
         raise NotFoundError(f"Program {program_id} not found", "PROGRAM_NOT_FOUND")
+
+    # Authorization check
+    if program.owner_id != current_user.id and not current_user.is_admin:
+        raise AuthorizationError(
+            "Not authorized to view this program",
+            "PROGRAM_ACCESS_DENIED",
+        )
 
     return ProgramResponse.model_validate(program)
 
@@ -58,8 +81,13 @@ async def get_program(
 async def create_program(
     program_in: ProgramCreate,
     db: DbSession,
+    current_user: Annotated[User, Depends(get_current_user)],
 ) -> ProgramResponse:
-    """Create a new program."""
+    """
+    Create a new program.
+
+    The current user is automatically set as the program owner.
+    """
     repo = ProgramRepository(db)
 
     # Check for duplicate code
@@ -69,8 +97,13 @@ async def create_program(
             "DUPLICATE_PROGRAM_CODE",
         )
 
-    program = await repo.create(program_in.model_dump())
+    # Create program with current user as owner
+    program_data = program_in.model_dump()
+    program_data["owner_id"] = current_user.id
+
+    program = await repo.create(program_data)
     await db.commit()
+    await db.refresh(program)
 
     return ProgramResponse.model_validate(program)
 
@@ -80,13 +113,25 @@ async def update_program(
     program_id: UUID,
     program_in: ProgramUpdate,
     db: DbSession,
+    current_user: Annotated[User, Depends(get_current_user)],
 ) -> ProgramResponse:
-    """Update an existing program."""
+    """
+    Update an existing program.
+
+    Users can only update programs they own or if they are admins.
+    """
     repo = ProgramRepository(db)
     program = await repo.get_by_id(program_id)
 
     if not program:
         raise NotFoundError(f"Program {program_id} not found", "PROGRAM_NOT_FOUND")
+
+    # Authorization check
+    if program.owner_id != current_user.id and not current_user.is_admin:
+        raise AuthorizationError(
+            "Not authorized to modify this program",
+            "PROGRAM_MODIFICATION_DENIED",
+        )
 
     updated = await repo.update(
         program,
@@ -101,13 +146,25 @@ async def update_program(
 async def delete_program(
     program_id: UUID,
     db: DbSession,
+    current_user: Annotated[User, Depends(get_current_user)],
 ) -> None:
-    """Delete a program."""
+    """
+    Delete a program (soft delete).
+
+    Users can only delete programs they own or if they are admins.
+    """
     repo = ProgramRepository(db)
     program = await repo.get_by_id(program_id)
 
     if not program:
         raise NotFoundError(f"Program {program_id} not found", "PROGRAM_NOT_FOUND")
 
-    await repo.delete(program)
+    # Authorization check
+    if program.owner_id != current_user.id and not current_user.is_admin:
+        raise AuthorizationError(
+            "Not authorized to delete this program",
+            "PROGRAM_DELETION_DENIED",
+        )
+
+    await repo.delete(program_id)
     await db.commit()
