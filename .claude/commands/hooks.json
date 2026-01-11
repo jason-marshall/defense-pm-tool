@@ -1,0 +1,93 @@
+{
+  "$schema": "https://claude.ai/schemas/hooks.json",
+  "hooks": {
+    "PostToolExecution": [
+      {
+        "event": "Write",
+        "pattern": "api/src/**/*.py",
+        "command": "cd api && ruff check $FILE --fix && ruff format $FILE",
+        "description": "Auto-format Python source files after editing"
+      },
+      {
+        "event": "Write",
+        "pattern": "api/tests/**/*.py",
+        "command": "cd api && ruff check $FILE --fix && ruff format $FILE",
+        "description": "Auto-format Python test files after editing"
+      },
+      {
+        "event": "Write",
+        "pattern": "web/src/**/*.{ts,tsx}",
+        "command": "cd web && npx prettier --write $FILE && npx eslint --fix $FILE 2>/dev/null || true",
+        "description": "Auto-format TypeScript/React files after editing"
+      },
+      {
+        "event": "Write",
+        "pattern": "web/src/**/*.css",
+        "command": "cd web && npx prettier --write $FILE",
+        "description": "Auto-format CSS files after editing"
+      }
+    ],
+    "PreCommit": [
+      {
+        "command": "cd api && ruff check src tests",
+        "description": "Run Python linting before commit",
+        "failOnError": true
+      },
+      {
+        "command": "cd api && ruff format src tests --check",
+        "description": "Check Python formatting before commit",
+        "failOnError": true
+      },
+      {
+        "command": "cd api && mypy src --ignore-missing-imports",
+        "description": "Run type checking before commit",
+        "failOnError": true
+      },
+      {
+        "command": "cd api && pytest tests/unit -q --tb=no",
+        "description": "Run unit tests before commit",
+        "failOnError": true
+      }
+    ],
+    "PostCommit": [
+      {
+        "command": "echo 'Commit successful. Remember to run integration tests before pushing.'",
+        "description": "Reminder for integration tests"
+      }
+    ],
+    "PrePush": [
+      {
+        "command": "cd api && pytest tests/integration -q --tb=short",
+        "description": "Run integration tests before push",
+        "failOnError": true
+      },
+      {
+        "command": "cd api && pytest --cov=src --cov-fail-under=60 -q --tb=no",
+        "description": "Verify minimum coverage before push",
+        "failOnError": false
+      }
+    ]
+  },
+  "aliases": {
+    "test": "cd api && pytest -v",
+    "test:unit": "cd api && pytest tests/unit -v",
+    "test:int": "cd api && pytest tests/integration -v",
+    "test:cov": "cd api && pytest --cov=src --cov-report=term-missing",
+    "lint": "cd api && ruff check src tests --fix && ruff format src tests",
+    "typecheck": "cd api && mypy src --ignore-missing-imports",
+    "verify": "cd api && ruff check src tests --fix && ruff format src tests && mypy src --ignore-missing-imports && pytest tests/unit -v",
+    "verify:full": "cd api && ruff check src tests --fix && ruff format src tests && mypy src --ignore-missing-imports && pytest -v --cov=src",
+    "db:migrate": "cd api && alembic upgrade head",
+    "db:rollback": "cd api && alembic downgrade -1",
+    "db:reset": "cd api && alembic downgrade base && alembic upgrade head",
+    "start": "cd api && uvicorn src.main:app --reload",
+    "start:docker": "docker-compose up -d"
+  },
+  "settings": {
+    "autoFormat": true,
+    "formatOnSave": true,
+    "lintOnSave": true,
+    "testOnSave": false,
+    "showHookOutput": true
+  }
+}

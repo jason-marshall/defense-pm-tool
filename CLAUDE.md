@@ -1,8 +1,9 @@
-# Defense Program Management Tool - CLAUDE.md
+# Defense Program Management Tool - Claude Code Instructions
 
-> **Project**: Defense Program Management Tool with EVMS/DFARS Compliance
-> **Stack**: Python 3.11+ / FastAPI / React 18 / TypeScript / PostgreSQL 15 / Redis
-> **Architecture**: Modular Monolith with Schedule Manager, CPM Engine, EVMS Calculator
+> **Project**: Defense PM Tool with EVMS/CPM capabilities
+> **Repository**: https://github.com/jason-marshall/defense-pm-tool
+> **Developer**: Single developer, 3-month timeline
+> **Current Phase**: Week 2 - Activity Management & Dependencies
 
 ---
 
@@ -10,25 +11,26 @@
 
 ```bash
 # Start development environment
-docker-compose up -d                    # Start PostgreSQL + Redis
-cd api && source venv/bin/activate      # Activate Python venv
-uvicorn src.main:app --reload           # Start backend (port 8000)
-cd web && npm run dev                   # Start frontend (port 5173)
+docker-compose up -d
 
-# Testing
-cd api && pytest                        # Run all backend tests
-cd api && pytest -m cpm                 # Run CPM engine tests only
-cd api && pytest --cov=src --cov-report=html  # With coverage
-cd web && npm test                      # Run frontend tests
+# Run verification ladder (always run before commits)
+cd api
+ruff check src tests --fix && ruff format src tests
+mypy src --ignore-missing-imports
+pytest tests/unit -v
+pytest tests/integration -v
+pytest --cov=src --cov-report=term-missing
 
-# Linting & Type Checking
-cd api && ruff check src tests          # Python linting
-cd api && mypy src                      # Python type checking
-cd web && npm run lint                  # TypeScript/React linting
-
-# Database
-alembic upgrade head                    # Apply migrations
+# Database operations
+alembic upgrade head          # Apply migrations
+alembic downgrade -1          # Rollback one migration
 alembic revision --autogenerate -m "description"  # Create migration
+
+# API server
+uvicorn src.main:app --reload --port 8000
+
+# Frontend (when implemented)
+cd web && npm run dev
 ```
 
 ---
@@ -37,30 +39,82 @@ alembic revision --autogenerate -m "description"  # Create migration
 
 ```
 defense-pm-tool/
-├── api/                        # FastAPI Backend
+├── CLAUDE.md                    # This file - Claude Code reads this automatically
+├── docker-compose.yml           # PostgreSQL + Redis + API containers
+├── .env.example                 # Environment template
+│
+├── api/                         # Backend (FastAPI + Python 3.11+)
+│   ├── alembic/                 # Database migrations
+│   │   ├── versions/            # Migration files (001_initial.py, etc.)
+│   │   └── env.py
 │   ├── src/
-│   │   ├── main.py            # App entry point
-│   │   ├── config.py          # Pydantic settings
-│   │   ├── models/            # SQLAlchemy models
-│   │   ├── schemas/           # Pydantic schemas
-│   │   ├── repositories/      # Data access layer
-│   │   ├── services/          # Business logic (CPM, EVMS)
-│   │   ├── api/v1/            # Route handlers
-│   │   └── core/              # Auth, deps, exceptions
+│   │   ├── __init__.py
+│   │   ├── main.py              # FastAPI application entry point
+│   │   ├── api/
+│   │   │   └── v1/
+│   │   │       ├── router.py    # API router aggregation
+│   │   │       └── endpoints/   # Route handlers
+│   │   │           ├── activities.py
+│   │   │           ├── auth.py
+│   │   │           ├── dependencies.py
+│   │   │           ├── programs.py
+│   │   │           └── health.py
+│   │   ├── core/                # Configuration & utilities
+│   │   │   ├── config.py        # Settings via pydantic-settings
+│   │   │   ├── database.py      # Async SQLAlchemy session
+│   │   │   ├── auth.py          # JWT utilities, password hashing
+│   │   │   ├── deps.py          # FastAPI dependencies (get_current_user, etc.)
+│   │   │   └── exceptions.py    # Custom exception hierarchy
+│   │   ├── models/              # SQLAlchemy 2.0 models
+│   │   │   ├── base.py          # Base model with id, timestamps, soft delete
+│   │   │   ├── user.py
+│   │   │   ├── program.py
+│   │   │   ├── wbs.py           # Work Breakdown Structure (ltree)
+│   │   │   ├── activity.py
+│   │   │   ├── dependency.py
+│   │   │   └── enums.py         # DependencyType, ConstraintType, etc.
+│   │   ├── schemas/             # Pydantic v2 schemas
+│   │   │   ├── activity.py      # ActivityCreate, ActivityResponse, etc.
+│   │   │   ├── dependency.py
+│   │   │   ├── program.py
+│   │   │   └── user.py
+│   │   ├── repositories/        # Data access layer
+│   │   │   ├── base.py          # BaseRepository[T] with CRUD
+│   │   │   ├── activity.py
+│   │   │   ├── dependency.py
+│   │   │   ├── program.py
+│   │   │   └── user.py
+│   │   └── services/            # Business logic
+│   │       ├── cpm.py           # Critical Path Method engine
+│   │       └── evms.py          # Earned Value calculations
 │   ├── tests/
-│   │   ├── unit/              # Unit tests
-│   │   ├── integration/       # API & DB tests
-│   │   └── conftest.py        # Fixtures
-│   └── alembic/               # Migrations
-├── web/                        # React Frontend
+│   │   ├── conftest.py          # Pytest fixtures
+│   │   ├── unit/                # Unit tests (no DB)
+│   │   │   ├── test_cpm.py      # ✅ Comprehensive CPM tests
+│   │   │   └── test_evms.py     # ✅ EVMS calculation tests
+│   │   └── integration/         # Integration tests (with DB)
+│   │       ├── test_activities_api.py
+│   │       └── test_auth_api.py
+│   ├── requirements.txt         # Python dependencies (pinned)
+│   ├── pyproject.toml           # Ruff, mypy, pytest config
+│   └── Dockerfile
+│
+├── web/                         # Frontend (React + TypeScript)
 │   ├── src/
-│   │   ├── components/        # React components
-│   │   ├── pages/             # Page components
-│   │   ├── hooks/             # Custom hooks
-│   │   ├── api/               # API client
-│   │   └── types/             # TypeScript types
-│   └── tests/
-└── docs/                       # Documentation
+│   │   ├── components/          # Reusable UI components
+│   │   ├── pages/               # Route pages
+│   │   ├── hooks/               # Custom React hooks
+│   │   ├── services/            # API client
+│   │   ├── types/               # TypeScript interfaces
+│   │   └── utils/               # Helper functions
+│   ├── package.json
+│   └── vite.config.ts
+│
+└── docs/                        # Documentation
+    ├── ARCHITECTURE.md          # System design, ERD, components
+    ├── TDD_PLAN.md              # Development prompts & milestones
+    └── prompts/                 # Week-by-week prompts
+        └── WEEK2.md
 ```
 
 ---
@@ -69,625 +123,563 @@ defense-pm-tool/
 
 ### Python (Backend)
 
-#### Style Rules
-- Use Python 3.11+ features: type hints, match statements, `Self` type
-- All functions must have type hints for parameters AND return values
-- Use `async def` for all database and I/O operations
-- Prefer `Annotated` types for FastAPI dependencies
-- Maximum line length: 100 characters
-- Use double quotes for strings consistently
-
-#### Naming Conventions
 ```python
-# Classes: PascalCase
-class ActivityRepository:
-    pass
-
-# Functions/methods: snake_case
-async def calculate_critical_path(activities: list[Activity]) -> list[Activity]:
-    pass
-
-# Constants: SCREAMING_SNAKE_CASE
-MAX_WBS_DEPTH = 10
-CPM_CALCULATION_TIMEOUT = 30
-
-# Private methods: single underscore prefix
-def _build_dependency_graph(self) -> nx.DiGraph:
-    pass
-
-# Type aliases: PascalCase
-ActivityDict = dict[UUID, Activity]
-```
-
-#### Import Order
-```python
-# 1. Standard library
+# Imports: stdlib → third-party → local (blank line between groups)
 from datetime import datetime
-from typing import Annotated
+from decimal import Decimal
 from uuid import UUID
 
-# 2. Third-party packages
-from fastapi import Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-import networkx as nx
 
-# 3. Local application imports
-from src.models import Activity, Dependency
-from src.core.deps import get_db
-```
+from src.core.deps import DbSession, get_current_user
+from src.models.activity import Activity
+from src.schemas.activity import ActivityCreate, ActivityResponse
 
-#### Docstring Format
-```python
-def calculate_forward_pass(
-    activities: list[Activity],
-    dependencies: list[Dependency]
-) -> dict[UUID, ScheduleResult]:
+# Type hints: Required on all functions
+async def get_activity(
+    activity_id: UUID,
+    db: DbSession,
+    current_user: User = Depends(get_current_user),
+) -> ActivityResponse:
     """
-    Calculate Early Start (ES) and Early Finish (EF) for all activities.
-    
-    Uses topological sort to process activities in dependency order.
-    Handles all dependency types: FS, SS, FF, SF with lag/lead.
+    Get a single activity by ID.
     
     Args:
-        activities: List of activities with duration and constraints
-        dependencies: List of dependencies between activities
+        activity_id: UUID of the activity to retrieve
+        db: Database session (injected)
+        current_user: Authenticated user (injected)
         
     Returns:
-        Dictionary mapping activity ID to ScheduleResult with ES/EF values
+        ActivityResponse with activity details
         
     Raises:
-        CircularDependencyError: If dependency graph contains cycles
-        
-    Example:
-        >>> results = calculate_forward_pass(activities, deps)
-        >>> results[activity_id].early_start
-        5
+        NotFoundError: If activity doesn't exist
+        AuthorizationError: If user doesn't have access
     """
+    ...
+
+# Naming conventions
+class ActivityRepository:     # PascalCase for classes
+    async def get_by_id():    # snake_case for functions/methods
+        activity_name = ""    # snake_case for variables
+        MAX_PAGE_SIZE = 100   # UPPER_SNAKE for constants
+
+# Decimal for money - NEVER use float
+budgeted_cost: Decimal = Decimal("10000.00")
+earned_value = budgeted_cost * (percent_complete / Decimal("100"))
+
+# Async everywhere for I/O
+async def create_activity(...) -> Activity:
+    result = await self.session.execute(...)
+    await self.session.commit()
+    return result
 ```
 
 ### TypeScript (Frontend)
 
-#### Style Rules
-- Use functional components with hooks exclusively
-- Prefer `interface` over `type` for object shapes
-- Use `const` assertions for literal types
-- Destructure props in function parameters
-- Use named exports (not default exports)
-
-#### Naming Conventions
 ```typescript
-// Components: PascalCase
-export function GanttChart({ activities, onActivityClick }: GanttChartProps) {}
-
-// Hooks: camelCase with 'use' prefix
-export function useActivities(programId: string) {}
-
-// Types/Interfaces: PascalCase
-interface ActivityResponse {
+// Explicit types, no 'any'
+interface Activity {
   id: string;
   name: string;
-  earlyStart: string;  // ISO date
+  duration: number;
+  earlyStart: number | null;
+  isCritical: boolean;
 }
 
-// Constants: SCREAMING_SNAKE_CASE
-const API_BASE_URL = '/api/v1';
+// Functional components with typed props
+interface GanttChartProps {
+  activities: Activity[];
+  onActivityClick: (id: string) => void;
+}
 
-// Event handlers: handle + Event
-const handleActivityDragEnd = (event: DragEndEvent) => {};
+const GanttChart: React.FC<GanttChartProps> = ({ activities, onActivityClick }) => {
+  // Component implementation
+};
+
+// Custom hooks for data fetching
+const useActivities = (programId: string) => {
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  
+  useEffect(() => {
+    // Fetch logic
+  }, [programId]);
+  
+  return { activities, loading, error };
+};
 ```
 
 ---
 
-## Error Handling
+## Architecture Patterns
 
-### Backend Error Hierarchy
+### Layered Architecture (Backend)
 
+```
+Request → Router → Endpoint → Repository → Model → Database
+                      ↓
+                   Service (business logic)
+```
+
+**Endpoints** (`api/v1/endpoints/`): HTTP handling, auth, validation
 ```python
-# src/core/exceptions.py
+@router.post("", response_model=ActivityResponse, status_code=201)
+async def create_activity(
+    activity_in: ActivityCreate,
+    db: DbSession,
+    current_user: User = Depends(get_current_user),
+) -> ActivityResponse:
+    # Validate authorization
+    # Call repository
+    # Return response
+```
 
-class DomainError(Exception):
-    """Base class for all domain errors."""
-    def __init__(self, message: str, code: str):
-        self.message = message
-        self.code = code
-        super().__init__(message)
-
-class ValidationError(DomainError):
-    """Invalid input data."""
-    pass
-
-class NotFoundError(DomainError):
-    """Resource not found."""
-    pass
-
-class ConflictError(DomainError):
-    """Resource conflict (duplicate, etc.)."""
-    pass
-
-class CircularDependencyError(DomainError):
-    """Circular dependency detected in schedule."""
-    def __init__(self, cycle_path: list[UUID]):
-        self.cycle_path = cycle_path
-        super().__init__(
-            f"Circular dependency: {' -> '.join(str(id) for id in cycle_path)}",
-            "CIRCULAR_DEPENDENCY"
+**Repositories** (`repositories/`): Data access, queries
+```python
+class ActivityRepository(BaseRepository[Activity]):
+    async def get_by_program(self, program_id: UUID) -> list[Activity]:
+        result = await self.session.execute(
+            select(Activity)
+            .where(Activity.program_id == program_id)
+            .where(Activity.deleted_at.is_(None))
         )
-
-class ScheduleCalculationError(DomainError):
-    """Error during CPM calculation."""
-    pass
+        return list(result.scalars().all())
 ```
 
-### Error Response Format
-
+**Services** (`services/`): Business logic, calculations
 ```python
-# All API errors return consistent JSON structure
-{
-    "detail": "Human-readable error message",
-    "code": "MACHINE_READABLE_CODE",
-    "field_errors": [  # Optional, for validation errors
-        {"field": "duration", "message": "Must be >= 0"}
-    ]
-}
+class CPMEngine:
+    def calculate(self) -> dict[UUID, ScheduleResult]:
+        self._forward_pass()
+        self._backward_pass()
+        self._calculate_float()
+        return self._results
 ```
 
-### Exception Handler Registration
+### Exception Hierarchy
 
 ```python
-# src/main.py
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-
-@app.exception_handler(DomainError)
-async def domain_error_handler(request: Request, exc: DomainError):
-    status_map = {
-        ValidationError: 422,
-        NotFoundError: 404,
-        ConflictError: 409,
-        CircularDependencyError: 400,
-    }
-    return JSONResponse(
-        status_code=status_map.get(type(exc), 400),
-        content={"detail": exc.message, "code": exc.code}
-    )
-```
-
----
-
-## Logging Standards
-
-### Configuration
-
-```python
-# src/core/logging.py
-import logging
-import structlog
-from src.config import settings
-
-def configure_logging():
-    """Configure structured logging for the application."""
-    
-    # Processors for all environments
-    shared_processors = [
-        structlog.contextvars.merge_contextvars,
-        structlog.processors.add_log_level,
-        structlog.processors.TimeStamper(fmt="iso"),
-        structlog.processors.StackInfoRenderer(),
-    ]
-    
-    if settings.ENVIRONMENT == "production":
-        # JSON output for production (ELK, Datadog, etc.)
-        processors = shared_processors + [
-            structlog.processors.JSONRenderer()
-        ]
-    else:
-        # Pretty console output for development
-        processors = shared_processors + [
-            structlog.dev.ConsoleRenderer(colors=True)
-        ]
-    
-    structlog.configure(
-        processors=processors,
-        logger_factory=structlog.stdlib.LoggerFactory(),
-        cache_logger_on_first_use=True,
-    )
-
-# Usage
-logger = structlog.get_logger()
-```
-
-### Logging Guidelines
-
-```python
-# ✅ DO: Include context with structured data
-logger.info(
-    "cpm_calculation_complete",
-    program_id=str(program_id),
-    activity_count=len(activities),
-    duration_ms=elapsed_ms,
-    critical_path_length=len(critical_path)
+from src.core.exceptions import (
+    AppException,           # Base - all custom exceptions inherit from this
+    NotFoundError,          # 404 - Resource not found
+    ValidationError,        # 400 - Invalid input
+    AuthenticationError,    # 401 - Not authenticated
+    AuthorizationError,     # 403 - Not authorized
+    ConflictError,          # 409 - Duplicate/conflict
+    CircularDependencyError,# 400 - Cycle detected in dependencies
 )
 
-# ✅ DO: Log at appropriate levels
-logger.debug("forward_pass_started", node_count=len(graph.nodes))
-logger.info("activity_created", activity_id=str(activity.id))
-logger.warning("near_critical_activity", activity_id=str(id), float_days=3)
-logger.error("cpm_calculation_failed", error=str(e), program_id=str(id))
+# Usage
+if not activity:
+    raise NotFoundError(f"Activity {activity_id} not found", "ACTIVITY_NOT_FOUND")
 
-# ❌ DON'T: Log sensitive data
-logger.info("user_login", password=password)  # NEVER
-
-# ❌ DON'T: Use string formatting
-logger.info(f"Activity {activity_id} created")  # Use structured instead
-
-# ❌ DON'T: Log inside tight loops
-for activity in activities:
-    logger.debug("processing", id=activity.id)  # Too noisy
+if would_create_cycle:
+    raise CircularDependencyError(cycle_path)
 ```
 
-### Request Logging Middleware
+---
 
-```python
-# src/core/middleware.py
-import time
-from uuid import uuid4
-import structlog
-from starlette.middleware.base import BaseHTTPMiddleware
+## Database Schema
 
-class RequestLoggingMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request, call_next):
-        request_id = str(uuid4())
-        structlog.contextvars.bind_contextvars(request_id=request_id)
-        
-        start_time = time.perf_counter()
-        response = await call_next(request)
-        duration_ms = (time.perf_counter() - start_time) * 1000
-        
-        logger = structlog.get_logger()
-        logger.info(
-            "http_request",
-            method=request.method,
-            path=request.url.path,
-            status_code=response.status_code,
-            duration_ms=round(duration_ms, 2)
-        )
-        
-        response.headers["X-Request-ID"] = request_id
-        return response
+### Entity Relationship Diagram
+
 ```
+┌─────────────┐       ┌─────────────┐       ┌─────────────┐
+│    User     │       │   Program   │       │     WBS     │
+├─────────────┤       ├─────────────┤       ├─────────────┤
+│ id (PK)     │──┐    │ id (PK)     │──┐    │ id (PK)     │
+│ email       │  │    │ owner_id(FK)│◄─┘    │ program_id  │◄─┐
+│ full_name   │  │    │ code        │       │ path (ltree)│  │
+│ hashed_pass │  │    │ name        │       │ code        │  │
+│ is_active   │  │    │ start_date  │       │ name        │  │
+│ is_admin    │  │    │ end_date    │       │ level       │  │
+└─────────────┘  │    │ status      │       └─────────────┘  │
+                 │    └─────────────┘                        │
+                 │           │                               │
+                 └───────────┼───────────────────────────────┘
+                             │
+                             ▼
+                    ┌─────────────────┐
+                    │    Activity     │
+                    ├─────────────────┤
+                    │ id (PK)         │
+                    │ program_id (FK) │◄── Direct FK for query efficiency
+                    │ wbs_id (FK)     │
+                    │ code            │    Unique within program
+                    │ name            │
+                    │ duration        │    Working days
+                    │ percent_complete│    Decimal 0-100
+                    │ budgeted_cost   │    Decimal (BCWS)
+                    │ actual_cost     │    Decimal (ACWP)
+                    │ constraint_type │    ASAP, SNET, FNLT, etc.
+                    │ constraint_date │
+                    │ early_start     │    CPM calculated
+                    │ early_finish    │
+                    │ late_start      │
+                    │ late_finish     │
+                    │ total_float     │
+                    │ free_float      │
+                    │ is_critical     │
+                    │ is_milestone    │
+                    └─────────────────┘
+                             │
+                             ▼
+                    ┌─────────────────┐
+                    │   Dependency    │
+                    ├─────────────────┤
+                    │ id (PK)         │
+                    │ predecessor_id  │◄── FK to Activity
+                    │ successor_id    │◄── FK to Activity
+                    │ dependency_type │    FS, FF, SS, SF
+                    │ lag             │    Days (can be negative)
+                    └─────────────────┘
+```
+
+### Key Constraints
+
+- `activities.program_id + activities.code` → UNIQUE (when not deleted)
+- `dependencies.predecessor_id + dependencies.successor_id` → UNIQUE
+- WBS uses PostgreSQL `ltree` for hierarchical paths (e.g., "1.2.3")
+- All tables have soft delete via `deleted_at` timestamp
 
 ---
 
 ## Testing Requirements
 
-### Coverage Targets
-| Module | Target | Rationale |
-|--------|--------|-----------|
-| `services/cpm.py` | 90%+ | Core algorithm - correctness critical |
-| `services/evms.py` | 90%+ | Financial calculations - audit requirements |
-| `models/` | 85%+ | Validation logic needs thorough testing |
-| `repositories/` | 80%+ | Data access layer |
-| `api/` | 75%+ | E2E tests provide additional coverage |
-| **Overall** | 80%+ | Project minimum |
+### Test Structure
 
-### Test File Naming
 ```
 tests/
-├── unit/
-│   ├── test_cpm_forward_pass.py
-│   ├── test_cpm_backward_pass.py
-│   ├── test_evms_calculations.py
-│   └── test_activity_validation.py
-├── integration/
-│   ├── test_activity_api.py
-│   ├── test_program_workflow.py
-│   └── test_cpm_integration.py
-└── e2e/
-    └── test_schedule_creation.py
+├── conftest.py              # Shared fixtures
+├── unit/                    # No database, fast
+│   ├── test_cpm.py          # CPM engine logic
+│   ├── test_evms.py         # EVMS calculations
+│   └── test_schemas.py      # Pydantic validation
+└── integration/             # With database, slower
+    ├── test_activities_api.py
+    ├── test_dependencies_api.py
+    └── test_auth_api.py
 ```
 
-### Test Structure (AAA Pattern)
+### Test Pattern (AAA)
 
 ```python
-class TestForwardPass:
-    """Tests for CPM forward pass calculation."""
+class TestActivityCreate:
+    """Tests for activity creation."""
     
-    def test_simple_chain_calculates_correct_dates(self):
-        """A(5d) -> B(3d) -> C(2d) should give ES/EF: 0/5, 5/8, 8/10."""
+    async def test_create_activity_success(self, client: AsyncClient, auth_headers: dict):
+        """Should create activity with valid data."""
         # Arrange
-        activities = [
-            Activity(id=uuid4(), name="A", duration=5),
-            Activity(id=uuid4(), name="B", duration=3),
-            Activity(id=uuid4(), name="C", duration=2),
-        ]
-        dependencies = [
-            Dependency(predecessor_id=activities[0].id, 
-                      successor_id=activities[1].id, type=DependencyType.FS),
-            Dependency(predecessor_id=activities[1].id, 
-                      successor_id=activities[2].id, type=DependencyType.FS),
-        ]
-        engine = CPMEngine(activities, dependencies)
+        program_id = await create_test_program(client, auth_headers)
+        activity_data = {
+            "program_id": program_id,
+            "name": "Design Review",
+            "code": "DR-001",
+            "duration": 5,
+        }
         
         # Act
-        result = engine.forward_pass()
+        response = await client.post(
+            "/api/v1/activities",
+            headers=auth_headers,
+            json=activity_data,
+        )
         
         # Assert
-        assert result[activities[0].id].early_start == 0
-        assert result[activities[0].id].early_finish == 5
-        assert result[activities[1].id].early_start == 5
-        assert result[activities[1].id].early_finish == 8
-        assert result[activities[2].id].early_start == 8
-        assert result[activities[2].id].early_finish == 10
+        assert response.status_code == 201
+        data = response.json()
+        assert data["name"] == "Design Review"
+        assert data["code"] == "DR-001"
 ```
 
-### Pytest Markers
+### Coverage Targets
 
-```python
-# pyproject.toml
-[tool.pytest.ini_options]
-markers = [
-    "unit: Unit tests (no external dependencies)",
-    "integration: Integration tests (requires database)",
-    "slow: Tests that take > 1 second",
-    "cpm: CPM engine tests",
-    "evms: EVMS calculation tests",
-]
-
-# Usage
-@pytest.mark.cpm
-@pytest.mark.unit
-def test_forward_pass_simple():
-    ...
-
-# Run specific markers
-# pytest -m "cpm and not slow"
-```
+| Week | Overall | New Code |
+|------|---------|----------|
+| 1    | 40%     | 80%      |
+| 2    | 60%     | 80%      |
+| 3    | 75%     | 80%      |
+| 4    | 80%     | 80%      |
 
 ---
 
 ## Verification Ladder
 
-Before marking any task complete, verify at each level:
+**Run ALL levels before every commit:**
 
-### Level 1: Syntax & Types
 ```bash
-ruff check src tests           # No linting errors
-mypy src --strict              # No type errors
+cd api
+
+# Level 1: Static Analysis
+ruff check src tests --fix
+ruff format src tests
+
+# Level 2: Type Checking  
+mypy src --ignore-missing-imports
+
+# Level 3: Unit Tests
+pytest tests/unit -v
+
+# Level 4: Integration Tests
+pytest tests/integration -v
+
+# Level 5: Coverage
+pytest --cov=src --cov-report=term-missing --cov-fail-under=60
+
+# Level 6: Manual Verification (API testing)
+# curl or httpie commands as needed
 ```
-
-### Level 2: Unit Tests
-```bash
-pytest tests/unit -v           # All unit tests pass
-pytest --cov=src               # Coverage meets targets
-```
-
-### Level 3: Integration Tests
-```bash
-pytest tests/integration -v    # All integration tests pass
-```
-
-### Level 4: Manual Verification
-- [ ] Feature works as expected in browser/API client
-- [ ] Edge cases handled (empty inputs, invalid data)
-- [ ] Error messages are clear and helpful
-
-### Level 5: Code Quality
-- [ ] No hardcoded values (use constants/config)
-- [ ] No commented-out code
-- [ ] Docstrings on public functions
-- [ ] No TODO comments (create issues instead)
 
 ---
 
 ## Git Workflow
 
 ### Branch Naming
-```
-feature/DPM-123-add-gantt-chart
-bugfix/DPM-456-fix-cpm-calculation
-refactor/DPM-789-optimize-queries
-hotfix/DPM-999-security-patch
-```
-
-### Commit Message Format
-```
-type(scope): description
-
-[optional body]
-
-[optional footer]
-```
-
-Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`
-
-Examples:
-```
-feat(cpm): implement forward pass with all dependency types
-
-- Add support for FS, SS, FF, SF dependencies
-- Handle positive and negative lag
-- Detect circular dependencies
-
-Closes #123
-```
 
 ```
-fix(evms): correct SPI calculation when BCWS is zero
-
-Return None instead of raising ZeroDivisionError.
-Add unit test for edge case.
-
-Fixes #456
+feature/activity-crud       # New features
+bugfix/cpm-float-calc       # Bug fixes
+hotfix/model-alignment      # Urgent fixes
+refactor/repository-pattern # Code improvements
 ```
 
----
+### Commit Messages (Conventional Commits)
 
-## PR Template
+```bash
+# Format: type(scope): description
+git commit -m "feat(activities): implement activity CRUD with authentication"
+git commit -m "fix(cpm): correct backward pass float calculation"
+git commit -m "test(dependencies): add cycle detection tests"
+git commit -m "refactor(repos): extract base repository pattern"
+git commit -m "docs(api): add endpoint documentation"
 
-When creating PRs, use this template (saved as `.github/PULL_REQUEST_TEMPLATE.md`):
+# Types: feat, fix, test, refactor, docs, chore, perf
+# Scopes: activities, dependencies, cpm, evms, auth, api, models, schemas, frontend
+```
 
-```markdown
-## Description
-<!-- Brief description of changes and why they're needed -->
+### Workflow
 
-## Type of Change
-- [ ] 🐛 Bug fix (non-breaking change fixing an issue)
-- [ ] ✨ New feature (non-breaking change adding functionality)
-- [ ] 💥 Breaking change (fix or feature causing existing functionality to change)
-- [ ] 📝 Documentation update
-- [ ] ♻️ Refactoring (no functional changes)
-- [ ] 🧪 Test update
+```bash
+# 1. Create branch from main
+git checkout main
+git pull
+git checkout -b feature/new-feature
 
-## Related Issues
-<!-- Link to related issues: Fixes #123, Relates to #456 -->
+# 2. Make changes with atomic commits
+git add .
+git commit -m "feat(scope): description"
 
-## Changes Made
-<!-- List the specific changes made -->
-- 
-- 
+# 3. Push and create PR
+git push -u origin feature/new-feature
+# Create PR via GitHub
 
-## Testing
-<!-- How was this tested? -->
-- [ ] Unit tests added/updated
-- [ ] Integration tests added/updated
-- [ ] Manual testing completed
-
-## Verification Checklist
-- [ ] `ruff check` passes
-- [ ] `mypy` passes
-- [ ] All tests pass
-- [ ] Coverage meets targets
-- [ ] Documentation updated (if needed)
-- [ ] No hardcoded values
-- [ ] Error handling is appropriate
-
-## Screenshots (if applicable)
-<!-- Add screenshots for UI changes -->
-
-## Notes for Reviewers
-<!-- Any specific areas to focus on? -->
+# 4. After merge, clean up
+git checkout main
+git pull
+git branch -d feature/new-feature
 ```
 
 ---
 
 ## Domain-Specific Rules
 
-### CPM Engine
+### CPM (Critical Path Method)
 
 ```python
-# All CPM calculations must:
-# 1. Use NetworkX for graph operations
-# 2. Handle all 4 dependency types (FS, SS, FF, SF)
-# 3. Support positive and negative lag
-# 4. Detect cycles before calculation
-# 5. Complete in <500ms for 1000 activities
+# Dependency Types
+FS = "Finish-to-Start"   # Most common: B starts after A finishes
+FF = "Finish-to-Finish"  # B finishes when A finishes
+SS = "Start-to-Start"    # B starts when A starts
+SF = "Start-to-Finish"   # Rare: B finishes when A starts
 
-from enum import Enum
+# Forward Pass: Calculate Early Start (ES) and Early Finish (EF)
+ES = max(EF of all predecessors + lag)
+EF = ES + duration
 
-class DependencyType(str, Enum):
-    FS = "FS"  # Finish-to-Start (most common)
-    SS = "SS"  # Start-to-Start
-    FF = "FF"  # Finish-to-Finish
-    SF = "SF"  # Start-to-Finish (rare)
+# Backward Pass: Calculate Late Start (LS) and Late Finish (LF)
+LF = min(LS of all successors - lag)
+LS = LF - duration
 
-# Dependency formulas:
-# FS: successor.ES = predecessor.EF + lag
-# SS: successor.ES = predecessor.ES + lag
-# FF: successor.EF = predecessor.EF + lag
-# SF: successor.EF = predecessor.ES + lag
+# Float
+Total Float = LS - ES = LF - EF  # Delay without affecting project end
+Free Float = min(ES of successors) - EF  # Delay without affecting successors
+Critical Path = activities where Total Float = 0
 ```
 
-### EVMS Calculations
+### EVMS (Earned Value Management)
 
 ```python
-# All EVMS metrics must:
-# 1. Use Decimal for financial calculations (not float)
-# 2. Handle division by zero gracefully (return None)
-# 3. Round to 2 decimal places for display
-# 4. Support all EV methods: 0/100, 50/50, % complete, milestone
+from decimal import Decimal
 
-from decimal import Decimal, ROUND_HALF_UP
+# Core Metrics (all Decimal, never float)
+BCWS = budgeted_cost                           # Planned Value (PV)
+BCWP = budgeted_cost * (percent_complete/100)  # Earned Value (EV)
+ACWP = actual_cost                             # Actual Cost (AC)
 
-def calculate_spi(bcwp: Decimal, bcws: Decimal) -> Decimal | None:
-    """Schedule Performance Index = BCWP / BCWS."""
-    if bcws == 0:
-        return None
-    return (bcwp / bcws).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+# Variances
+CV = BCWP - ACWP   # Cost Variance (negative = over budget)
+SV = BCWP - BCWS   # Schedule Variance (negative = behind schedule)
+
+# Performance Indices
+CPI = BCWP / ACWP  # Cost Performance Index (< 1.0 = over budget)
+SPI = BCWP / BCWS  # Schedule Performance Index (< 1.0 = behind schedule)
+
+# Estimates at Completion
+EAC = BAC / CPI              # Estimate at Completion
+ETC = EAC - ACWP             # Estimate to Complete
+VAC = BAC - EAC              # Variance at Completion
+TCPI = (BAC - BCWP) / (BAC - ACWP)  # To-Complete Performance Index
 ```
 
-### WBS Hierarchy
+### WBS (Work Breakdown Structure)
 
 ```python
-# WBS uses PostgreSQL ltree for efficient hierarchy queries
-# Path format: "1.2.3.4" representing WBS code hierarchy
+# PostgreSQL ltree paths
+"1"         # Level 1: Program
+"1.1"       # Level 2: Phase
+"1.1.1"     # Level 3: Work Package
+"1.1.1.1"   # Level 4: Task
 
-# Efficient queries using ltree:
-# - Get all descendants: WHERE path <@ '1.2'
-# - Get all ancestors: WHERE '1.2.3.4' <@ path
-# - Get direct children: WHERE path ~ '1.2.*{1}'
+# Query descendants
+SELECT * FROM wbs WHERE path <@ '1.1';  # All under 1.1
+
+# Query ancestors
+SELECT * FROM wbs WHERE '1.1.1' <@ path;  # Parents of 1.1.1
 ```
 
 ---
 
 ## Security Guidelines
 
-### Never Commit
-- API keys, passwords, secrets
-- .env files with real credentials
-- Database dumps with real data
-- Private keys or certificates
-
-### Input Validation
-- Validate all user input at API boundary
-- Use Pydantic models for automatic validation
-- Sanitize file uploads (MS Project XML)
-- Escape output to prevent XSS
-
-### Authentication
-- JWT tokens expire in 15 minutes
-- Refresh tokens expire in 7 days
-- Passwords hashed with bcrypt (cost factor 12)
-- Rate limit auth endpoints
+1. **Authentication**: JWT tokens with bcrypt password hashing
+2. **Authorization**: Check `program.owner_id == current_user.id` or `is_admin`
+3. **Input Validation**: Pydantic schemas validate all input
+4. **SQL Injection**: Use SQLAlchemy ORM, never raw SQL with user input
+5. **Secrets**: Never commit `.env`, use environment variables
+6. **CORS**: Configure allowed origins in production
 
 ---
 
-## When Stuck
+## Common Issues & Solutions
 
-1. **Build errors**: Check `docker-compose logs` for service issues
-2. **Type errors**: Run `mypy src` and fix one file at a time
-3. **Test failures**: Run single test with `-v` flag for details
-4. **Database issues**: Check migrations with `alembic current`
-5. **Import errors**: Verify virtual environment is activated
-
-### Common Issues
+### Docker Issues
 
 ```bash
-# ModuleNotFoundError
-source venv/bin/activate  # Forgot to activate venv
+# Port 5432 in use
+docker-compose down
+# Or: Change port in docker-compose.yml
 
-# Database connection refused
-docker-compose up -d      # Start containers first
+# Database won't start (leftover volume)
+docker-compose down -v  # Removes volumes
+docker-compose up -d
 
-# Alembic "Target database is not up to date"
-alembic upgrade head      # Apply pending migrations
+# Check container logs
+docker-compose logs api
+docker-compose logs postgres
+```
 
-# Port already in use
-lsof -i :8000            # Find process using port
-kill -9 <PID>            # Kill it
+### Database Issues
+
+```bash
+# Migration conflicts
+alembic downgrade base
+alembic upgrade head
+
+# Check current revision
+alembic current
+
+# Generate new migration
+alembic revision --autogenerate -m "description"
+```
+
+### Test Issues
+
+```bash
+# Test database connection issues
+docker exec -it defense-pm-tool-postgres psql -U dev_user -d defense_pm_dev
+
+# Run single test
+pytest tests/unit/test_cpm.py::TestCPMEngine::test_forward_pass -v
+
+# Show print output
+pytest -v -s
 ```
 
 ---
 
-## File References
+## Current Development Status
 
-For detailed documentation, see:
-- `@docs/architecture.md` - System architecture and design decisions
-- `@docs/api.md` - API endpoint documentation
-- `@docs/cpm-algorithm.md` - CPM implementation details
-- `@docs/evms-formulas.md` - EVMS calculation specifications
-- `@README.md` - Project overview and setup instructions
+### ✅ Completed (Week 1)
+- [x] Project structure and Docker setup
+- [x] PostgreSQL with ltree extension
+- [x] SQLAlchemy 2.0 async models (User, Program, WBS, Activity, Dependency)
+- [x] Pydantic v2 schemas with validation
+- [x] Repository pattern with BaseRepository
+- [x] CPM engine with all 4 dependency types
+- [x] EVMS calculator with Decimal precision
+- [x] JWT authentication utilities
+- [x] Initial Alembic migration
+- [x] Unit tests for CPM and EVMS
+
+### 🔶 In Progress (Week 2)
+- [ ] Fix model-schema alignment (Hotfix 2.0.1 - PRIORITY)
+- [ ] Activity CRUD with authentication
+- [ ] Dependency CRUD with cycle detection
+- [ ] Schedule calculation endpoint
+- [ ] Basic Gantt visualization
+
+### ⏳ Upcoming (Weeks 3-4)
+- [ ] WBS CRUD and tree visualization
+- [ ] EVMS period tracking and dashboard
+- [ ] MS Project XML import
+- [ ] Performance optimization
+- [ ] End-to-end tests
+- [ ] Production deployment prep
 
 ---
 
-*Last updated: January 2026*
-*Maintained by: Defense PM Tool Development Team*
+## Known Issues to Address
+
+### 🔴 Critical (Fix First in Week 2)
+
+1. **Activity Model Missing Fields**
+   - Missing: `program_id` (FK), `code` field
+   - Impact: Repository queries will fail
+   - Fix: Prompt 2.0.1
+
+2. **Dependency Model Field Mismatch**
+   - Model uses `lag_days`, CPM engine expects `lag`
+   - Impact: CPM calculations broken
+   - Fix: Prompt 2.0.1
+
+### 🟡 Medium Priority
+
+3. **Test Coverage Low** (~40%)
+   - Target: 60% by end of Week 2
+   - Add integration tests for endpoints
+
+4. **Auth Endpoints Need Verification**
+   - Verify login/register flow works E2E
+
+---
+
+## Important Notes for Claude Code
+
+1. **Always run verification ladder** before suggesting code is complete
+2. **TDD approach**: Write tests first, then implementation
+3. **Decimal for money**: Never use float for financial calculations
+4. **Async everywhere**: All database operations must be async
+5. **Type hints required**: All functions need parameter and return types
+6. **Check authorization**: Every endpoint must verify user access
+7. **Soft deletes**: Use `deleted_at` timestamp, not hard deletes
+8. **Atomic commits**: One logical change per commit
+9. **Start with Hotfix 2.0.1**: Model alignment must be fixed before other Week 2 work
+
+---
+
+*Last Updated: January 2026*
+*Week 2 of 4-week development cycle*
