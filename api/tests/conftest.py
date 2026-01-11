@@ -98,6 +98,7 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
 
 # Auth helper fixtures
 
+
 @pytest_asyncio.fixture
 async def auth_headers(client: AsyncClient, sample_user_data: dict) -> dict[str, str]:
     """
@@ -156,6 +157,7 @@ async def admin_auth_headers(client: AsyncClient) -> dict[str, str]:
 
 # Model fixtures
 
+
 @pytest.fixture
 def sample_program_data() -> dict:
     """Sample program data for testing."""
@@ -174,6 +176,7 @@ def sample_program_data() -> dict:
 def sample_program() -> Program:
     """Create a sample program instance."""
     from datetime import date
+
     return Program(
         id=uuid4(),
         name="Test Program",
@@ -240,6 +243,7 @@ def sample_dependencies(sample_activities: list[Activity]) -> list[Dependency]:
 
 
 # User fixtures for authentication testing
+
 
 @pytest.fixture
 def sample_user_data() -> dict:

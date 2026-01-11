@@ -515,9 +515,7 @@ class TestWeek1DatabaseIntegrity:
         )
 
         # Query database to verify relationship
-        result = await db_session.execute(
-            select(Program).where(Program.owner_id == UUID(user_id))
-        )
+        result = await db_session.execute(select(Program).where(Program.owner_id == UUID(user_id)))
         programs = result.scalars().all()
         assert len(programs) == 1
         assert programs[0].name == "DB Relationship Test"

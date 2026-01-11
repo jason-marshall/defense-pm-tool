@@ -24,7 +24,10 @@
       "Bash(DATABASE_URL=\"postgresql://test:test@localhost:5432/test\" REDIS_URL=\"redis://localhost:6379/1\" SECRET_KEY=\"test-secret-key-for-testing-purposes-only-32chars\" python -m pytest:*)",
       "Bash(python -m pip install:*)",
       "Bash(python -m ruff check:*)",
-      "Bash(DATABASE_URL=\"postgresql://test:test@localhost:5432/test\" REDIS_URL=\"redis://localhost:6379/1\" SECRET_KEY=\"test-secret-key-for-testing-purposes-only-32chars\" python -m mypy:*)"
+      "Bash(DATABASE_URL=\"postgresql://test:test@localhost:5432/test\" REDIS_URL=\"redis://localhost:6379/1\" SECRET_KEY=\"test-secret-key-for-testing-purposes-only-32chars\" python -m mypy:*)",
+      "Bash(ruff check:*)",
+      "Bash(ruff format:*)",
+      "Bash(mypy:*)"
     ]
   }
 }

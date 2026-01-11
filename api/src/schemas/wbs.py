@@ -192,7 +192,7 @@ class WBSResponse(BaseModel):
                 "created_at": "2026-01-08T12:00:00Z",
                 "updated_at": "2026-01-08T12:00:00Z",
             }
-        }
+        },
     )
 
     id: UUID = Field(
@@ -227,6 +227,15 @@ class WBSResponse(BaseModel):
         description="ltree path for hierarchy queries",
         examples=["1_0", "1_0.1", "1_0.1.2"],
     )
+
+    @field_validator("path", mode="before")
+    @classmethod
+    def convert_path_to_string(cls, v: str | float | int | None) -> str:
+        """Convert path to string (handles SQLite returning numeric values)."""
+        if v is None:
+            return ""
+        return str(v)
+
     level: int = Field(
         ...,
         ge=1,
@@ -268,7 +277,7 @@ class WBSBriefResponse(BaseModel):
                 "name": "Program Management",
                 "wbs_code": "1.0",
             }
-        }
+        },
     )
 
     id: UUID = Field(
@@ -331,7 +340,7 @@ class WBSTreeResponse(BaseModel):
                     }
                 ],
             }
-        }
+        },
     )
 
     id: UUID = Field(

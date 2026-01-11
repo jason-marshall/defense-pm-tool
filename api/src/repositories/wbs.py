@@ -58,9 +58,7 @@ class WBSElementRepository(BaseRepository[WBSElement]):
     async def get_with_children(self, id: UUID) -> WBSElement | None:
         """Get a WBS element with its children loaded."""
         result = await self.session.execute(
-            select(WBSElement)
-            .where(WBSElement.id == id)
-            .options(selectinload(WBSElement.children))
+            select(WBSElement).where(WBSElement.id == id).options(selectinload(WBSElement.children))
         )
         return result.scalar_one_or_none()
 

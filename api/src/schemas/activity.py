@@ -78,11 +78,11 @@ class ActivityCreate(ActivityBase):
         description="ID of the parent WBS element",
         examples=["660e8400-e29b-41d4-a716-446655440001"],
     )
-    code: str = Field(
-        ...,
+    code: str | None = Field(
+        default=None,
         min_length=1,
         max_length=50,
-        description="Unique activity code within program",
+        description="Unique activity code within program (auto-generated if not provided)",
         examples=["A001", "TASK-100"],
     )
     duration: int = Field(
@@ -394,7 +394,7 @@ class ActivityResponse(BaseModel):
                 "created_at": "2026-01-08T12:00:00Z",
                 "updated_at": "2026-01-08T12:00:00Z",
             }
-        }
+        },
     )
 
     id: UUID = Field(
@@ -557,7 +557,7 @@ class ActivityBriefResponse(BaseModel):
                 "is_milestone": False,
                 "is_critical": False,
             }
-        }
+        },
     )
 
     id: UUID = Field(

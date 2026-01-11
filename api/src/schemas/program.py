@@ -213,7 +213,7 @@ class ProgramResponse(BaseModel):
                 "created_at": "2026-01-08T12:00:00Z",
                 "updated_at": "2026-01-08T12:00:00Z",
             }
-        }
+        },
     )
 
     id: UUID = Field(
@@ -300,7 +300,7 @@ class ProgramBriefResponse(BaseModel):
                 "name": "F-35 Lightning II Integration",
                 "status": "active",
             }
-        }
+        },
     )
 
     id: UUID = Field(

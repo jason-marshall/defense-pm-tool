@@ -47,14 +47,18 @@ class LtreeType(UserDefinedType):
 
     def bind_processor(self, dialect):
         """Process value before binding to database."""
+
         def process(value):
             return value
+
         return process
 
     def result_processor(self, dialect, coltype):
         """Process value after retrieving from database."""
+
         def process(value):
             return value
+
         return process
 
 

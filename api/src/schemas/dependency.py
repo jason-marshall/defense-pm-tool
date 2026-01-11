@@ -7,6 +7,7 @@ This module provides schemas for:
 """
 
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -14,6 +15,19 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from src.models.enums import DependencyType
 from src.schemas.activity import ActivityBriefResponse
 from src.schemas.common import PaginatedResponse
+
+
+def safe_get_relationship(obj: Any, attr: str) -> Any:
+    """
+    Safely get a relationship attribute, returning None if lazy loading fails.
+
+    This handles the MissingGreenlet error that occurs when trying to access
+    a lazy-loaded relationship in async context.
+    """
+    try:
+        return getattr(obj, attr, None)
+    except Exception:
+        return None
 
 
 class DependencyBase(BaseModel):
@@ -138,7 +152,7 @@ class DependencyResponse(BaseModel):
                 "created_at": "2026-01-08T12:00:00Z",
                 "updated_at": "2026-01-08T12:00:00Z",
             }
-        }
+        },
     )
 
     id: UUID = Field(
@@ -181,6 +195,32 @@ class DependencyResponse(BaseModel):
         ...,
         description="Last update timestamp",
     )
+
+    @classmethod
+    def from_orm_safe(cls, obj: Any) -> "DependencyResponse":
+        """
+        Create DependencyResponse from ORM object, safely handling lazy-loaded relationships.
+
+        This avoids the MissingGreenlet error in async context.
+        """
+        predecessor_data = safe_get_relationship(obj, "predecessor")
+        successor_data = safe_get_relationship(obj, "successor")
+
+        return cls(
+            id=obj.id,
+            predecessor_id=obj.predecessor_id,
+            successor_id=obj.successor_id,
+            dependency_type=obj.dependency_type,
+            lag=obj.lag,
+            predecessor=ActivityBriefResponse.model_validate(predecessor_data)
+            if predecessor_data
+            else None,
+            successor=ActivityBriefResponse.model_validate(successor_data)
+            if successor_data
+            else None,
+            created_at=obj.created_at,
+            updated_at=obj.updated_at,
+        )
 
     @property
     def has_lag(self) -> bool:
@@ -231,7 +271,7 @@ class DependencyBriefResponse(BaseModel):
                 "dependency_type": "FS",
                 "lag": 0,
             }
-        }
+        },
     )
 
     id: UUID = Field(

@@ -19,19 +19,13 @@ class ProgramRepository(BaseRepository[Program]):
     async def get_by_code(self, code: str) -> Program | None:
         """Get a program by its unique code."""
         result = await self.session.execute(
-            select(Program)
-            .where(Program.code == code)
-            .where(Program.deleted_at.is_(None))
+            select(Program).where(Program.code == code).where(Program.deleted_at.is_(None))
         )
         return result.scalar_one_or_none()
 
     async def code_exists(self, code: str, exclude_id: UUID | None = None) -> bool:
         """Check if a program code already exists."""
-        query = (
-            select(Program)
-            .where(Program.code == code)
-            .where(Program.deleted_at.is_(None))
-        )
+        query = select(Program).where(Program.code == code).where(Program.deleted_at.is_(None))
         if exclude_id:
             query = query.where(Program.id != exclude_id)
         result = await self.session.execute(query)
@@ -56,9 +50,7 @@ class ProgramRepository(BaseRepository[Program]):
             Tuple of (list of programs, total count)
         """
         base_query = (
-            select(Program)
-            .where(Program.owner_id == owner_id)
-            .where(Program.deleted_at.is_(None))
+            select(Program).where(Program.owner_id == owner_id).where(Program.deleted_at.is_(None))
         )
 
         # Get total count

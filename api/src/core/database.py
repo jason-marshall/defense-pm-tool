@@ -31,9 +31,7 @@ def get_engine() -> AsyncEngine:
         RuntimeError: If engine has not been initialized.
     """
     if _engine is None:
-        raise RuntimeError(
-            "Database engine not initialized. Call init_engine() first."
-        )
+        raise RuntimeError("Database engine not initialized. Call init_engine() first.")
     return _engine
 
 
@@ -48,9 +46,7 @@ def get_session_maker() -> async_sessionmaker[AsyncSession]:
         RuntimeError: If session maker has not been initialized.
     """
     if _async_session_maker is None:
-        raise RuntimeError(
-            "Session maker not initialized. Call init_engine() first."
-        )
+        raise RuntimeError("Session maker not initialized. Call init_engine() first.")
     return _async_session_maker
 
 

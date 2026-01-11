@@ -22,9 +22,7 @@ class TestAuthRegistration:
         assert "password" not in data
         assert "hashed_password" not in data
 
-    async def test_register_duplicate_email(
-        self, client: AsyncClient, sample_user_data: dict
-    ):
+    async def test_register_duplicate_email(self, client: AsyncClient, sample_user_data: dict):
         """Should return 409 for duplicate email registration."""
         # Register first user
         await client.post("/api/v1/auth/register", json=sample_user_data)
@@ -80,9 +78,7 @@ class TestAuthLogin:
         assert data["token_type"] == "bearer"
         assert data["expires_in"] > 0
 
-    async def test_login_wrong_password(
-        self, client: AsyncClient, sample_user_data: dict
-    ):
+    async def test_login_wrong_password(self, client: AsyncClient, sample_user_data: dict):
         """Should return 401 for wrong password."""
         # Register user first
         await client.post("/api/v1/auth/register", json=sample_user_data)
@@ -111,9 +107,7 @@ class TestAuthLogin:
 class TestAuthToken:
     """Integration tests for token validation and refresh."""
 
-    async def test_access_token_valid(
-        self, client: AsyncClient, sample_user_data: dict
-    ):
+    async def test_access_token_valid(self, client: AsyncClient, sample_user_data: dict):
         """Should accept valid access token for protected endpoint."""
         # Register and login
         await client.post("/api/v1/auth/register", json=sample_user_data)
@@ -151,9 +145,7 @@ class TestAuthToken:
 
         assert response.status_code == 401
 
-    async def test_refresh_token_success(
-        self, client: AsyncClient, sample_user_data: dict
-    ):
+    async def test_refresh_token_success(self, client: AsyncClient, sample_user_data: dict):
         """Should successfully refresh tokens."""
         # Register and login
         await client.post("/api/v1/auth/register", json=sample_user_data)
@@ -191,9 +183,7 @@ class TestAuthToken:
 class TestAuthFlow:
     """End-to-end authentication flow tests."""
 
-    async def test_complete_auth_flow(
-        self, client: AsyncClient, sample_user_data: dict
-    ):
+    async def test_complete_auth_flow(self, client: AsyncClient, sample_user_data: dict):
         """
         Complete authentication flow:
         1. Register new user

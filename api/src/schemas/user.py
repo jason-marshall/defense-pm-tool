@@ -206,7 +206,7 @@ class UserResponse(BaseModel):
                 "created_at": "2026-01-08T12:00:00Z",
                 "updated_at": "2026-01-08T12:00:00Z",
             }
-        }
+        },
     )
 
     id: UUID = Field(
@@ -262,7 +262,7 @@ class UserBriefResponse(BaseModel):
                 "email": "john.doe@example.com",
                 "full_name": "John Doe",
             }
-        }
+        },
     )
 
     id: UUID = Field(

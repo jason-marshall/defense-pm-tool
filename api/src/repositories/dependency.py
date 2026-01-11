@@ -5,6 +5,7 @@ from uuid import UUID
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.models.activity import Activity
 from src.models.dependency import Dependency
 from src.repositories.base import BaseRepository
 
@@ -69,3 +70,28 @@ class DependencyRepository(BaseRepository[Dependency]):
             )
         )
         return result.scalar_one_or_none() is not None
+
+    async def get_by_program(self, program_id: UUID) -> list[Dependency]:
+        """
+        Get all dependencies for activities in a program.
+
+        Args:
+            program_id: ID of the program
+
+        Returns:
+            List of dependencies where predecessor activity belongs to the program
+        """
+        # Get all activity IDs for the program
+        activity_result = await self.session.execute(
+            select(Activity.id).where(Activity.program_id == program_id)
+        )
+        activity_ids = [row[0] for row in activity_result.all()]
+
+        if not activity_ids:
+            return []
+
+        # Get dependencies where predecessor is in the program
+        result = await self.session.execute(
+            select(Dependency).where(Dependency.predecessor_id.in_(activity_ids))
+        )
+        return list(result.scalars().all())

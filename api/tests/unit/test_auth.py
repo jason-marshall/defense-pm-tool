@@ -105,9 +105,7 @@ class TestAccessToken:
         payload = jwt.decode(token, options={"verify_signature": False})
 
         # Check expiration is approximately correct (within 1 minute)
-        expected_exp = datetime.now(UTC) + timedelta(
-            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-        )
+        expected_exp = datetime.now(UTC) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         actual_exp = datetime.fromtimestamp(payload["exp"], tz=UTC)
         diff = abs((expected_exp - actual_exp).total_seconds())
         assert diff < 60  # Within 1 minute
@@ -137,9 +135,7 @@ class TestRefreshToken:
         payload = jwt.decode(token, options={"verify_signature": False})
 
         # Check expiration is approximately correct (within 1 hour)
-        expected_exp = datetime.now(UTC) + timedelta(
-            days=settings.REFRESH_TOKEN_EXPIRE_DAYS
-        )
+        expected_exp = datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
         actual_exp = datetime.fromtimestamp(payload["exp"], tz=UTC)
         diff = abs((expected_exp - actual_exp).total_seconds())
         assert diff < 3600  # Within 1 hour

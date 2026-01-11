@@ -87,7 +87,7 @@ class Settings(BaseSettings):
             if self.ENVIRONMENT == "production":
                 raise ValueError(
                     "SECRET_KEY must be explicitly set in production environment. "
-                    "Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(32))\""
+                    'Generate one with: python -c "import secrets; print(secrets.token_urlsafe(32))"'
                 )
             # Generate a random key for development/staging
             object.__setattr__(self, "SECRET_KEY", generate_secret_key())
@@ -99,9 +99,7 @@ class Settings(BaseSettings):
     def validate_database_pool(self) -> "Settings":
         """Validate database pool configuration."""
         if self.DATABASE_POOL_MIN_SIZE > self.DATABASE_POOL_MAX_SIZE:
-            raise ValueError(
-                "DATABASE_POOL_MIN_SIZE cannot be greater than DATABASE_POOL_MAX_SIZE"
-            )
+            raise ValueError("DATABASE_POOL_MIN_SIZE cannot be greater than DATABASE_POOL_MAX_SIZE")
         return self
 
     @property

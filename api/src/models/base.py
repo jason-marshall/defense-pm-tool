@@ -144,9 +144,7 @@ class Base(DeclarativeBase):
                     related = getattr(self, rel.key)
                     if related is not None:
                         if hasattr(related, "__iter__"):
-                            result[rel.key] = [
-                                item.to_dict(exclude=exclude) for item in related
-                            ]
+                            result[rel.key] = [item.to_dict(exclude=exclude) for item in related]
                         else:
                             result[rel.key] = related.to_dict(exclude=exclude)
 
