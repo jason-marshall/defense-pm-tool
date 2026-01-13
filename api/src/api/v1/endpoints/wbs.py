@@ -143,5 +143,5 @@ async def delete_wbs_element(
     if not element:
         raise NotFoundError(f"WBS element {element_id} not found", "WBS_NOT_FOUND")
 
-    await repo.delete(element)
+    await repo.delete(element.id)
     await db.commit()

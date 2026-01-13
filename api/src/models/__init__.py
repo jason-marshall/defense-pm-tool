@@ -22,6 +22,7 @@ Enums (from src.models.enums):
 from src.models.activity import Activity
 from src.models.base import Base, SoftDeleteMixin
 from src.models.dependency import Dependency
+from src.models.evms_period import EVMSPeriod, EVMSPeriodData, PeriodStatus
 
 # Import enums from centralized location
 from src.models.enums import (
@@ -47,6 +48,7 @@ __all__ = [
     "ConstraintType",
     "DependencyType",
     "ActivityStatus",
+    "PeriodStatus",
     # Models
     "User",
     "Program",
@@ -54,4 +56,6 @@ __all__ = [
     "LtreeType",
     "Activity",
     "Dependency",
+    "EVMSPeriod",
+    "EVMSPeriodData",
 ]

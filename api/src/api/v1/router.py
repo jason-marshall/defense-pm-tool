@@ -2,7 +2,16 @@
 
 from fastapi import APIRouter
 
-from src.api.v1.endpoints import activities, auth, dependencies, programs, schedule, wbs
+from src.api.v1.endpoints import (
+    activities,
+    auth,
+    dependencies,
+    evms,
+    programs,
+    reports,
+    schedule,
+    wbs,
+)
 
 api_router = APIRouter()
 
@@ -41,4 +50,16 @@ api_router.include_router(
     schedule.router,
     prefix="/schedule",
     tags=["Schedule"],
+)
+
+api_router.include_router(
+    evms.router,
+    prefix="/evms",
+    tags=["EVMS"],
+)
+
+api_router.include_router(
+    reports.router,
+    prefix="/reports",
+    tags=["Reports"],
 )

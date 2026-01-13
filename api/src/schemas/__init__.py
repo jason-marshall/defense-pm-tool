@@ -78,6 +78,19 @@ from src.schemas.wbs import (
     WBSWithChildrenResponse,
 )
 
+# EVMS Period schemas
+from src.schemas.evms_period import (
+    EVMSPeriodCreate,
+    EVMSPeriodDataCreate,
+    EVMSPeriodDataResponse,
+    EVMSPeriodDataUpdate,
+    EVMSPeriodListResponse,
+    EVMSPeriodResponse,
+    EVMSPeriodUpdate,
+    EVMSPeriodWithDataResponse,
+    EVMSSummaryResponse,
+)
+
 __all__ = [
     # Common
     "PaginatedResponse",
@@ -126,4 +139,14 @@ __all__ = [
     "DependencyBriefResponse",
     "BulkDependencyCreate",
     "DependencyValidationResult",
+    # EVMS Period
+    "EVMSPeriodCreate",
+    "EVMSPeriodUpdate",
+    "EVMSPeriodResponse",
+    "EVMSPeriodWithDataResponse",
+    "EVMSPeriodListResponse",
+    "EVMSPeriodDataCreate",
+    "EVMSPeriodDataUpdate",
+    "EVMSPeriodDataResponse",
+    "EVMSSummaryResponse",
 ]
