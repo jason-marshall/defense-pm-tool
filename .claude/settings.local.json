@@ -35,7 +35,9 @@
       "Bash(npm install)",
       "Bash(git checkout:*)",
       "Bash(git add:*)",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\ntest\\(perf\\): add performance benchmarks and Week 3 verification\n\n- Add performance benchmark tests for CPM engine \\(100-5000 activities\\)\n- Add benchmark runner script \\(api/scripts/run_benchmarks.py\\)\n- Establish performance baselines:\n  - CPM 1000 activities: 11.88ms \\(target <500ms\\)\n  - CPM 5000 activities: 83.65ms \\(target <2000ms\\)\n  - EVMS 1000 calculations: 1.52ms \\(target <100ms\\)\n- Fix test fixtures and mock objects for report generator\n- Update CLAUDE.md with Week 3 completion status\n- 486 tests passing at 75% coverage\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git commit -m \"$\\(cat <<''EOF''\ntest\\(perf\\): add performance benchmarks and Week 3 verification\n\n- Add performance benchmark tests for CPM engine \\(100-5000 activities\\)\n- Add benchmark runner script \\(api/scripts/run_benchmarks.py\\)\n- Establish performance baselines:\n  - CPM 1000 activities: 11.88ms \\(target <500ms\\)\n  - CPM 5000 activities: 83.65ms \\(target <2000ms\\)\n  - EVMS 1000 calculations: 1.52ms \\(target <100ms\\)\n- Fix test fixtures and mock objects for report generator\n- Update CLAUDE.md with Week 3 completion status\n- 486 tests passing at 75% coverage\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)"
     ]
   }
 }
