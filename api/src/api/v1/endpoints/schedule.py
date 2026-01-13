@@ -1,9 +1,11 @@
 """Schedule and CPM calculation endpoints."""
 
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
+from src.core.cache import CacheKeys, cache_manager, compute_activities_hash
 from src.core.deps import CurrentUser, DbSession
 from src.core.exceptions import AuthorizationError, NotFoundError
 from src.repositories.activity import ActivityRepository
@@ -24,6 +26,9 @@ async def calculate_schedule(
     program_id: UUID,
     db: DbSession,
     current_user: CurrentUser,
+    force_recalculate: Annotated[
+        bool, Query(description="Force recalculation ignoring cache")
+    ] = False,
 ) -> list[ScheduleResult]:
     """
     Calculate the CPM schedule for a program.
@@ -34,6 +39,7 @@ async def calculate_schedule(
     - Total Float and Free Float
     - Critical Path
 
+    Results are cached based on activity/dependency hash.
     Returns schedule results for all activities.
     """
     # Verify program exists and user has access
@@ -59,6 +65,33 @@ async def calculate_schedule(
     dep_repo = DependencyRepository(db)
     all_dependencies = await dep_repo.get_by_program(program_id)
 
+    # Compute hash for cache key
+    activities_data = [
+        {
+            "id": str(a.id),
+            "duration": a.duration,
+        }
+        for a in activities
+    ]
+    deps_data = [
+        {
+            "pred": str(d.predecessor_id),
+            "succ": str(d.successor_id),
+            "type": d.dependency_type,
+            "lag": d.lag,
+        }
+        for d in all_dependencies
+    ]
+    data_hash = compute_activities_hash(activities_data + deps_data)
+    cache_key = CacheKeys.cpm_key(str(program_id), data_hash)
+
+    # Try to get from cache (unless force_recalculate)
+    if not force_recalculate:
+        cached = await cache_manager.get(cache_key)
+        if cached:
+            # Return cached results (already in schema format)
+            return [ScheduleResult(**r) for r in cached]
+
     # Run CPM calculation
     engine = CPMEngine(activities, all_dependencies)
     results = engine.calculate()
@@ -73,8 +106,8 @@ async def calculate_schedule(
 
     await db.commit()
 
-    # Return results as schema objects
-    return [
+    # Convert results to schema objects
+    result_list = [
         ScheduleResult(
             activity_id=r.activity_id,
             early_start=r.early_start,
@@ -87,6 +120,15 @@ async def calculate_schedule(
         )
         for r in results.values()
     ]
+
+    # Cache the results
+    await cache_manager.set(
+        cache_key,
+        [r.model_dump() for r in result_list],
+        ttl=CacheKeys.CPM_TTL,
+    )
+
+    return result_list
 
 
 @router.get("/critical-path/{program_id}", response_model=CriticalPathResponse)

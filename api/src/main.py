@@ -10,8 +10,18 @@ from fastapi.responses import JSONResponse
 
 from src.api.v1.router import api_router
 from src.config import settings
+from src.core.cache import cache_manager, close_redis, init_redis
 from src.core.database import dispose_engine, init_engine
-from src.core.exceptions import DomainError
+from src.core.exceptions import (
+    AuthenticationError,
+    AuthorizationError,
+    CircularDependencyError,
+    ConflictError,
+    DomainError,
+    NotFoundError,
+    ScheduleCalculationError,
+    ValidationError,
+)
 
 # Configure structured logging
 structlog.configure(
@@ -53,9 +63,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await init_engine()
     logger.info("database_initialized")
 
-    # TODO: Initialize Redis connection pool
-    # redis_pool = await aioredis.from_url(str(settings.REDIS_URL))
-    # app.state.redis = redis_pool
+    # Initialize Redis connection
+    try:
+        redis_client = await init_redis()
+        cache_manager.redis = redis_client
+        app.state.redis = redis_client
+        logger.info("redis_initialized")
+    except Exception as e:
+        logger.warning("redis_init_failed", error=str(e))
+        cache_manager.disable()
 
     yield
 
@@ -66,8 +82,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await dispose_engine()
     logger.info("database_connections_closed")
 
-    # TODO: Close Redis connections
-    # await app.state.redis.close()
+    # Close Redis connections
+    if hasattr(app.state, "redis") and app.state.redis:
+        await close_redis(app.state.redis)
+        logger.info("redis_connections_closed")
 
 
 app = FastAPI(
@@ -93,16 +111,6 @@ app.add_middleware(
 @app.exception_handler(DomainError)
 async def domain_error_handler(request: Request, exc: DomainError) -> JSONResponse:
     """Handle domain-specific errors with consistent JSON responses."""
-    from src.core.exceptions import (
-        AuthenticationError,
-        AuthorizationError,
-        CircularDependencyError,
-        ConflictError,
-        NotFoundError,
-        ScheduleCalculationError,
-        ValidationError,
-    )
-
     status_map: dict[type[DomainError], int] = {
         ValidationError: 422,
         NotFoundError: 404,
@@ -135,6 +143,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
         "unhandled_exception",
         path=request.url.path,
         method=request.method,
+        error_type=type(exc).__name__,
     )
 
     return JSONResponse(

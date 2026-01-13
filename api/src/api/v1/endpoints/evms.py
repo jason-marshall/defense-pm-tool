@@ -7,6 +7,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query
 
+from src.core.cache import CacheKeys, cache_manager
 from src.core.deps import CurrentUser, DbSession
 from src.core.exceptions import (
     AuthorizationError,
@@ -317,6 +318,9 @@ async def add_period_data(
     await db.commit()
     await db.refresh(period_data)
 
+    # Invalidate EVMS cache for this program
+    await cache_manager.invalidate_evms(str(period.program_id))
+
     return EVMSPeriodDataResponse.model_validate(period_data)
 
 
@@ -407,6 +411,9 @@ async def update_period_data(
     await db.commit()
     await db.refresh(updated)
 
+    # Invalidate EVMS cache for this program
+    await cache_manager.invalidate_evms(str(period.program_id))
+
     return EVMSPeriodDataResponse.model_validate(updated)
 
 
@@ -416,8 +423,13 @@ async def get_evms_summary(
     db: DbSession,
     current_user: CurrentUser,
     as_of_date: Annotated[date | None, Query(description="As-of date for summary")] = None,
+    skip_cache: Annotated[bool, Query(description="Skip cache and fetch fresh data")] = False,
 ) -> EVMSSummaryResponse:
-    """Get current EVMS summary for a program."""
+    """
+    Get current EVMS summary for a program.
+
+    Summary data is cached for 5 minutes to improve performance.
+    """
     # Verify program exists and user has access
     program_repo = ProgramRepository(db)
     program = await program_repo.get_by_id(program_id)
@@ -430,6 +442,13 @@ async def get_evms_summary(
             "Not authorized to view EVMS summary for this program",
             "NOT_AUTHORIZED",
         )
+
+    # Try cache for current summary (no as_of_date filter)
+    cache_key = CacheKeys.evms_summary_key(str(program_id))
+    if not as_of_date and not skip_cache:
+        cached = await cache_manager.get(cache_key)
+        if cached:
+            return EVMSSummaryResponse(**cached)
 
     # Get the latest period (or period as of the given date)
     period_repo = EVMSPeriodRepository(db)
@@ -458,7 +477,7 @@ async def get_evms_summary(
 
     percent_complete = (bcwp / bac * 100).quantize(Decimal("0.01")) if bac > 0 else Decimal("0.00")
 
-    return EVMSSummaryResponse(
+    response = EVMSSummaryResponse(
         program_id=program_id,
         as_of_date=as_of_date or (period.period_end if period else date.today()),
         bac=bac,
@@ -475,3 +494,13 @@ async def get_evms_summary(
         tcpi=tcpi,
         percent_complete=percent_complete,
     )
+
+    # Cache current summary (not historical as_of_date queries)
+    if not as_of_date:
+        await cache_manager.set(
+            cache_key,
+            response.model_dump(mode="json"),
+            ttl=CacheKeys.EVMS_TTL,
+        )
+
+    return response

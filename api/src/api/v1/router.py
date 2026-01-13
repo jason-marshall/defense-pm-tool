@@ -7,6 +7,7 @@ from src.api.v1.endpoints import (
     auth,
     dependencies,
     evms,
+    import_export,
     programs,
     reports,
     schedule,
@@ -62,4 +63,10 @@ api_router.include_router(
     reports.router,
     prefix="/reports",
     tags=["Reports"],
+)
+
+api_router.include_router(
+    import_export.router,
+    prefix="/import",
+    tags=["Import/Export"],
 )

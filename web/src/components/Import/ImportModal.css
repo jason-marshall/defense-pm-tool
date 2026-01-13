@@ -1,0 +1,475 @@
+/* Import Modal Component Styles */
+
+.import-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.import-modal {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.import-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.import-modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.import-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  padding: 4px 8px;
+  line-height: 1;
+  border-radius: 4px;
+}
+
+.import-modal-close:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.import-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.import-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid #e0e0e0;
+  background: #fafafa;
+}
+
+/* Drop Zone */
+.import-dropzone {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 48px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fafafa;
+}
+
+.import-dropzone:hover {
+  border-color: #1976d2;
+  background: #e3f2fd;
+}
+
+.import-dropzone.dragover {
+  border-color: #1976d2;
+  background: #e3f2fd;
+  border-style: solid;
+}
+
+.import-dropzone.has-file {
+  border-color: #4caf50;
+  background: #e8f5e9;
+  border-style: solid;
+}
+
+.import-dropzone-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.import-dropzone h3 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.import-dropzone p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.import-dropzone-file {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.import-dropzone-file-icon {
+  font-size: 24px;
+}
+
+.import-dropzone-file-info {
+  text-align: left;
+}
+
+.import-dropzone-file-name {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.import-dropzone-file-size {
+  font-size: 12px;
+  color: #666;
+}
+
+.import-dropzone-remove {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 16px;
+}
+
+.import-dropzone-remove:hover {
+  color: #d32f2f;
+}
+
+/* Preview Section */
+.import-preview {
+  margin-top: 24px;
+}
+
+.import-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.import-preview-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.import-preview-badge {
+  padding: 4px 12px;
+  background: #e3f2fd;
+  color: #1565c0;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.import-preview-info {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.import-preview-info-item {
+  background: #f5f5f5;
+  padding: 12px 16px;
+  border-radius: 6px;
+}
+
+.import-preview-info-label {
+  font-size: 11px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.import-preview-info-value {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Tasks Table */
+.import-preview-tasks {
+  margin-top: 16px;
+}
+
+.import-preview-tasks h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+}
+
+.import-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.import-preview-table th,
+.import-preview-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.import-preview-table th {
+  background: #f5f5f5;
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #666;
+}
+
+.import-preview-table tr:last-child td {
+  border-bottom: none;
+}
+
+.import-preview-table tr:hover td {
+  background: #fafafa;
+}
+
+.import-milestone-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #fff3e0;
+  color: #e65100;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* Warnings */
+.import-warnings {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: #fff3e0;
+  border: 1px solid #ffcc80;
+  border-radius: 6px;
+}
+
+.import-warnings-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  color: #e65100;
+  margin-bottom: 8px;
+}
+
+.import-warnings-list {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  color: #795548;
+}
+
+.import-warnings-list li {
+  margin-bottom: 4px;
+}
+
+/* Progress */
+.import-progress {
+  margin-top: 24px;
+}
+
+.import-progress-text {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.import-progress-bar {
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.import-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1976d2, #42a5f5);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.import-progress-status {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+}
+
+/* Success State */
+.import-success {
+  text-align: center;
+  padding: 24px 0;
+}
+
+.import-success-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.import-success h3 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #2e7d32;
+}
+
+.import-success p {
+  margin: 0 0 24px 0;
+  color: #666;
+}
+
+.import-success-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.import-success-stat {
+  background: #f5f5f5;
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.import-success-stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1976d2;
+  font-family: monospace;
+}
+
+.import-success-stat-label {
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+/* Error State */
+.import-error {
+  text-align: center;
+  padding: 24px 0;
+}
+
+.import-error-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.import-error h3 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #c62828;
+}
+
+.import-error p {
+  margin: 0 0 16px 0;
+  color: #666;
+}
+
+.import-error-message {
+  background: #ffebee;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 13px;
+  color: #c62828;
+  text-align: left;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+/* Buttons */
+.import-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.import-btn-primary {
+  background: #1976d2;
+  color: white;
+}
+
+.import-btn-primary:hover:not(:disabled) {
+  background: #1565c0;
+}
+
+.import-btn-primary:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.import-btn-secondary {
+  background: white;
+  color: #333;
+  border: 1px solid #ccc;
+}
+
+.import-btn-secondary:hover {
+  background: #f5f5f5;
+  border-color: #999;
+}
+
+.import-btn-success {
+  background: #4caf50;
+  color: white;
+}
+
+.import-btn-success:hover {
+  background: #43a047;
+}
+
+/* Loading Spinner */
+.import-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ffffff40;
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

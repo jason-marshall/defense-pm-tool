@@ -1,0 +1,199 @@
+# =============================================================================
+# Defense PM Tool - Production Docker Compose Configuration
+# =============================================================================
+# Production deployment configuration for Defense PM Tool.
+#
+# Prerequisites:
+#   - Set environment variables in .env.prod or export them
+#   - Use managed database (RDS, Azure SQL, Cloud SQL) instead of local postgres
+#   - Use managed Redis (ElastiCache, Azure Cache, Memorystore) instead of local redis
+#   - Configure SSL termination at load balancer level
+#
+# Usage:
+#   docker-compose -f docker-compose.prod.yml up -d
+#   docker-compose -f docker-compose.prod.yml logs -f
+#   docker-compose -f docker-compose.prod.yml down
+#
+# For scaling:
+#   docker-compose -f docker-compose.prod.yml up -d --scale api=3
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # FastAPI Application (Backend API)
+  # ---------------------------------------------------------------------------
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+      args:
+        PYTHON_VERSION: "3.11"
+
+    container_name: defense-pm-tool-api-prod
+    restart: always
+
+    # Port mapping - typically behind reverse proxy in production
+    ports:
+      - "8000:8000"
+
+    # Environment variables for production
+    environment:
+      # Application settings
+      ENVIRONMENT: production
+      DEBUG: "false"
+
+      # Database - use managed service URL from environment
+      DATABASE_URL: ${DATABASE_URL}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-20}
+      DB_MAX_OVERFLOW: ${DB_MAX_OVERFLOW:-10}
+
+      # Redis - use managed service URL from environment
+      REDIS_URL: ${REDIS_URL}
+
+      # Security
+      SECRET_KEY: ${SECRET_KEY}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-15}
+      REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-7}
+
+      # CORS - restrict to production domains
+      CORS_ORIGINS: ${CORS_ORIGINS}
+
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+
+    # Logging configuration
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - defense-pm-prod-network
+
+  # ---------------------------------------------------------------------------
+  # React Frontend (Nginx)
+  # ---------------------------------------------------------------------------
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile.prod
+      args:
+        VITE_API_URL: ${API_URL:-/api/v1}
+
+    container_name: defense-pm-tool-web-prod
+    restart: always
+
+    # Port mapping for frontend
+    ports:
+      - "80:80"
+      - "443:443"
+
+    # SSL certificates (mount from host or use secrets)
+    volumes:
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+
+    depends_on:
+      api:
+        condition: service_healthy
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+        reservations:
+          memory: 64M
+          cpus: '0.1'
+
+    # Logging configuration
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - defense-pm-prod-network
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  defense-pm-prod-network:
+    driver: bridge
+
+# =============================================================================
+# Notes for Production Deployment
+# =============================================================================
+#
+# 1. Database:
+#    - Use a managed PostgreSQL service (AWS RDS, Azure Database, Cloud SQL)
+#    - Enable automated backups
+#    - Configure proper security groups/firewall rules
+#    - Use SSL connections (add ?sslmode=require to DATABASE_URL)
+#
+# 2. Redis:
+#    - Use a managed Redis service (ElastiCache, Azure Cache, Memorystore)
+#    - Enable persistence if needed
+#    - Configure authentication (add password to REDIS_URL)
+#
+# 3. SSL/TLS:
+#    - Terminate SSL at load balancer for better performance
+#    - Or mount certificates to nginx container
+#    - Use Let's Encrypt or commercial certificates
+#
+# 4. Secrets:
+#    - Use Docker secrets or environment-specific .env files
+#    - Never commit secrets to version control
+#    - Rotate SECRET_KEY periodically
+#
+# 5. Monitoring:
+#    - Configure log aggregation (ELK, CloudWatch, etc.)
+#    - Set up APM (Datadog, New Relic, etc.)
+#    - Configure alerts for health check failures
+#
+# 6. Scaling:
+#    - Scale API horizontally: --scale api=3
+#    - Use load balancer for API instances
+#    - Consider container orchestration (ECS, Kubernetes)
+#
+# 7. Backup:
+#    - Regular database backups
+#    - Test restore procedures
+#    - Document recovery process
+#
+# =============================================================================
