@@ -1,12 +1,5 @@
 """Unit tests for Activity model."""
 
-from datetime import date
-from decimal import Decimal
-from uuid import uuid4
-
-import pytest
-
-from src.models.activity import Activity
 from src.models.enums import ActivityStatus, ConstraintType
 
 

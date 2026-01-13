@@ -1,7 +1,6 @@
 """Integration tests for WBS API endpoints."""
 
 from uuid import uuid4
-from decimal import Decimal
 
 import pytest
 from httpx import AsyncClient
@@ -91,9 +90,7 @@ class TestWBSAPICRUD:
         assert data["parent_id"] == root_id
         assert data["level"] == 2
 
-    async def test_create_control_account(
-        self, client: AsyncClient, auth_context: dict
-    ):
+    async def test_create_control_account(self, client: AsyncClient, auth_context: dict):
         """Should create control account WBS element."""
         response = await client.post(
             "/api/v1/wbs",
@@ -215,9 +212,7 @@ class TestWBSAPICRUD:
         response = await client.get(f"/api/v1/wbs/{uuid4()}")
         assert response.status_code == 404
 
-    async def test_create_wbs_with_nonexistent_program_returns_404(
-        self, client: AsyncClient
-    ):
+    async def test_create_wbs_with_nonexistent_program_returns_404(self, client: AsyncClient):
         """Should return 404 when program doesn't exist."""
         response = await client.post(
             "/api/v1/wbs",
@@ -264,9 +259,7 @@ class TestWBSAPICRUD:
             assert data["level"] == level
             parent_id = data["id"]
 
-    async def test_update_budget_at_completion(
-        self, client: AsyncClient, auth_context: dict
-    ):
+    async def test_update_budget_at_completion(self, client: AsyncClient, auth_context: dict):
         """Should update budget at completion."""
         # Create CA element
         create_response = await client.post(
@@ -289,9 +282,7 @@ class TestWBSAPICRUD:
         assert update_response.status_code == 200
         assert update_response.json()["budget_at_completion"] == "75000.00"
 
-    async def test_wbs_response_includes_timestamps(
-        self, client: AsyncClient, auth_context: dict
-    ):
+    async def test_wbs_response_includes_timestamps(self, client: AsyncClient, auth_context: dict):
         """WBS response should include created_at and updated_at."""
         response = await client.post(
             "/api/v1/wbs",

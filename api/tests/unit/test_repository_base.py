@@ -1,11 +1,8 @@
 """Tests for base repository operations."""
 
-import pytest
-from datetime import datetime, UTC
-from decimal import Decimal
-from uuid import uuid4
+from datetime import datetime
 
-from sqlalchemy import Column, String, Boolean, DateTime
+from sqlalchemy import Boolean, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.models.base import Base

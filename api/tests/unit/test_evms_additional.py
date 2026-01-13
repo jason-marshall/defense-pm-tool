@@ -1,9 +1,8 @@
 """Additional EVMS tests for edge cases and coverage boost."""
 
-import pytest
 from decimal import Decimal
 
-from src.services.evms import EVMSCalculator, EVMethod
+from src.services.evms import EVMethod, EVMSCalculator
 
 
 class TestEVMSEdgeCases:
@@ -311,7 +310,7 @@ class TestEVMSAllMetrics:
         """Calculate all metrics for troubled project."""
         metrics = EVMSCalculator.calculate_all_metrics(
             bcws=Decimal("1000"),
-            bcwp=Decimal("800"),   # Behind schedule
+            bcwp=Decimal("800"),  # Behind schedule
             acwp=Decimal("1200"),  # Over budget
             bac=Decimal("5000"),
         )
@@ -325,7 +324,7 @@ class TestEVMSAllMetrics:
         metrics = EVMSCalculator.calculate_all_metrics(
             bcws=Decimal("1000"),
             bcwp=Decimal("1200"),  # Ahead of schedule
-            acwp=Decimal("900"),   # Under budget
+            acwp=Decimal("900"),  # Under budget
             bac=Decimal("5000"),
         )
         assert metrics.schedule_variance == Decimal("200")

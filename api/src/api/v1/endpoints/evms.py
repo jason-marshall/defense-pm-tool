@@ -396,12 +396,8 @@ async def update_period_data(
 
         update_dict["cv"] = cumulative_bcwp - cumulative_acwp
         update_dict["sv"] = cumulative_bcwp - cumulative_bcws
-        update_dict["cpi"] = EVMSCalculator.calculate_cpi(
-            cumulative_bcwp, cumulative_acwp
-        )
-        update_dict["spi"] = EVMSCalculator.calculate_spi(
-            cumulative_bcwp, cumulative_bcws
-        )
+        update_dict["cpi"] = EVMSCalculator.calculate_cpi(cumulative_bcwp, cumulative_acwp)
+        update_dict["spi"] = EVMSCalculator.calculate_spi(cumulative_bcwp, cumulative_bcws)
 
     updated = await data_repo.update(period_data, update_dict)
 
@@ -439,9 +435,7 @@ async def get_evms_summary(
     period_repo = EVMSPeriodRepository(db)
 
     if as_of_date:
-        periods = await period_repo.get_by_date_range(
-            program_id, program.start_date, as_of_date
-        )
+        periods = await period_repo.get_by_date_range(program_id, program.start_date, as_of_date)
         period = periods[-1] if periods else None
     else:
         period = await period_repo.get_latest_period(program_id)
@@ -462,9 +456,7 @@ async def get_evms_summary(
     vac = EVMSCalculator.calculate_vac(bac, eac) if eac else None
     tcpi = EVMSCalculator.calculate_tcpi(bac, bcwp, acwp, "bac")
 
-    percent_complete = (
-        (bcwp / bac * 100).quantize(Decimal("0.01")) if bac > 0 else Decimal("0.00")
-    )
+    percent_complete = (bcwp / bac * 100).quantize(Decimal("0.01")) if bac > 0 else Decimal("0.00")
 
     return EVMSSummaryResponse(
         program_id=program_id,

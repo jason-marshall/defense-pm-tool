@@ -1,17 +1,13 @@
 """Unit tests for models and enums."""
 
-from datetime import date, datetime
-from decimal import Decimal
-from uuid import uuid4
-
 import pytest
 
 from src.models.enums import (
     ActivityStatus,
-    DependencyType,
-    UserRole,
-    ProgramStatus,
     ConstraintType,
+    DependencyType,
+    ProgramStatus,
+    UserRole,
 )
 from src.models.evms_period import PeriodStatus
 

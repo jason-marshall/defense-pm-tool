@@ -1,12 +1,10 @@
 """Unit tests for core auth module."""
 
-import pytest
-
 from src.core.auth import (
-    hash_password,
-    verify_password,
     create_access_token,
     create_refresh_token,
+    hash_password,
+    verify_password,
 )
 
 

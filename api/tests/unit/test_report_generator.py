@@ -1,6 +1,6 @@
 """Unit tests for Report Generator service."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 from typing import Any
@@ -9,12 +9,13 @@ from uuid import UUID, uuid4
 import pytest
 
 from src.models.evms_period import PeriodStatus
-from src.services.report_generator import ReportGenerator, WBSSummaryRow, CPRFormat1Report
+from src.services.report_generator import ReportGenerator, WBSSummaryRow
 
 
 @dataclass
 class MockProgram:
     """Mock Program for testing."""
+
     id: UUID
     name: str
     code: str
@@ -79,6 +80,7 @@ class MockEVMSPeriod:
 @dataclass
 class MockWBSElement:
     """Mock WBSElement for testing."""
+
     id: UUID
     program_id: UUID
     wbs_code: str
@@ -92,6 +94,7 @@ class MockWBSElement:
 @dataclass
 class MockEVMSPeriodData:
     """Mock EVMSPeriodData for testing."""
+
     id: UUID
     period_id: UUID
     wbs_id: UUID

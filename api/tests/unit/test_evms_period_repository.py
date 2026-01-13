@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.auth import hash_password
 from src.models.enums import UserRole
-from src.models.evms_period import EVMSPeriod, EVMSPeriodData, PeriodStatus
+from src.models.evms_period import EVMSPeriod, PeriodStatus
 from src.models.program import Program
 from src.models.user import User
 from src.models.wbs import WBSElement
@@ -72,19 +72,19 @@ class TestEVMSPeriodRepository:
     """Tests for EVMSPeriodRepository."""
 
     @pytest.mark.asyncio
-    async def test_create_period(
-        self, db_session: AsyncSession, test_program: Program
-    ):
+    async def test_create_period(self, db_session: AsyncSession, test_program: Program):
         """Test creating an EVMS period."""
         repo = EVMSPeriodRepository(db_session)
 
-        period = await repo.create({
-            "program_id": test_program.id,
-            "period_start": date(2024, 1, 1),
-            "period_end": date(2024, 1, 31),
-            "period_name": "January 2024",
-            "status": PeriodStatus.DRAFT,
-        })
+        period = await repo.create(
+            {
+                "program_id": test_program.id,
+                "period_start": date(2024, 1, 1),
+                "period_end": date(2024, 1, 31),
+                "period_name": "January 2024",
+                "status": PeriodStatus.DRAFT,
+            }
+        )
 
         assert period.id is not None
         assert period.program_id == test_program.id
@@ -92,27 +92,29 @@ class TestEVMSPeriodRepository:
         assert period.status == PeriodStatus.DRAFT
 
     @pytest.mark.asyncio
-    async def test_get_by_program(
-        self, db_session: AsyncSession, test_program: Program
-    ):
+    async def test_get_by_program(self, db_session: AsyncSession, test_program: Program):
         """Test getting periods by program."""
         repo = EVMSPeriodRepository(db_session)
 
         # Create multiple periods
-        await repo.create({
-            "program_id": test_program.id,
-            "period_start": date(2024, 1, 1),
-            "period_end": date(2024, 1, 31),
-            "period_name": "January 2024",
-            "status": PeriodStatus.APPROVED,
-        })
-        await repo.create({
-            "program_id": test_program.id,
-            "period_start": date(2024, 2, 1),
-            "period_end": date(2024, 2, 29),
-            "period_name": "February 2024",
-            "status": PeriodStatus.DRAFT,
-        })
+        await repo.create(
+            {
+                "program_id": test_program.id,
+                "period_start": date(2024, 1, 1),
+                "period_end": date(2024, 1, 31),
+                "period_name": "January 2024",
+                "status": PeriodStatus.APPROVED,
+            }
+        )
+        await repo.create(
+            {
+                "program_id": test_program.id,
+                "period_start": date(2024, 2, 1),
+                "period_end": date(2024, 2, 29),
+                "period_name": "February 2024",
+                "status": PeriodStatus.DRAFT,
+            }
+        )
 
         await db_session.flush()
 
@@ -134,13 +136,15 @@ class TestEVMSPeriodRepository:
 
         # Create 5 periods
         for i in range(5):
-            await repo.create({
-                "program_id": test_program.id,
-                "period_start": date(2024, i + 1, 1),
-                "period_end": date(2024, i + 1, 28),
-                "period_name": f"Period {i + 1}",
-                "status": PeriodStatus.DRAFT,
-            })
+            await repo.create(
+                {
+                    "program_id": test_program.id,
+                    "period_start": date(2024, i + 1, 1),
+                    "period_end": date(2024, i + 1, 28),
+                    "period_name": f"Period {i + 1}",
+                    "status": PeriodStatus.DRAFT,
+                }
+            )
 
         await db_session.flush()
 
@@ -152,31 +156,35 @@ class TestEVMSPeriodRepository:
         assert len(page2) == 2
 
     @pytest.mark.asyncio
-    async def test_get_latest_period(
-        self, db_session: AsyncSession, test_program: Program
-    ):
+    async def test_get_latest_period(self, db_session: AsyncSession, test_program: Program):
         """Test getting the latest period."""
         repo = EVMSPeriodRepository(db_session)
 
         # Create periods with different end dates
-        await repo.create({
-            "program_id": test_program.id,
-            "period_start": date(2024, 1, 1),
-            "period_end": date(2024, 1, 31),
-            "period_name": "January 2024",
-        })
-        await repo.create({
-            "program_id": test_program.id,
-            "period_start": date(2024, 3, 1),
-            "period_end": date(2024, 3, 31),
-            "period_name": "March 2024",
-        })
-        await repo.create({
-            "program_id": test_program.id,
-            "period_start": date(2024, 2, 1),
-            "period_end": date(2024, 2, 29),
-            "period_name": "February 2024",
-        })
+        await repo.create(
+            {
+                "program_id": test_program.id,
+                "period_start": date(2024, 1, 1),
+                "period_end": date(2024, 1, 31),
+                "period_name": "January 2024",
+            }
+        )
+        await repo.create(
+            {
+                "program_id": test_program.id,
+                "period_start": date(2024, 3, 1),
+                "period_end": date(2024, 3, 31),
+                "period_name": "March 2024",
+            }
+        )
+        await repo.create(
+            {
+                "program_id": test_program.id,
+                "period_start": date(2024, 2, 1),
+                "period_end": date(2024, 2, 29),
+                "period_name": "February 2024",
+            }
+        )
 
         await db_session.flush()
 
@@ -185,9 +193,7 @@ class TestEVMSPeriodRepository:
         assert latest.period_name == "March 2024"
 
     @pytest.mark.asyncio
-    async def test_get_latest_period_none(
-        self, db_session: AsyncSession, test_program: Program
-    ):
+    async def test_get_latest_period_none(self, db_session: AsyncSession, test_program: Program):
         """Test getting latest period when none exist."""
         repo = EVMSPeriodRepository(db_session)
 
@@ -195,31 +201,35 @@ class TestEVMSPeriodRepository:
         assert latest is None
 
     @pytest.mark.asyncio
-    async def test_get_by_date_range(
-        self, db_session: AsyncSession, test_program: Program
-    ):
+    async def test_get_by_date_range(self, db_session: AsyncSession, test_program: Program):
         """Test getting periods by date range."""
         repo = EVMSPeriodRepository(db_session)
 
         # Create periods
-        await repo.create({
-            "program_id": test_program.id,
-            "period_start": date(2024, 1, 1),
-            "period_end": date(2024, 1, 31),
-            "period_name": "January 2024",
-        })
-        await repo.create({
-            "program_id": test_program.id,
-            "period_start": date(2024, 2, 1),
-            "period_end": date(2024, 2, 29),
-            "period_name": "February 2024",
-        })
-        await repo.create({
-            "program_id": test_program.id,
-            "period_start": date(2024, 3, 1),
-            "period_end": date(2024, 3, 31),
-            "period_name": "March 2024",
-        })
+        await repo.create(
+            {
+                "program_id": test_program.id,
+                "period_start": date(2024, 1, 1),
+                "period_end": date(2024, 1, 31),
+                "period_name": "January 2024",
+            }
+        )
+        await repo.create(
+            {
+                "program_id": test_program.id,
+                "period_start": date(2024, 2, 1),
+                "period_end": date(2024, 2, 29),
+                "period_name": "February 2024",
+            }
+        )
+        await repo.create(
+            {
+                "program_id": test_program.id,
+                "period_start": date(2024, 3, 1),
+                "period_end": date(2024, 3, 31),
+                "period_name": "March 2024",
+            }
+        )
 
         await db_session.flush()
 
@@ -232,18 +242,18 @@ class TestEVMSPeriodRepository:
         assert len(periods) == 2  # January and February overlap
 
     @pytest.mark.asyncio
-    async def test_period_exists(
-        self, db_session: AsyncSession, test_program: Program
-    ):
+    async def test_period_exists(self, db_session: AsyncSession, test_program: Program):
         """Test checking if period exists."""
         repo = EVMSPeriodRepository(db_session)
 
-        period = await repo.create({
-            "program_id": test_program.id,
-            "period_start": date(2024, 1, 1),
-            "period_end": date(2024, 1, 31),
-            "period_name": "January 2024",
-        })
+        period = await repo.create(
+            {
+                "program_id": test_program.id,
+                "period_start": date(2024, 1, 1),
+                "period_end": date(2024, 1, 31),
+                "period_name": "January 2024",
+            }
+        )
 
         await db_session.flush()
 
@@ -277,9 +287,7 @@ class TestEVMSPeriodDataRepository:
     """Tests for EVMSPeriodDataRepository."""
 
     @pytest_asyncio.fixture
-    async def test_period(
-        self, db_session: AsyncSession, test_program: Program
-    ) -> EVMSPeriod:
+    async def test_period(self, db_session: AsyncSession, test_program: Program) -> EVMSPeriod:
         """Create a test period."""
         period = EVMSPeriod(
             id=uuid4(),
@@ -300,16 +308,18 @@ class TestEVMSPeriodDataRepository:
         """Test creating period data."""
         repo = EVMSPeriodDataRepository(db_session)
 
-        data = await repo.create({
-            "period_id": test_period.id,
-            "wbs_id": test_wbs.id,
-            "bcws": Decimal("100000.00"),
-            "bcwp": Decimal("95000.00"),
-            "acwp": Decimal("90000.00"),
-            "cumulative_bcws": Decimal("100000.00"),
-            "cumulative_bcwp": Decimal("95000.00"),
-            "cumulative_acwp": Decimal("90000.00"),
-        })
+        data = await repo.create(
+            {
+                "period_id": test_period.id,
+                "wbs_id": test_wbs.id,
+                "bcws": Decimal("100000.00"),
+                "bcwp": Decimal("95000.00"),
+                "acwp": Decimal("90000.00"),
+                "cumulative_bcws": Decimal("100000.00"),
+                "cumulative_bcwp": Decimal("95000.00"),
+                "cumulative_acwp": Decimal("90000.00"),
+            }
+        )
 
         assert data.id is not None
         assert data.period_id == test_period.id
@@ -322,16 +332,18 @@ class TestEVMSPeriodDataRepository:
         """Test getting data by period."""
         repo = EVMSPeriodDataRepository(db_session)
 
-        await repo.create({
-            "period_id": test_period.id,
-            "wbs_id": test_wbs.id,
-            "bcws": Decimal("100000.00"),
-            "bcwp": Decimal("95000.00"),
-            "acwp": Decimal("90000.00"),
-            "cumulative_bcws": Decimal("100000.00"),
-            "cumulative_bcwp": Decimal("95000.00"),
-            "cumulative_acwp": Decimal("90000.00"),
-        })
+        await repo.create(
+            {
+                "period_id": test_period.id,
+                "wbs_id": test_wbs.id,
+                "bcws": Decimal("100000.00"),
+                "bcwp": Decimal("95000.00"),
+                "acwp": Decimal("90000.00"),
+                "cumulative_bcws": Decimal("100000.00"),
+                "cumulative_bcwp": Decimal("95000.00"),
+                "cumulative_acwp": Decimal("90000.00"),
+            }
+        )
 
         await db_session.flush()
 
@@ -347,39 +359,47 @@ class TestEVMSPeriodDataRepository:
         data_repo = EVMSPeriodDataRepository(db_session)
 
         # Create multiple periods with same WBS
-        period1 = await period_repo.create({
-            "program_id": test_program.id,
-            "period_start": date(2024, 1, 1),
-            "period_end": date(2024, 1, 31),
-            "period_name": "January 2024",
-        })
-        period2 = await period_repo.create({
-            "program_id": test_program.id,
-            "period_start": date(2024, 2, 1),
-            "period_end": date(2024, 2, 29),
-            "period_name": "February 2024",
-        })
+        period1 = await period_repo.create(
+            {
+                "program_id": test_program.id,
+                "period_start": date(2024, 1, 1),
+                "period_end": date(2024, 1, 31),
+                "period_name": "January 2024",
+            }
+        )
+        period2 = await period_repo.create(
+            {
+                "program_id": test_program.id,
+                "period_start": date(2024, 2, 1),
+                "period_end": date(2024, 2, 29),
+                "period_name": "February 2024",
+            }
+        )
 
-        await data_repo.create({
-            "period_id": period1.id,
-            "wbs_id": test_wbs.id,
-            "bcws": Decimal("100000.00"),
-            "bcwp": Decimal("95000.00"),
-            "acwp": Decimal("90000.00"),
-            "cumulative_bcws": Decimal("100000.00"),
-            "cumulative_bcwp": Decimal("95000.00"),
-            "cumulative_acwp": Decimal("90000.00"),
-        })
-        await data_repo.create({
-            "period_id": period2.id,
-            "wbs_id": test_wbs.id,
-            "bcws": Decimal("50000.00"),
-            "bcwp": Decimal("48000.00"),
-            "acwp": Decimal("45000.00"),
-            "cumulative_bcws": Decimal("150000.00"),
-            "cumulative_bcwp": Decimal("143000.00"),
-            "cumulative_acwp": Decimal("135000.00"),
-        })
+        await data_repo.create(
+            {
+                "period_id": period1.id,
+                "wbs_id": test_wbs.id,
+                "bcws": Decimal("100000.00"),
+                "bcwp": Decimal("95000.00"),
+                "acwp": Decimal("90000.00"),
+                "cumulative_bcws": Decimal("100000.00"),
+                "cumulative_bcwp": Decimal("95000.00"),
+                "cumulative_acwp": Decimal("90000.00"),
+            }
+        )
+        await data_repo.create(
+            {
+                "period_id": period2.id,
+                "wbs_id": test_wbs.id,
+                "bcws": Decimal("50000.00"),
+                "bcwp": Decimal("48000.00"),
+                "acwp": Decimal("45000.00"),
+                "cumulative_bcws": Decimal("150000.00"),
+                "cumulative_bcwp": Decimal("143000.00"),
+                "cumulative_acwp": Decimal("135000.00"),
+            }
+        )
 
         await db_session.flush()
 
@@ -393,16 +413,18 @@ class TestEVMSPeriodDataRepository:
         """Test getting data by period and WBS."""
         repo = EVMSPeriodDataRepository(db_session)
 
-        created_data = await repo.create({
-            "period_id": test_period.id,
-            "wbs_id": test_wbs.id,
-            "bcws": Decimal("100000.00"),
-            "bcwp": Decimal("95000.00"),
-            "acwp": Decimal("90000.00"),
-            "cumulative_bcws": Decimal("100000.00"),
-            "cumulative_bcwp": Decimal("95000.00"),
-            "cumulative_acwp": Decimal("90000.00"),
-        })
+        created_data = await repo.create(
+            {
+                "period_id": test_period.id,
+                "wbs_id": test_wbs.id,
+                "bcws": Decimal("100000.00"),
+                "bcwp": Decimal("95000.00"),
+                "acwp": Decimal("90000.00"),
+                "cumulative_bcws": Decimal("100000.00"),
+                "cumulative_bcwp": Decimal("95000.00"),
+                "cumulative_acwp": Decimal("90000.00"),
+            }
+        )
 
         await db_session.flush()
 
@@ -421,16 +443,18 @@ class TestEVMSPeriodDataRepository:
         """Test checking if data exists."""
         repo = EVMSPeriodDataRepository(db_session)
 
-        data = await repo.create({
-            "period_id": test_period.id,
-            "wbs_id": test_wbs.id,
-            "bcws": Decimal("100000.00"),
-            "bcwp": Decimal("95000.00"),
-            "acwp": Decimal("90000.00"),
-            "cumulative_bcws": Decimal("100000.00"),
-            "cumulative_bcwp": Decimal("95000.00"),
-            "cumulative_acwp": Decimal("90000.00"),
-        })
+        data = await repo.create(
+            {
+                "period_id": test_period.id,
+                "wbs_id": test_wbs.id,
+                "bcws": Decimal("100000.00"),
+                "bcwp": Decimal("95000.00"),
+                "acwp": Decimal("90000.00"),
+                "cumulative_bcws": Decimal("100000.00"),
+                "cumulative_bcwp": Decimal("95000.00"),
+                "cumulative_acwp": Decimal("90000.00"),
+            }
+        )
 
         await db_session.flush()
 
@@ -453,16 +477,18 @@ class TestEVMSPeriodDataRepository:
         data_repo = EVMSPeriodDataRepository(db_session)
 
         # Create period data
-        await data_repo.create({
-            "period_id": test_period.id,
-            "wbs_id": test_wbs.id,
-            "bcws": Decimal("100000.00"),
-            "bcwp": Decimal("95000.00"),
-            "acwp": Decimal("90000.00"),
-            "cumulative_bcws": Decimal("100000.00"),
-            "cumulative_bcwp": Decimal("95000.00"),
-            "cumulative_acwp": Decimal("90000.00"),
-        })
+        await data_repo.create(
+            {
+                "period_id": test_period.id,
+                "wbs_id": test_wbs.id,
+                "bcws": Decimal("100000.00"),
+                "bcwp": Decimal("95000.00"),
+                "acwp": Decimal("90000.00"),
+                "cumulative_bcws": Decimal("100000.00"),
+                "cumulative_bcwp": Decimal("95000.00"),
+                "cumulative_acwp": Decimal("90000.00"),
+            }
+        )
 
         await db_session.flush()
 
@@ -474,9 +500,7 @@ class TestEVMSPeriodDataRepository:
         assert updated_period.cumulative_acwp == Decimal("90000.00")
 
     @pytest.mark.asyncio
-    async def test_update_cumulative_totals_not_found(
-        self, db_session: AsyncSession
-    ):
+    async def test_update_cumulative_totals_not_found(self, db_session: AsyncSession):
         """Test updating totals for non-existent period."""
         period_repo = EVMSPeriodRepository(db_session)
         result = await period_repo.update_cumulative_totals(uuid4())
@@ -491,24 +515,28 @@ class TestEVMSPeriodDataRepository:
         data_repo = EVMSPeriodDataRepository(db_session)
 
         # Create first period
-        period1 = await period_repo.create({
-            "program_id": test_program.id,
-            "period_start": date(2024, 1, 1),
-            "period_end": date(2024, 1, 31),
-            "period_name": "January 2024",
-        })
+        period1 = await period_repo.create(
+            {
+                "program_id": test_program.id,
+                "period_start": date(2024, 1, 1),
+                "period_end": date(2024, 1, 31),
+                "period_name": "January 2024",
+            }
+        )
 
         # Create data for first period
-        await data_repo.create({
-            "period_id": period1.id,
-            "wbs_id": test_wbs.id,
-            "bcws": Decimal("100000.00"),
-            "bcwp": Decimal("95000.00"),
-            "acwp": Decimal("90000.00"),
-            "cumulative_bcws": Decimal("100000.00"),
-            "cumulative_bcwp": Decimal("95000.00"),
-            "cumulative_acwp": Decimal("90000.00"),
-        })
+        await data_repo.create(
+            {
+                "period_id": period1.id,
+                "wbs_id": test_wbs.id,
+                "bcws": Decimal("100000.00"),
+                "bcwp": Decimal("95000.00"),
+                "acwp": Decimal("90000.00"),
+                "cumulative_bcws": Decimal("100000.00"),
+                "cumulative_bcwp": Decimal("95000.00"),
+                "cumulative_acwp": Decimal("90000.00"),
+            }
+        )
 
         await db_session.flush()
 

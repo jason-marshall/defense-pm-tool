@@ -167,18 +167,14 @@ class EVMSPeriod(Base):
         """Calculate Cost Performance Index (CPI = BCWP / ACWP)."""
         if self.cumulative_acwp == 0:
             return None
-        return (self.cumulative_bcwp / self.cumulative_acwp).quantize(
-            Decimal("0.01")
-        )
+        return (self.cumulative_bcwp / self.cumulative_acwp).quantize(Decimal("0.01"))
 
     @property
     def spi(self) -> Decimal | None:
         """Calculate Schedule Performance Index (SPI = BCWP / BCWS)."""
         if self.cumulative_bcws == 0:
             return None
-        return (self.cumulative_bcwp / self.cumulative_bcws).quantize(
-            Decimal("0.01")
-        )
+        return (self.cumulative_bcwp / self.cumulative_bcws).quantize(Decimal("0.01"))
 
 
 class EVMSPeriodData(Base):
@@ -328,15 +324,11 @@ class EVMSPeriodData(Base):
         self.sv = self.cumulative_bcwp - self.cumulative_bcws
 
         if self.cumulative_acwp > 0:
-            self.cpi = (self.cumulative_bcwp / self.cumulative_acwp).quantize(
-                Decimal("0.01")
-            )
+            self.cpi = (self.cumulative_bcwp / self.cumulative_acwp).quantize(Decimal("0.01"))
         else:
             self.cpi = None
 
         if self.cumulative_bcws > 0:
-            self.spi = (self.cumulative_bcwp / self.cumulative_bcws).quantize(
-                Decimal("0.01")
-            )
+            self.spi = (self.cumulative_bcwp / self.cumulative_bcws).quantize(Decimal("0.01"))
         else:
             self.spi = None

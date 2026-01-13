@@ -109,9 +109,7 @@ class TestWBSElementRepository:
         assert roots[0].name == "Root Element"
 
     @pytest.mark.asyncio
-    async def test_get_children(
-        self, db_session: AsyncSession, wbs_hierarchy: list[WBSElement]
-    ):
+    async def test_get_children(self, db_session: AsyncSession, wbs_hierarchy: list[WBSElement]):
         """Test getting child elements."""
         repo = WBSElementRepository(db_session)
         root = wbs_hierarchy[0]
@@ -144,9 +142,7 @@ class TestWBSElementRepository:
         assert element is None
 
     @pytest.mark.asyncio
-    async def test_get_descendants(
-        self, db_session: AsyncSession, wbs_hierarchy: list[WBSElement]
-    ):
+    async def test_get_descendants(self, db_session: AsyncSession, wbs_hierarchy: list[WBSElement]):
         """Test getting all descendants."""
         repo = WBSElementRepository(db_session)
         root = wbs_hierarchy[0]
@@ -154,9 +150,7 @@ class TestWBSElementRepository:
         assert len(descendants) == 2
 
     @pytest.mark.asyncio
-    async def test_get_descendants_not_found(
-        self, db_session: AsyncSession
-    ):
+    async def test_get_descendants_not_found(self, db_session: AsyncSession):
         """Test getting descendants of non-existent element."""
         repo = WBSElementRepository(db_session)
         descendants = await repo.get_descendants(uuid4())

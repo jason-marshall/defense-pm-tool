@@ -121,9 +121,7 @@ class TestDependencyAPICRUD:
             "activity_ids": [act1_id, act2_id, act3_id],
         }
 
-    async def test_create_fs_dependency(
-        self, client: AsyncClient, auth_context: dict
-    ):
+    async def test_create_fs_dependency(self, client: AsyncClient, auth_context: dict):
         """Should create finish-to-start dependency."""
         response = await client.post(
             "/api/v1/dependencies",
@@ -140,9 +138,7 @@ class TestDependencyAPICRUD:
         assert data["predecessor_id"] == auth_context["activity_ids"][0]
         assert data["successor_id"] == auth_context["activity_ids"][1]
 
-    async def test_create_dependency_with_lag(
-        self, client: AsyncClient, auth_context: dict
-    ):
+    async def test_create_dependency_with_lag(self, client: AsyncClient, auth_context: dict):
         """Should create dependency with lag."""
         response = await client.post(
             "/api/v1/dependencies",
@@ -232,9 +228,7 @@ class TestDependencyAPICRUD:
         )
         assert get_response.status_code == 404
 
-    async def test_list_dependencies_for_activity(
-        self, client: AsyncClient, auth_context: dict
-    ):
+    async def test_list_dependencies_for_activity(self, client: AsyncClient, auth_context: dict):
         """Should list all dependencies for an activity."""
         # Create dependencies
         await client.post(
@@ -265,9 +259,7 @@ class TestDependencyAPICRUD:
         data = response.json()
         assert data["total"] == 2
 
-    async def test_list_dependencies_for_program(
-        self, client: AsyncClient, auth_context: dict
-    ):
+    async def test_list_dependencies_for_program(self, client: AsyncClient, auth_context: dict):
         """Should list all dependencies for a program."""
         # Create dependencies
         await client.post(
@@ -288,9 +280,7 @@ class TestDependencyAPICRUD:
         assert response.status_code == 200
         assert response.json()["total"] >= 1
 
-    async def test_prevent_duplicate_dependency(
-        self, client: AsyncClient, auth_context: dict
-    ):
+    async def test_prevent_duplicate_dependency(self, client: AsyncClient, auth_context: dict):
         """Should prevent creating duplicate dependency."""
         # Create first dependency
         await client.post(
@@ -315,9 +305,7 @@ class TestDependencyAPICRUD:
         )
         assert response.status_code == 409
 
-    async def test_prevent_circular_dependency(
-        self, client: AsyncClient, auth_context: dict
-    ):
+    async def test_prevent_circular_dependency(self, client: AsyncClient, auth_context: dict):
         """Should prevent creating circular dependency."""
         # Create A -> B
         await client.post(
@@ -368,9 +356,7 @@ class TestDependencyAPICRUD:
         )
         assert response.status_code == 404
 
-    async def test_nonexistent_successor_returns_404(
-        self, client: AsyncClient, auth_context: dict
-    ):
+    async def test_nonexistent_successor_returns_404(self, client: AsyncClient, auth_context: dict):
         """Should return 404 for nonexistent successor."""
         response = await client.post(
             "/api/v1/dependencies",
