@@ -1,12 +1,9 @@
 """Unit tests for User schemas."""
 
-from uuid import uuid4
-
 import pytest
 from pydantic import ValidationError
 
-from src.schemas.user import UserCreate, UserUpdate, UserResponse
-from src.models.enums import UserRole
+from src.schemas.user import UserCreate, UserUpdate
 
 
 class TestUserCreate:

@@ -4,11 +4,9 @@ from datetime import date
 from decimal import Decimal
 from uuid import uuid4
 
-import pytest
-
+from src.schemas.evms_period import EVMSPeriodCreate, EVMSPeriodDataCreate
 from src.schemas.program import ProgramCreate, ProgramUpdate
 from src.schemas.wbs import WBSCreate, WBSUpdate
-from src.schemas.evms_period import EVMSPeriodCreate, EVMSPeriodDataCreate
 
 
 class TestProgramSchemas:

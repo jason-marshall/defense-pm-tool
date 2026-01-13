@@ -3,7 +3,7 @@
 > **Project**: Defense PM Tool with EVMS/CPM capabilities
 > **Repository**: https://github.com/jason-marshall/defense-pm-tool
 > **Developer**: Single developer, 3-month timeline
-> **Current Phase**: Week 2 - Activity Management & Dependencies
+> **Current Phase**: Week 4 - Performance Optimization & Polish
 
 ---
 
@@ -625,45 +625,46 @@ pytest -v -s
 - [x] Initial Alembic migration
 - [x] Unit tests for CPM and EVMS
 
-### 🔶 In Progress (Week 2)
-- [ ] Fix model-schema alignment (Hotfix 2.0.1 - PRIORITY)
-- [ ] Activity CRUD with authentication
-- [ ] Dependency CRUD with cycle detection
-- [ ] Schedule calculation endpoint
-- [ ] Basic Gantt visualization
+### ✅ Completed (Week 2)
+- [x] Model-schema alignment fixes
+- [x] Activity CRUD with authentication
+- [x] Dependency CRUD with cycle detection
+- [x] Schedule calculation endpoint
+- [x] 157 tests passing, 71% coverage
 
-### ⏳ Upcoming (Weeks 3-4)
-- [ ] WBS CRUD and tree visualization
-- [ ] EVMS period tracking and dashboard
-- [ ] MS Project XML import
+### ✅ Completed (Week 3)
+- [x] WBS CRUD with ltree hierarchy
+- [x] WBS Tree visualization component
+- [x] EVMS period tracking
+- [x] EVMS dashboard with metrics
+- [x] CPR Format 1 report generation
+- [x] Week 3 integration tests
+- [x] 486 tests passing, 75%+ coverage achieved
+
+### 🔶 In Progress (Week 4)
 - [ ] Performance optimization
+- [ ] MS Project XML import
 - [ ] End-to-end tests
 - [ ] Production deployment prep
 
 ---
 
-## Known Issues to Address
+## Performance Baselines (Week 3)
 
-### 🔴 Critical (Fix First in Week 2)
+Established baselines for Week 4 optimization targets:
 
-1. **Activity Model Missing Fields**
-   - Missing: `program_id` (FK), `code` field
-   - Impact: Repository queries will fail
-   - Fix: Prompt 2.0.1
+| Benchmark | Current | Target | Status |
+|-----------|---------|--------|--------|
+| CPM 100 activities (chain) | 1.86ms | <50ms | ✅ |
+| CPM 500 activities (chain) | 5.77ms | <200ms | ✅ |
+| CPM 1000 activities (chain) | 11.88ms | <500ms | ✅ |
+| CPM 1000 activities (parallel) | 14.06ms | <500ms | ✅ |
+| CPM 2000 activities (chain) | 26.71ms | <1000ms | ✅ |
+| CPM 5000 activities (chain) | 83.65ms | <2000ms | ✅ |
+| Graph construction (1000 nodes) | 5.43ms | <100ms | ✅ |
+| EVMS calculations (1000 items) | 1.52ms | <100ms | ✅ |
 
-2. **Dependency Model Field Mismatch**
-   - Model uses `lag_days`, CPM engine expects `lag`
-   - Impact: CPM calculations broken
-   - Fix: Prompt 2.0.1
-
-### 🟡 Medium Priority
-
-3. **Test Coverage Low** (~40%)
-   - Target: 60% by end of Week 2
-   - Add integration tests for endpoints
-
-4. **Auth Endpoints Need Verification**
-   - Verify login/register flow works E2E
+Run benchmarks: `cd api && python scripts/run_benchmarks.py`
 
 ---
 
@@ -677,9 +678,9 @@ pytest -v -s
 6. **Check authorization**: Every endpoint must verify user access
 7. **Soft deletes**: Use `deleted_at` timestamp, not hard deletes
 8. **Atomic commits**: One logical change per commit
-9. **Start with Hotfix 2.0.1**: Model alignment must be fixed before other Week 2 work
+9. **Run benchmarks**: Before performance changes, run `python scripts/run_benchmarks.py`
 
 ---
 
 *Last Updated: January 2026*
-*Week 2 of 4-week development cycle*
+*Week 4 of 4-week development cycle - 486 tests, 75% coverage*

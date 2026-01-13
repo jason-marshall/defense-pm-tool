@@ -42,53 +42,61 @@ async def program_with_wbs(db_session: AsyncSession) -> dict:
 
     # Create program
     program_repo = ProgramRepository(db_session)
-    program = await program_repo.create({
-        "name": "Test Defense Program",
-        "code": "TDP-001",
-        "description": "E2E test program for EVMS",
-        "start_date": date(2024, 1, 1),
-        "end_date": date(2024, 12, 31),
-        "budget_at_completion": Decimal("1000000.00"),
-        "contract_number": "W912DQ-24-C-0001",
-        "owner_id": user.id,
-    })
+    program = await program_repo.create(
+        {
+            "name": "Test Defense Program",
+            "code": "TDP-001",
+            "description": "E2E test program for EVMS",
+            "start_date": date(2024, 1, 1),
+            "end_date": date(2024, 12, 31),
+            "budget_at_completion": Decimal("1000000.00"),
+            "contract_number": "W912DQ-24-C-0001",
+            "owner_id": user.id,
+        }
+    )
 
     # Create WBS hierarchy
     wbs_repo = WBSElementRepository(db_session)
 
     # Root element
-    root = await wbs_repo.create({
-        "program_id": program.id,
-        "wbs_code": "1",
-        "name": "Program Management",
-        "path": "1",
-        "level": 1,
-        "budget_at_completion": Decimal("300000.00"),
-        "is_control_account": True,
-    })
+    root = await wbs_repo.create(
+        {
+            "program_id": program.id,
+            "wbs_code": "1",
+            "name": "Program Management",
+            "path": "1",
+            "level": 1,
+            "budget_at_completion": Decimal("300000.00"),
+            "is_control_account": True,
+        }
+    )
 
     # Child elements
-    design = await wbs_repo.create({
-        "program_id": program.id,
-        "parent_id": root.id,
-        "wbs_code": "1.1",
-        "name": "System Design",
-        "path": "1.1",
-        "level": 2,
-        "budget_at_completion": Decimal("200000.00"),
-        "is_control_account": True,
-    })
+    design = await wbs_repo.create(
+        {
+            "program_id": program.id,
+            "parent_id": root.id,
+            "wbs_code": "1.1",
+            "name": "System Design",
+            "path": "1.1",
+            "level": 2,
+            "budget_at_completion": Decimal("200000.00"),
+            "is_control_account": True,
+        }
+    )
 
-    development = await wbs_repo.create({
-        "program_id": program.id,
-        "parent_id": root.id,
-        "wbs_code": "1.2",
-        "name": "Development",
-        "path": "1.2",
-        "level": 2,
-        "budget_at_completion": Decimal("500000.00"),
-        "is_control_account": True,
-    })
+    development = await wbs_repo.create(
+        {
+            "program_id": program.id,
+            "parent_id": root.id,
+            "wbs_code": "1.2",
+            "name": "Development",
+            "path": "1.2",
+            "level": 2,
+            "budget_at_completion": Decimal("500000.00"),
+            "is_control_account": True,
+        }
+    )
 
     await db_session.commit()
 
@@ -104,9 +112,7 @@ class TestEVMSWorkflowE2E:
     """End-to-end tests for complete EVMS workflow."""
 
     @pytest.mark.asyncio
-    async def test_complete_evms_workflow(
-        self, db_session: AsyncSession, program_with_wbs: dict
-    ):
+    async def test_complete_evms_workflow(self, db_session: AsyncSession, program_with_wbs: dict):
         """Test complete EVMS workflow from period creation to metrics calculation."""
         program = program_with_wbs["program"]
         wbs_design = program_with_wbs["wbs_design"]
@@ -114,13 +120,15 @@ class TestEVMSWorkflowE2E:
 
         # 1. Create EVMS period
         period_repo = EVMSPeriodRepository(db_session)
-        period = await period_repo.create({
-            "program_id": program.id,
-            "period_start": date(2024, 1, 1),
-            "period_end": date(2024, 1, 31),
-            "period_name": "January 2024",
-            "status": PeriodStatus.DRAFT,
-        })
+        period = await period_repo.create(
+            {
+                "program_id": program.id,
+                "period_start": date(2024, 1, 1),
+                "period_end": date(2024, 1, 31),
+                "period_name": "January 2024",
+                "status": PeriodStatus.DRAFT,
+            }
+        )
 
         assert period.id is not None
         assert period.period_name == "January 2024"
@@ -129,29 +137,33 @@ class TestEVMSWorkflowE2E:
         data_repo = EVMSPeriodDataRepository(db_session)
 
         # Design: on schedule, under budget
-        design_data = await data_repo.create({
-            "period_id": period.id,
-            "wbs_id": wbs_design.id,
-            "bcws": Decimal("50000.00"),
-            "bcwp": Decimal("50000.00"),  # On schedule
-            "acwp": Decimal("45000.00"),  # Under budget
-            "cumulative_bcws": Decimal("50000.00"),
-            "cumulative_bcwp": Decimal("50000.00"),
-            "cumulative_acwp": Decimal("45000.00"),
-        })
+        design_data = await data_repo.create(
+            {
+                "period_id": period.id,
+                "wbs_id": wbs_design.id,
+                "bcws": Decimal("50000.00"),
+                "bcwp": Decimal("50000.00"),  # On schedule
+                "acwp": Decimal("45000.00"),  # Under budget
+                "cumulative_bcws": Decimal("50000.00"),
+                "cumulative_bcwp": Decimal("50000.00"),
+                "cumulative_acwp": Decimal("45000.00"),
+            }
+        )
         design_data.calculate_metrics()
 
         # Development: behind schedule, over budget
-        dev_data = await data_repo.create({
-            "period_id": period.id,
-            "wbs_id": wbs_development.id,
-            "bcws": Decimal("100000.00"),
-            "bcwp": Decimal("80000.00"),  # Behind schedule
-            "acwp": Decimal("120000.00"),  # Over budget
-            "cumulative_bcws": Decimal("100000.00"),
-            "cumulative_bcwp": Decimal("80000.00"),
-            "cumulative_acwp": Decimal("120000.00"),
-        })
+        dev_data = await data_repo.create(
+            {
+                "period_id": period.id,
+                "wbs_id": wbs_development.id,
+                "bcws": Decimal("100000.00"),
+                "bcwp": Decimal("80000.00"),  # Behind schedule
+                "acwp": Decimal("120000.00"),  # Over budget
+                "cumulative_bcws": Decimal("100000.00"),
+                "cumulative_bcwp": Decimal("80000.00"),
+                "cumulative_acwp": Decimal("120000.00"),
+            }
+        )
         dev_data.calculate_metrics()
 
         await db_session.flush()
@@ -178,22 +190,22 @@ class TestEVMSWorkflowE2E:
         assert total_acwp == Decimal("165000.00")
 
     @pytest.mark.asyncio
-    async def test_period_status_workflow(
-        self, db_session: AsyncSession, program_with_wbs: dict
-    ):
+    async def test_period_status_workflow(self, db_session: AsyncSession, program_with_wbs: dict):
         """Test period status transitions."""
         program = program_with_wbs["program"]
 
         period_repo = EVMSPeriodRepository(db_session)
 
         # Create draft period
-        period = await period_repo.create({
-            "program_id": program.id,
-            "period_start": date(2024, 2, 1),
-            "period_end": date(2024, 2, 29),
-            "period_name": "February 2024",
-            "status": PeriodStatus.DRAFT,
-        })
+        period = await period_repo.create(
+            {
+                "program_id": program.id,
+                "period_start": date(2024, 2, 1),
+                "period_end": date(2024, 2, 29),
+                "period_name": "February 2024",
+                "status": PeriodStatus.DRAFT,
+            }
+        )
 
         assert period.status == PeriodStatus.DRAFT
 
@@ -219,45 +231,53 @@ class TestEVMSWorkflowE2E:
         data_repo = EVMSPeriodDataRepository(db_session)
 
         # Create January period
-        jan_period = await period_repo.create({
-            "program_id": program.id,
-            "period_start": date(2024, 1, 1),
-            "period_end": date(2024, 1, 31),
-            "period_name": "January 2024",
-            "status": PeriodStatus.APPROVED,
-        })
+        jan_period = await period_repo.create(
+            {
+                "program_id": program.id,
+                "period_start": date(2024, 1, 1),
+                "period_end": date(2024, 1, 31),
+                "period_name": "January 2024",
+                "status": PeriodStatus.APPROVED,
+            }
+        )
 
-        jan_data = await data_repo.create({
-            "period_id": jan_period.id,
-            "wbs_id": wbs_design.id,
-            "bcws": Decimal("50000.00"),
-            "bcwp": Decimal("50000.00"),
-            "acwp": Decimal("45000.00"),
-            "cumulative_bcws": Decimal("50000.00"),
-            "cumulative_bcwp": Decimal("50000.00"),
-            "cumulative_acwp": Decimal("45000.00"),
-        })
+        jan_data = await data_repo.create(
+            {
+                "period_id": jan_period.id,
+                "wbs_id": wbs_design.id,
+                "bcws": Decimal("50000.00"),
+                "bcwp": Decimal("50000.00"),
+                "acwp": Decimal("45000.00"),
+                "cumulative_bcws": Decimal("50000.00"),
+                "cumulative_bcwp": Decimal("50000.00"),
+                "cumulative_acwp": Decimal("45000.00"),
+            }
+        )
         jan_data.calculate_metrics()
 
         # Create February period
-        feb_period = await period_repo.create({
-            "program_id": program.id,
-            "period_start": date(2024, 2, 1),
-            "period_end": date(2024, 2, 29),
-            "period_name": "February 2024",
-            "status": PeriodStatus.DRAFT,
-        })
+        feb_period = await period_repo.create(
+            {
+                "program_id": program.id,
+                "period_start": date(2024, 2, 1),
+                "period_end": date(2024, 2, 29),
+                "period_name": "February 2024",
+                "status": PeriodStatus.DRAFT,
+            }
+        )
 
-        feb_data = await data_repo.create({
-            "period_id": feb_period.id,
-            "wbs_id": wbs_design.id,
-            "bcws": Decimal("50000.00"),
-            "bcwp": Decimal("55000.00"),  # Caught up
-            "acwp": Decimal("48000.00"),
-            "cumulative_bcws": Decimal("100000.00"),
-            "cumulative_bcwp": Decimal("105000.00"),
-            "cumulative_acwp": Decimal("93000.00"),
-        })
+        feb_data = await data_repo.create(
+            {
+                "period_id": feb_period.id,
+                "wbs_id": wbs_design.id,
+                "bcws": Decimal("50000.00"),
+                "bcwp": Decimal("55000.00"),  # Caught up
+                "acwp": Decimal("48000.00"),
+                "cumulative_bcws": Decimal("100000.00"),
+                "cumulative_bcwp": Decimal("105000.00"),
+                "cumulative_acwp": Decimal("93000.00"),
+            }
+        )
         feb_data.calculate_metrics()
 
         await db_session.commit()
@@ -267,9 +287,7 @@ class TestEVMSWorkflowE2E:
         assert latest.id == feb_period.id
 
         # Get periods by status
-        approved = await period_repo.get_by_program(
-            program.id, status=PeriodStatus.APPROVED
-        )
+        approved = await period_repo.get_by_program(program.id, status=PeriodStatus.APPROVED)
         assert len(approved) == 1
         assert approved[0].id == jan_period.id
 
@@ -293,25 +311,29 @@ class TestEVMSAPIE2E:
         period_repo = EVMSPeriodRepository(db_session)
         data_repo = EVMSPeriodDataRepository(db_session)
 
-        period = await period_repo.create({
-            "program_id": program.id,
-            "period_start": date(2024, 3, 1),
-            "period_end": date(2024, 3, 31),
-            "period_name": "March 2024",
-            "status": PeriodStatus.DRAFT,
-        })
+        period = await period_repo.create(
+            {
+                "program_id": program.id,
+                "period_start": date(2024, 3, 1),
+                "period_end": date(2024, 3, 31),
+                "period_name": "March 2024",
+                "status": PeriodStatus.DRAFT,
+            }
+        )
 
         # Add period data
-        period_data = await data_repo.create({
-            "period_id": period.id,
-            "wbs_id": wbs_design.id,
-            "bcws": Decimal("60000.00"),
-            "bcwp": Decimal("58000.00"),
-            "acwp": Decimal("55000.00"),
-            "cumulative_bcws": Decimal("60000.00"),
-            "cumulative_bcwp": Decimal("58000.00"),
-            "cumulative_acwp": Decimal("55000.00"),
-        })
+        period_data = await data_repo.create(
+            {
+                "period_id": period.id,
+                "wbs_id": wbs_design.id,
+                "bcws": Decimal("60000.00"),
+                "bcwp": Decimal("58000.00"),
+                "acwp": Decimal("55000.00"),
+                "cumulative_bcws": Decimal("60000.00"),
+                "cumulative_bcwp": Decimal("58000.00"),
+                "cumulative_acwp": Decimal("55000.00"),
+            }
+        )
         period_data.calculate_metrics()
 
         await db_session.flush()
@@ -330,9 +352,7 @@ class TestEVMSAPIE2E:
         assert len(periods) >= 1
 
     @pytest.mark.asyncio
-    async def test_evms_summary_repository(
-        self, db_session: AsyncSession, program_with_wbs: dict
-    ):
+    async def test_evms_summary_repository(self, db_session: AsyncSession, program_with_wbs: dict):
         """Test EVMS summary via repository."""
         program = program_with_wbs["program"]
         wbs_design = program_with_wbs["wbs_design"]
@@ -341,27 +361,31 @@ class TestEVMSAPIE2E:
         period_repo = EVMSPeriodRepository(db_session)
         data_repo = EVMSPeriodDataRepository(db_session)
 
-        period = await period_repo.create({
-            "program_id": program.id,
-            "period_start": date(2024, 4, 1),
-            "period_end": date(2024, 4, 30),
-            "period_name": "April 2024",
-            "status": PeriodStatus.APPROVED,
-            "cumulative_bcws": Decimal("100000.00"),
-            "cumulative_bcwp": Decimal("95000.00"),
-            "cumulative_acwp": Decimal("90000.00"),
-        })
+        period = await period_repo.create(
+            {
+                "program_id": program.id,
+                "period_start": date(2024, 4, 1),
+                "period_end": date(2024, 4, 30),
+                "period_name": "April 2024",
+                "status": PeriodStatus.APPROVED,
+                "cumulative_bcws": Decimal("100000.00"),
+                "cumulative_bcwp": Decimal("95000.00"),
+                "cumulative_acwp": Decimal("90000.00"),
+            }
+        )
 
-        await data_repo.create({
-            "period_id": period.id,
-            "wbs_id": wbs_design.id,
-            "bcws": Decimal("100000.00"),
-            "bcwp": Decimal("95000.00"),
-            "acwp": Decimal("90000.00"),
-            "cumulative_bcws": Decimal("100000.00"),
-            "cumulative_bcwp": Decimal("95000.00"),
-            "cumulative_acwp": Decimal("90000.00"),
-        })
+        await data_repo.create(
+            {
+                "period_id": period.id,
+                "wbs_id": wbs_design.id,
+                "bcws": Decimal("100000.00"),
+                "bcwp": Decimal("95000.00"),
+                "acwp": Decimal("90000.00"),
+                "cumulative_bcws": Decimal("100000.00"),
+                "cumulative_bcwp": Decimal("95000.00"),
+                "cumulative_acwp": Decimal("90000.00"),
+            }
+        )
 
         await db_session.flush()
 
@@ -389,46 +413,52 @@ class TestReportsE2E:
         period_repo = EVMSPeriodRepository(db_session)
         data_repo = EVMSPeriodDataRepository(db_session)
 
-        period = await period_repo.create({
-            "program_id": program.id,
-            "period_start": date(2024, 5, 1),
-            "period_end": date(2024, 5, 31),
-            "period_name": "May 2024",
-            "status": PeriodStatus.APPROVED,
-            "cumulative_bcws": Decimal("150000.00"),
-            "cumulative_bcwp": Decimal("140000.00"),
-            "cumulative_acwp": Decimal("145000.00"),
-        })
+        period = await period_repo.create(
+            {
+                "program_id": program.id,
+                "period_start": date(2024, 5, 1),
+                "period_end": date(2024, 5, 31),
+                "period_name": "May 2024",
+                "status": PeriodStatus.APPROVED,
+                "cumulative_bcws": Decimal("150000.00"),
+                "cumulative_bcwp": Decimal("140000.00"),
+                "cumulative_acwp": Decimal("145000.00"),
+            }
+        )
 
-        await data_repo.create({
-            "period_id": period.id,
-            "wbs_id": wbs_design.id,
-            "bcws": Decimal("50000.00"),
-            "bcwp": Decimal("50000.00"),
-            "acwp": Decimal("48000.00"),
-            "cumulative_bcws": Decimal("50000.00"),
-            "cumulative_bcwp": Decimal("50000.00"),
-            "cumulative_acwp": Decimal("48000.00"),
-            "cv": Decimal("2000.00"),
-            "sv": Decimal("0.00"),
-            "cpi": Decimal("1.04"),
-            "spi": Decimal("1.00"),
-        })
+        await data_repo.create(
+            {
+                "period_id": period.id,
+                "wbs_id": wbs_design.id,
+                "bcws": Decimal("50000.00"),
+                "bcwp": Decimal("50000.00"),
+                "acwp": Decimal("48000.00"),
+                "cumulative_bcws": Decimal("50000.00"),
+                "cumulative_bcwp": Decimal("50000.00"),
+                "cumulative_acwp": Decimal("48000.00"),
+                "cv": Decimal("2000.00"),
+                "sv": Decimal("0.00"),
+                "cpi": Decimal("1.04"),
+                "spi": Decimal("1.00"),
+            }
+        )
 
-        await data_repo.create({
-            "period_id": period.id,
-            "wbs_id": wbs_development.id,
-            "bcws": Decimal("100000.00"),
-            "bcwp": Decimal("90000.00"),
-            "acwp": Decimal("97000.00"),
-            "cumulative_bcws": Decimal("100000.00"),
-            "cumulative_bcwp": Decimal("90000.00"),
-            "cumulative_acwp": Decimal("97000.00"),
-            "cv": Decimal("-7000.00"),
-            "sv": Decimal("-10000.00"),
-            "cpi": Decimal("0.93"),
-            "spi": Decimal("0.90"),
-        })
+        await data_repo.create(
+            {
+                "period_id": period.id,
+                "wbs_id": wbs_development.id,
+                "bcws": Decimal("100000.00"),
+                "bcwp": Decimal("90000.00"),
+                "acwp": Decimal("97000.00"),
+                "cumulative_bcws": Decimal("100000.00"),
+                "cumulative_bcwp": Decimal("90000.00"),
+                "cumulative_acwp": Decimal("97000.00"),
+                "cv": Decimal("-7000.00"),
+                "sv": Decimal("-10000.00"),
+                "cpi": Decimal("0.93"),
+                "spi": Decimal("0.90"),
+            }
+        )
 
         await db_session.commit()
 
@@ -453,13 +483,15 @@ class TestReportsE2E:
 
         # Create minimal period
         period_repo = EVMSPeriodRepository(db_session)
-        await period_repo.create({
-            "program_id": program.id,
-            "period_start": date(2024, 6, 1),
-            "period_end": date(2024, 6, 30),
-            "period_name": "June 2024",
-            "status": PeriodStatus.APPROVED,
-        })
+        await period_repo.create(
+            {
+                "program_id": program.id,
+                "period_start": date(2024, 6, 1),
+                "period_end": date(2024, 6, 30),
+                "period_name": "June 2024",
+                "status": PeriodStatus.APPROVED,
+            }
+        )
         await db_session.commit()
 
         # Generate HTML report
@@ -481,13 +513,15 @@ class TestReportsE2E:
 
         # Create period
         period_repo = EVMSPeriodRepository(db_session)
-        await period_repo.create({
-            "program_id": program.id,
-            "period_start": date(2024, 7, 1),
-            "period_end": date(2024, 7, 31),
-            "period_name": "July 2024",
-            "status": PeriodStatus.DRAFT,
-        })
+        await period_repo.create(
+            {
+                "program_id": program.id,
+                "period_start": date(2024, 7, 1),
+                "period_end": date(2024, 7, 31),
+                "period_name": "July 2024",
+                "status": PeriodStatus.DRAFT,
+            }
+        )
         await db_session.commit()
 
         # Get reports summary

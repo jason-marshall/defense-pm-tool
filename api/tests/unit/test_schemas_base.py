@@ -1,12 +1,12 @@
 """Tests for base schema classes."""
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
 from pydantic import ValidationError
 
-from src.schemas.base import BaseSchema, TimestampMixin, IDMixin, AuditMixin
+from src.schemas.base import AuditMixin, BaseSchema, IDMixin, TimestampMixin
 
 
 class TestBaseSchema:
@@ -14,6 +14,7 @@ class TestBaseSchema:
 
     def test_base_schema_strips_whitespace(self):
         """Should strip whitespace from string fields."""
+
         class TestSchema(BaseSchema):
             name: str
 
@@ -22,6 +23,7 @@ class TestBaseSchema:
 
     def test_base_schema_from_attributes(self):
         """Should support from_attributes for ORM conversion."""
+
         class MockModel:
             name = "test"
 
@@ -37,6 +39,7 @@ class TestTimestampMixin:
 
     def test_timestamp_mixin_fields(self):
         """Should have created_at and updated_at fields."""
+
         class TestSchema(TimestampMixin):
             pass
 
@@ -47,6 +50,7 @@ class TestTimestampMixin:
 
     def test_timestamp_mixin_requires_fields(self):
         """Should require both timestamp fields."""
+
         class TestSchema(TimestampMixin):
             pass
 
@@ -59,6 +63,7 @@ class TestIDMixin:
 
     def test_id_mixin_uuid(self):
         """Should accept UUID for id field."""
+
         class TestSchema(IDMixin):
             pass
 
@@ -68,6 +73,7 @@ class TestIDMixin:
 
     def test_id_mixin_requires_id(self):
         """Should require id field."""
+
         class TestSchema(IDMixin):
             pass
 
@@ -80,6 +86,7 @@ class TestAuditMixin:
 
     def test_audit_mixin_all_fields(self):
         """Should have id, created_at, and updated_at."""
+
         class TestSchema(AuditMixin):
             pass
 

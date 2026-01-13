@@ -1,13 +1,10 @@
 """Additional CPM engine tests for edge cases and coverage."""
 
-import pytest
-from datetime import date
-from decimal import Decimal
 from uuid import uuid4
 
-from src.services.cpm import CPMEngine
 from src.models.activity import Activity
 from src.models.dependency import Dependency
+from src.services.cpm import CPMEngine
 
 
 class TestCPMEdgeCases:

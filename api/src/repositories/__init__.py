@@ -9,8 +9,8 @@ from src.repositories.wbs import WBSElementRepository
 __all__ = [
     "ActivityRepository",
     "DependencyRepository",
-    "EVMSPeriodRepository",
     "EVMSPeriodDataRepository",
+    "EVMSPeriodRepository",
     "ProgramRepository",
     "WBSElementRepository",
 ]

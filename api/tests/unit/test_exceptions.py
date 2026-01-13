@@ -2,17 +2,15 @@
 
 from uuid import uuid4
 
-import pytest
-
 from src.core.exceptions import (
-    DomainError,
-    NotFoundError,
-    ValidationError,
     AuthenticationError,
     AuthorizationError,
-    ConflictError,
     CircularDependencyError,
+    ConflictError,
+    DomainError,
+    NotFoundError,
     ScheduleCalculationError,
+    ValidationError,
 )
 
 

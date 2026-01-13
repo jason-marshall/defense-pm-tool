@@ -2,10 +2,8 @@
 
 from uuid import uuid4
 
-import pytest
-
-from src.schemas.dependency import DependencyCreate, DependencyUpdate
 from src.models.enums import DependencyType
+from src.schemas.dependency import DependencyCreate, DependencyUpdate
 
 
 class TestDependencyCreate:

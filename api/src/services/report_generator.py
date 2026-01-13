@@ -89,14 +89,10 @@ class ReportGenerator:
         self.wbs_elements = wbs_elements
 
         # Build WBS lookup
-        self.wbs_by_id: dict[UUID, WBSElement] = {
-            wbs.id: wbs for wbs in wbs_elements
-        }
+        self.wbs_by_id: dict[UUID, WBSElement] = {wbs.id: wbs for wbs in wbs_elements}
 
         # Build period data lookup by WBS
-        self.data_by_wbs: dict[UUID, EVMSPeriodData] = {
-            data.wbs_id: data for data in period_data
-        }
+        self.data_by_wbs: dict[UUID, EVMSPeriodData] = {data.wbs_id: data for data in period_data}
 
     def _build_wbs_row(self, wbs: WBSElement) -> WBSSummaryRow:
         """Build a single WBS summary row."""
@@ -113,10 +109,21 @@ class ReportGenerator:
         eac, etc, vac = self._calculate_projections(bac, acwp, bcwp)
 
         return WBSSummaryRow(
-            wbs_code=wbs.wbs_code, wbs_name=wbs.name, level=wbs.level,
+            wbs_code=wbs.wbs_code,
+            wbs_name=wbs.name,
+            level=wbs.level,
             is_control_account=wbs.is_control_account,
-            bac=bac, bcws=bcws, bcwp=bcwp, acwp=acwp,
-            cv=cv, sv=sv, cpi=cpi, spi=spi, eac=eac, etc=etc, vac=vac,
+            bac=bac,
+            bcws=bcws,
+            bcwp=bcwp,
+            acwp=acwp,
+            cv=cv,
+            sv=sv,
+            cpi=cpi,
+            spi=spi,
+            eac=eac,
+            etc=etc,
+            vac=vac,
         )
 
     def _calculate_projections(
@@ -144,7 +151,9 @@ class ReportGenerator:
 
     def generate_cpr_format1(self) -> CPRFormat1Report:
         """Generate CPR Format 1 (WBS Summary) report."""
-        wbs_rows = [self._build_wbs_row(wbs) for wbs in sorted(self.wbs_elements, key=lambda w: w.path)]
+        wbs_rows = [
+            self._build_wbs_row(wbs) for wbs in sorted(self.wbs_elements, key=lambda w: w.path)
+        ]
 
         # Calculate totals from period data
         total_bac = self.program.budget_at_completion or Decimal("0")
@@ -154,8 +163,12 @@ class ReportGenerator:
         total_sv = self.period.schedule_variance or Decimal("0")
         total_cpi, total_spi = self.period.cpi, self.period.spi
 
-        total_eac, total_etc, total_vac = self._calculate_projections(total_bac, total_acwp, total_bcwp)
-        percent_complete, percent_spent = self._calculate_percent_metrics(total_bac, total_bcwp, total_acwp)
+        total_eac, total_etc, total_vac = self._calculate_projections(
+            total_bac, total_acwp, total_bcwp
+        )
+        percent_complete, percent_spent = self._calculate_percent_metrics(
+            total_bac, total_bcwp, total_acwp
+        )
         variance_notes = self._generate_variance_notes(wbs_rows)
 
         return CPRFormat1Report(
@@ -314,11 +327,11 @@ class ReportGenerator:
 
     <div class="header-info">
         <div><label>Program</label><span>{report.program_name} ({report.program_code})</span></div>
-        <div><label>Contract</label><span>{report.contract_number or 'N/A'}</span></div>
-        <div><label>Report Date</label><span>{report.report_date.strftime('%B %d, %Y')}</span></div>
+        <div><label>Contract</label><span>{report.contract_number or "N/A"}</span></div>
+        <div><label>Report Date</label><span>{report.report_date.strftime("%B %d, %Y")}</span></div>
         <div><label>Reporting Period</label><span>{report.reporting_period}</span></div>
-        <div><label>Period Start</label><span>{report.period_start.strftime('%B %d, %Y')}</span></div>
-        <div><label>Period End</label><span>{report.period_end.strftime('%B %d, %Y')}</span></div>
+        <div><label>Period Start</label><span>{report.period_start.strftime("%B %d, %Y")}</span></div>
+        <div><label>Period End</label><span>{report.period_end.strftime("%B %d, %Y")}</span></div>
     </div>
 
     <div class="summary-grid">
@@ -326,13 +339,13 @@ class ReportGenerator:
             <label>Budget at Completion</label>
             <div class="value">${report.total_bac:,.0f}</div>
         </div>
-        <div class="summary-card {'positive' if report.total_cv >= 0 else 'negative'}">
+        <div class="summary-card {"positive" if report.total_cv >= 0 else "negative"}">
             <label>Cost Variance</label>
-            <div class="value {'positive' if report.total_cv >= 0 else 'negative'}">${report.total_cv:,.0f}</div>
+            <div class="value {"positive" if report.total_cv >= 0 else "negative"}">${report.total_cv:,.0f}</div>
         </div>
-        <div class="summary-card {'positive' if report.total_sv >= 0 else 'negative'}">
+        <div class="summary-card {"positive" if report.total_sv >= 0 else "negative"}">
             <label>Schedule Variance</label>
-            <div class="value {'positive' if report.total_sv >= 0 else 'negative'}">${report.total_sv:,.0f}</div>
+            <div class="value {"positive" if report.total_sv >= 0 else "negative"}">${report.total_sv:,.0f}</div>
         </div>
         <div class="summary-card">
             <label>% Complete</label>
@@ -375,7 +388,7 @@ class ReportGenerator:
             html += f"""
             <tr{ca_class}>
                 <td>{row.wbs_code}</td>
-                <td>{indent}{row.wbs_name}{'*' if row.is_control_account else ''}</td>
+                <td>{indent}{row.wbs_name}{"*" if row.is_control_account else ""}</td>
                 <td>${row.bac:,.0f}</td>
                 <td>${row.bcws:,.0f}</td>
                 <td>${row.bcwp:,.0f}</td>

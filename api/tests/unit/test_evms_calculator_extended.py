@@ -2,8 +2,6 @@
 
 from decimal import Decimal
 
-import pytest
-
 from src.services.evms import EVMSCalculator
 
 

@@ -1,11 +1,12 @@
 """Unit tests for WBS CRUD operations and schemas."""
 
-import pytest
-from uuid import uuid4
 from decimal import Decimal
+from uuid import uuid4
 
-from src.schemas.wbs import WBSCreate, WBSUpdate, WBSResponse
+import pytest
+
 from src.models.wbs import WBSElement
+from src.schemas.wbs import WBSCreate, WBSUpdate
 
 
 class TestWBSCreate:
