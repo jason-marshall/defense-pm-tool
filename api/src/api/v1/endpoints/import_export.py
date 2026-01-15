@@ -62,9 +62,7 @@ async def import_msproject(
     file: Annotated[UploadFile, File(description="MS Project XML file")],
     db: DbSession,
     current_user: CurrentUser,
-    preview: Annotated[
-        bool, Query(description="Preview only, don't save")
-    ] = False,
+    preview: Annotated[bool, Query(description="Preview only, don't save")] = False,
 ) -> ImportResultResponse | ImportPreviewResponse:
     """
     Import MS Project XML file into a program.

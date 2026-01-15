@@ -159,12 +159,10 @@ class CPMEngine:
                         # Successor starts after predecessor starts
                         es = pred_result.early_start + lag
                     case DependencyType.FF.value:
-                        # Successor finishes after predecessor finishes
-                        # ES = pred.EF + lag - duration
+                        # Successor finishes after predecessor finishes (adjust for duration)
                         es = pred_result.early_finish + lag - activity.duration
                     case DependencyType.SF.value:
-                        # Successor finishes after predecessor starts
-                        # ES = pred.ES + lag - duration
+                        # Successor finishes after predecessor starts (adjust for duration)
                         es = pred_result.early_start + lag - activity.duration
                     case _:
                         es = pred_result.early_finish + lag
@@ -213,15 +211,13 @@ class CPMEngine:
                         # Predecessor finishes before successor starts
                         lf = succ_result.late_start - lag
                     case DependencyType.SS.value:
-                        # Predecessor starts before successor starts
-                        # LF = succ.LS - lag + duration
+                        # Predecessor starts before successor starts (adjust for duration)
                         lf = succ_result.late_start - lag + activity.duration
                     case DependencyType.FF.value:
                         # Predecessor finishes before successor finishes
                         lf = succ_result.late_finish - lag
                     case DependencyType.SF.value:
-                        # Predecessor starts before successor finishes
-                        # LF = succ.LF - lag + duration
+                        # Predecessor starts before successor finishes (adjust for duration)
                         lf = succ_result.late_finish - lag + activity.duration
                     case _:
                         lf = succ_result.late_start - lag

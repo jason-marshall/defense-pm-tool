@@ -39,23 +39,23 @@ from src.models.user import User
 from src.models.wbs import LtreeType, WBSElement
 
 __all__ = [
+    "Activity",
+    "ActivityStatus",
     # Base classes
     "Base",
-    "SoftDeleteMixin",
-    # Enums
-    "UserRole",
-    "ProgramStatus",
     "ConstraintType",
-    "DependencyType",
-    "ActivityStatus",
-    "PeriodStatus",
-    # Models
-    "User",
-    "Program",
-    "WBSElement",
-    "LtreeType",
-    "Activity",
     "Dependency",
+    "DependencyType",
     "EVMSPeriod",
     "EVMSPeriodData",
+    "LtreeType",
+    "PeriodStatus",
+    "Program",
+    "ProgramStatus",
+    "SoftDeleteMixin",
+    # Models
+    "User",
+    # Enums
+    "UserRole",
+    "WBSElement",
 ]

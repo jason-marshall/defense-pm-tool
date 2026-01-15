@@ -246,9 +246,8 @@ class ActivityUpdate(BaseModel):
     @classmethod
     def validate_percent_complete(cls, v: Decimal | None) -> Decimal | None:
         """Ensure percent_complete is between 0 and 100."""
-        if v is not None:
-            if v < 0 or v > 100:
-                raise ValueError("percent_complete must be between 0 and 100")
+        if v is not None and (v < 0 or v > 100):
+            raise ValueError("percent_complete must be between 0 and 100")
         return v
 
 

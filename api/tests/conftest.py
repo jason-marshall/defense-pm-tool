@@ -1,9 +1,12 @@
 """Pytest configuration and fixtures."""
 
+import contextlib
 import os
 import tempfile
 from collections.abc import AsyncGenerator
+from datetime import date
 from decimal import Decimal
+from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -56,10 +59,8 @@ async def async_engine():
     await engine.dispose()
 
     # Clean up the temp file
-    try:
-        os.unlink(db_path)
-    except OSError:
-        pass  # File may already be deleted
+    with contextlib.suppress(OSError):
+        Path(db_path).unlink()
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -136,8 +137,7 @@ async def admin_auth_headers(client: AsyncClient) -> dict[str, str]:
     }
 
     # Register admin
-    register_response = await client.post("/api/v1/auth/register", json=admin_data)
-    user_id = register_response.json()["id"]
+    await client.post("/api/v1/auth/register", json=admin_data)
 
     # Update role to admin via direct database access
     # For tests, we need to manually set admin role after registration
@@ -175,8 +175,6 @@ def sample_program_data() -> dict:
 @pytest.fixture
 def sample_program() -> Program:
     """Create a sample program instance."""
-    from datetime import date
-
     return Program(
         id=uuid4(),
         name="Test Program",

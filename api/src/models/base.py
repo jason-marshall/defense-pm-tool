@@ -178,6 +178,6 @@ class SoftDeleteMixin:
 
 # Event listener to automatically update updated_at on changes
 @event.listens_for(Base, "before_update", propagate=True)
-def receive_before_update(mapper: Any, connection: Any, target: Base) -> None:
+def receive_before_update(_mapper: Any, _connection: Any, target: Base) -> None:
     """Automatically update the updated_at timestamp before any update."""
     target.updated_at = datetime.now()

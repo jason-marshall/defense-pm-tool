@@ -60,7 +60,7 @@ async def init_engine() -> AsyncEngine:
     Returns:
         The initialized AsyncEngine instance.
     """
-    global _engine, _async_session_maker
+    global _engine, _async_session_maker  # noqa: PLW0603 - necessary for singleton pattern
 
     if _engine is not None:
         logger.warning("database_engine_already_initialized")
@@ -103,7 +103,7 @@ async def dispose_engine() -> None:
     Closes all connections in the connection pool.
     This should be called during application shutdown.
     """
-    global _engine, _async_session_maker
+    global _engine, _async_session_maker  # noqa: PLW0603 - necessary for singleton pattern
 
     if _engine is not None:
         logger.info("disposing_database_engine")

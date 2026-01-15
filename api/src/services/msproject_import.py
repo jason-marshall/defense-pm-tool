@@ -74,9 +74,7 @@ class MSProjectImporter:
     to internal data structures for import into the system.
     """
 
-    NAMESPACE: ClassVar[dict[str, str]] = {
-        "msp": "http://schemas.microsoft.com/project"
-    }
+    NAMESPACE: ClassVar[dict[str, str]] = {"msp": "http://schemas.microsoft.com/project"}
 
     # MS Project dependency type mapping
     # 0 = FF, 1 = FS, 2 = SF, 3 = SS
@@ -165,9 +163,7 @@ class MSProjectImporter:
             return tasks
 
         for task_elem in (
-            tasks_element.findall("msp:Task", ns)
-            if ns
-            else tasks_element.findall("Task")
+            tasks_element.findall("msp:Task", ns) if ns else tasks_element.findall("Task")
         ):
             task = self._parse_task(task_elem, ns)
             if task:
@@ -244,9 +240,7 @@ class MSProjectImporter:
         mapped_constraint = self.CONSTRAINT_TYPE_MAP.get(constraint_type_id)
         if mapped_constraint:
             constraint_type = mapped_constraint.value
-            constraint_date = self._parse_date(
-                self._get_text(elem, "ConstraintDate", ns)
-            )
+            constraint_date = self._parse_date(self._get_text(elem, "ConstraintDate", ns))
             return constraint_type, constraint_date
 
         if constraint_type_id in (6, 7):
@@ -259,9 +253,7 @@ class MSProjectImporter:
                 constraint_type = ConstraintType.FNLT.value
             else:  # Must Start On
                 constraint_type = ConstraintType.SNET.value
-            constraint_date = self._parse_date(
-                self._get_text(elem, "ConstraintDate", ns)
-            )
+            constraint_date = self._parse_date(self._get_text(elem, "ConstraintDate", ns))
             return constraint_type, constraint_date
 
         return None, None
@@ -271,9 +263,7 @@ class MSProjectImporter:
         predecessors = []
 
         pred_elements = (
-            elem.findall("msp:PredecessorLink", ns)
-            if ns
-            else elem.findall("PredecessorLink")
+            elem.findall("msp:PredecessorLink", ns) if ns else elem.findall("PredecessorLink")
         )
 
         for pred_elem in pred_elements:
@@ -404,10 +394,7 @@ async def import_msproject_to_program(
 
     # First pass: Create WBS elements and activities
     for task in project.tasks:
-        await _import_task(
-            task, program_id, session, wbs_repo,
-            uid_to_id, created_wbs_codes, stats
-        )
+        await _import_task(task, program_id, session, wbs_repo, uid_to_id, created_wbs_codes, stats)
 
     # Flush to ensure activities exist before creating dependencies
     await session.flush()
@@ -433,13 +420,10 @@ async def _import_task(
     """Import a single task as either WBS element or activity."""
     try:
         if task.is_summary:
-            await _create_wbs_element(
-                task, program_id, session, created_wbs_codes, stats
-            )
+            await _create_wbs_element(task, program_id, session, created_wbs_codes, stats)
         else:
             await _create_activity(
-                task, program_id, session, wbs_repo,
-                uid_to_id, created_wbs_codes, stats
+                task, program_id, session, wbs_repo, uid_to_id, created_wbs_codes, stats
             )
     except Exception as e:
         stats["errors"].append(f"Error importing task '{task.name}': {e!s}")
@@ -518,9 +502,7 @@ async def _create_activity(
             if task.constraint_date:
                 activity.constraint_date = task.constraint_date.date()
         except ValueError:
-            stats["warnings"].append(
-                f"Unknown constraint type for task '{task.name}'"
-            )
+            stats["warnings"].append(f"Unknown constraint type for task '{task.name}'")
 
     session.add(activity)
     uid_to_id[task.uid] = activity_id
@@ -580,8 +562,7 @@ def _create_dependencies(
         predecessor_id = uid_to_id.get(pred["predecessor_uid"])
         if not predecessor_id:
             stats["warnings"].append(
-                f"Predecessor UID {pred['predecessor_uid']} "
-                f"not found for task '{task.name}'"
+                f"Predecessor UID {pred['predecessor_uid']} not found for task '{task.name}'"
             )
             continue
 
@@ -596,6 +577,4 @@ def _create_dependencies(
             session.add(dep)
             stats["dependencies_imported"] += 1
         except Exception as e:
-            stats["errors"].append(
-                f"Error creating dependency for task '{task.name}': {e!s}"
-            )
+            stats["errors"].append(f"Error creating dependency for task '{task.name}': {e!s}")
