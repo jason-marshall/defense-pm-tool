@@ -4,7 +4,7 @@ import hashlib
 import json
 from typing import Any, TypeVar
 
-import redis.asyncio as redis
+import redis.asyncio as aioredis
 import structlog
 
 from src.config import settings
@@ -57,23 +57,23 @@ class CacheManager:
     Provides methods for caching and invalidation of application data.
     """
 
-    def __init__(self, redis_client: redis.Redis | None = None) -> None:
+    def __init__(self, redis_client: aioredis.Redis | None = None) -> None:
         """
         Initialize cache manager.
 
         Args:
             redis_client: Optional Redis client. If not provided, will be set later.
         """
-        self._redis: redis.Redis | None = redis_client
+        self._redis: aioredis.Redis | None = redis_client
         self._enabled = True
 
     @property
-    def redis(self) -> redis.Redis | None:
+    def redis(self) -> aioredis.Redis | None:
         """Get Redis client."""
         return self._redis
 
     @redis.setter
-    def redis(self, client: redis.Redis) -> None:
+    def redis(self, client: aioredis.Redis) -> None:
         """Set Redis client."""
         self._redis = client
 
@@ -110,7 +110,7 @@ class CacheManager:
                 return json.loads(data)
             logger.debug("cache_miss", key=key)
             return None
-        except redis.RedisError as e:
+        except aioaioredis.RedisError as e:
             logger.warning("cache_get_error", key=key, error=str(e))
             return None
         except json.JSONDecodeError as e:
@@ -145,7 +145,7 @@ class CacheManager:
                 await self._redis.set(key, serialized)  # type: ignore
             logger.debug("cache_set", key=key, ttl=ttl)
             return True
-        except (redis.RedisError, TypeError, ValueError) as e:
+        except (aioaioredis.RedisError, TypeError, ValueError) as e:
             logger.warning("cache_set_error", key=key, error=str(e))
             return False
 
@@ -166,7 +166,7 @@ class CacheManager:
             await self._redis.delete(key)  # type: ignore
             logger.debug("cache_delete", key=key)
             return True
-        except redis.RedisError as e:
+        except aioaioredis.RedisError as e:
             logger.warning("cache_delete_error", key=key, error=str(e))
             return False
 
@@ -193,7 +193,7 @@ class CacheManager:
                 logger.debug("cache_delete_pattern", pattern=pattern, count=deleted)
                 return deleted
             return 0
-        except redis.RedisError as e:
+        except aioaioredis.RedisError as e:
             logger.warning("cache_delete_pattern_error", pattern=pattern, error=str(e))
             return 0
 
@@ -265,7 +265,7 @@ class CacheManager:
                 "used_memory_human": info.get("used_memory_human"),
                 "uptime_in_seconds": info.get("uptime_in_seconds"),
             }
-        except redis.RedisError as e:
+        except aioaioredis.RedisError as e:
             return {"status": "unhealthy", "error": str(e)}
 
 
@@ -293,7 +293,7 @@ def compute_activities_hash(activities_data: list[dict[str, Any]]) -> str:
     return hash_obj.hexdigest()[:16]
 
 
-async def init_redis() -> redis.Redis:
+async def init_redis() -> aioredis.Redis:
     """
     Initialize Redis connection.
 
@@ -301,7 +301,7 @@ async def init_redis() -> redis.Redis:
         Redis client instance
     """
     redis_url = str(settings.REDIS_URL)
-    client = redis.from_url(
+    client = aioredis.from_url(
         redis_url,
         encoding="utf-8",
         decode_responses=True,
@@ -310,7 +310,7 @@ async def init_redis() -> redis.Redis:
     return client
 
 
-async def close_redis(client: redis.Redis) -> None:
+async def close_redis(client: aioredis.Redis) -> None:
     """
     Close Redis connection.
 

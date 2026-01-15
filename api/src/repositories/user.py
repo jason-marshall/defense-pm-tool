@@ -105,11 +105,7 @@ class UserRepository(BaseRepository[User]):
         """
         result = await self.session.execute(
             select(User)
-<<<<<<< HEAD
             .where(User.is_active.is_(True))
-=======
-            .where(User.is_active)
->>>>>>> d05b5f31ab93b43733b70313ef639e531eec4747
             .offset(skip)
             .limit(limit)
             .order_by(User.created_at.desc())
