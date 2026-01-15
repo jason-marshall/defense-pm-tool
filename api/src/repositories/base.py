@@ -110,6 +110,14 @@ class BaseRepository(Generic[ModelType]):
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
+    async def get(
+        self,
+        id: UUID,
+        include_deleted: bool = False,
+    ) -> ModelType | None:
+        """Alias for get_by_id for convenience."""
+        return await self.get_by_id(id, include_deleted)
+
     async def get_all(
         self,
         *,

@@ -102,11 +102,13 @@ class TestCacheManager:
         mock.setex = AsyncMock(return_value=True)
         mock.delete = AsyncMock(return_value=1)
         mock.scan_iter = AsyncMock(return_value=iter([]))
-        mock.info = AsyncMock(return_value={
-            "connected_clients": 1,
-            "used_memory_human": "1M",
-            "uptime_in_seconds": 3600,
-        })
+        mock.info = AsyncMock(
+            return_value={
+                "connected_clients": 1,
+                "used_memory_human": "1M",
+                "uptime_in_seconds": 3600,
+            }
+        )
         return mock
 
     @pytest.fixture
@@ -228,6 +230,7 @@ class TestCacheManager:
         mock_redis: MagicMock,
     ) -> None:
         """Test invalidate_program deletes all program keys."""
+
         # Mock scan_iter to return some keys
         async def mock_scan(*args, **kwargs):
             for key in [b"cpm:result:prog-123:hash1", b"cpm:result:prog-123:hash2"]:
@@ -248,6 +251,7 @@ class TestCacheManager:
         mock_redis: MagicMock,
     ) -> None:
         """Test invalidate_cpm deletes CPM keys for program."""
+
         async def mock_scan(*args, **kwargs):
             for key in [b"cpm:result:prog-123:hash1"]:
                 yield key

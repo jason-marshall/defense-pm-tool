@@ -1050,10 +1050,7 @@ class TestIntegrationScenarios:
         assert bac == Decimal("180000.00")
 
         # BCWP = sum of earned values (budgeted * % complete)
-        bcwp = sum(
-            a.budgeted_cost * a.percent_complete / Decimal("100")
-            for a in activities
-        )
+        bcwp = sum(a.budgeted_cost * a.percent_complete / Decimal("100") for a in activities)
         # 50000 * 1.0 + 100000 * 0.5 + 30000 * 0 = 100000
         assert bcwp == Decimal("100000.00")
 

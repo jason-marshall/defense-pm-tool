@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     CheckConstraint,
     Date,
@@ -23,7 +24,7 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.models.base import Base
-from src.models.enums import ConstraintType
+from src.models.enums import ConstraintType, EVMethod
 
 if TYPE_CHECKING:
     from src.models.dependency import Dependency
@@ -234,6 +235,21 @@ class Activity(Base):
         nullable=False,
         default=Decimal("0.00"),
         comment="Actual cost incurred (ACWP)",
+    )
+
+    # EV Method configuration
+    ev_method: Mapped[str] = mapped_column(
+        String(30),
+        nullable=False,
+        default=EVMethod.PERCENT_COMPLETE.value,
+        comment="Earned value calculation method",
+    )
+
+    # Milestones for milestone-weight method (stored as JSON)
+    milestones_json: Mapped[dict | None] = mapped_column(
+        JSON,
+        nullable=True,
+        comment="Milestone definitions for weighted EV method",
     )
 
     # Relationships

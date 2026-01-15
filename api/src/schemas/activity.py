@@ -13,7 +13,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from src.models.enums import ConstraintType
+from src.models.enums import ConstraintType, EVMethod
 from src.schemas.common import PaginatedResponse
 from src.schemas.wbs import WBSBriefResponse
 
@@ -121,6 +121,16 @@ class ActivityCreate(ActivityBase):
         ge=0,
         description="Budgeted cost (BCWS at completion)",
         examples=["25000.00"],
+    )
+    ev_method: EVMethod = Field(
+        default=EVMethod.PERCENT_COMPLETE,
+        description="Earned value calculation method",
+        examples=["percent_complete", "0/100", "50/50", "loe"],
+    )
+    milestones_json: list[dict] | None = Field(
+        default=None,
+        description="Milestones for milestone-weight EV method",
+        examples=[[{"name": "Design", "weight": 0.25, "is_complete": False}]],
     )
 
     @model_validator(mode="after")
@@ -234,6 +244,14 @@ class ActivityUpdate(BaseModel):
         ge=0,
         description="Actual cost incurred",
     )
+    ev_method: EVMethod | None = Field(
+        default=None,
+        description="Earned value calculation method",
+    )
+    milestones_json: list[dict] | None = Field(
+        default=None,
+        description="Milestones for milestone-weight EV method",
+    )
 
     @model_validator(mode="after")
     def validate_milestone_duration(self) -> "ActivityUpdate":
@@ -246,9 +264,8 @@ class ActivityUpdate(BaseModel):
     @classmethod
     def validate_percent_complete(cls, v: Decimal | None) -> Decimal | None:
         """Ensure percent_complete is between 0 and 100."""
-        if v is not None:
-            if v < 0 or v > 100:
-                raise ValueError("percent_complete must be between 0 and 100")
+        if v is not None and (v < 0 or v > 100):
+            raise ValueError("percent_complete must be between 0 and 100")
         return v
 
 
@@ -507,6 +524,15 @@ class ActivityResponse(BaseModel):
     actual_cost: Decimal = Field(
         default=Decimal("0.00"),
         description="Actual cost incurred (ACWP)",
+    )
+    # EV Method configuration
+    ev_method: str = Field(
+        default=EVMethod.PERCENT_COMPLETE.value,
+        description="Earned value calculation method",
+    )
+    milestones_json: list[dict] | None = Field(
+        default=None,
+        description="Milestones for milestone-weight EV method",
     )
     # Timestamps
     created_at: datetime = Field(

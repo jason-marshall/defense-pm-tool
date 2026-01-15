@@ -5,12 +5,15 @@ from fastapi import APIRouter
 from src.api.v1.endpoints import (
     activities,
     auth,
+    baselines,
     dependencies,
     evms,
     import_export,
     programs,
     reports,
+    scenarios,
     schedule,
+    simulations,
     wbs,
 )
 
@@ -69,4 +72,22 @@ api_router.include_router(
     import_export.router,
     prefix="/import",
     tags=["Import/Export"],
+)
+
+api_router.include_router(
+    baselines.router,
+    prefix="/baselines",
+    tags=["Baselines"],
+)
+
+api_router.include_router(
+    scenarios.router,
+    prefix="/scenarios",
+    tags=["Scenarios"],
+)
+
+api_router.include_router(
+    simulations.router,
+    prefix="/simulations",
+    tags=["Simulations"],
 )

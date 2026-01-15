@@ -3,7 +3,7 @@
 > **Project**: Defense PM Tool with EVMS/CPM capabilities
 > **Repository**: https://github.com/jason-marshall/defense-pm-tool
 > **Developer**: Single developer, 3-month timeline
-> **Current Phase**: Week 4 - Performance Optimization & Polish
+> **Current Phase**: Month 2, Week 6 - Monte Carlo Integration & Scenario Analysis
 
 ---
 
@@ -641,11 +641,27 @@ pytest -v -s
 - [x] Week 3 integration tests
 - [x] 486 tests passing, 75%+ coverage achieved
 
-### 🔶 In Progress (Week 4)
-- [ ] Performance optimization
-- [ ] MS Project XML import
-- [ ] End-to-end tests
-- [ ] Production deployment prep
+### ✅ Completed (Week 4)
+- [x] Performance optimization
+- [x] MS Project XML import
+- [x] End-to-end tests
+- [x] Redis caching infrastructure
+- [x] Documentation complete
+
+### ✅ Completed (Week 5 - Month 2 Start)
+- [x] Multiple EV methods (0/100, 50/50, LOE, milestone weights, % complete)
+- [x] Baseline management model & CRUD with JSONB snapshots
+- [x] Baseline comparison service for variance analysis
+- [x] Scenario planning foundation (model, repository, schemas)
+- [x] Monte Carlo engine with NumPy vectorization
+- [x] Support for triangular, PERT, normal, uniform distributions
+- [x] 690 tests passing (562 unit + 128 integration)
+
+### 🔶 In Progress (Week 6)
+- [ ] Monte Carlo API endpoints
+- [ ] Scenario branching and comparison
+- [ ] Advanced EAC methods
+- [ ] Enhanced S-curve dashboard
 
 ---
 

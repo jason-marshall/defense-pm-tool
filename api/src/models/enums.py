@@ -411,6 +411,106 @@ class ConstraintType(str, Enum):
         return self in (ConstraintType.SNLT, ConstraintType.FNLT)
 
 
+class EVMethod(str, Enum):
+    """
+    Earned Value (EV) calculation methods for EVMS compliance.
+
+    Different activities require different methods for measuring earned value
+    (BCWP - Budgeted Cost of Work Performed) based on their nature and duration.
+
+    Methods:
+        ZERO_HUNDRED (0/100):
+            BCWP = 0 until complete, then BAC (full budget).
+            Best for: Short discrete tasks (< 1 month)
+            Example: Document review, inspection
+
+        FIFTY_FIFTY (50/50):
+            BCWP = 50% of BAC when started, 100% when complete.
+            Best for: 1-2 month tasks where progress is hard to measure
+            Example: Design tasks, analysis activities
+
+        PERCENT_COMPLETE:
+            BCWP = BAC * (percent_complete / 100)
+            Default method. Best for: General use, measurable progress
+            Example: Construction, manufacturing
+
+        MILESTONE_WEIGHT:
+            BCWP = BAC * sum(completed milestone weights)
+            Best for: Long tasks (3+ months) with defined milestones
+            Example: Software development phases
+
+        LOE (Level of Effort):
+            BCWP = BCWS (always equals planned value)
+            Best for: Support activities, overhead tasks
+            Example: Project management, quality assurance
+
+        APPORTIONED:
+            BCWP = factor * base_activity_BCWP
+            Best for: Activities tied to another (deferred to Week 6)
+            Example: Inspection tied to manufacturing
+
+    EVMS Compliance:
+        Per DI-MGMT-81466 and EIA-748, the EV method should match
+        the work content and allow objective measurement of progress.
+    """
+
+    ZERO_HUNDRED = "0/100"
+    FIFTY_FIFTY = "50/50"
+    PERCENT_COMPLETE = "percent_complete"
+    MILESTONE_WEIGHT = "milestone_weight"
+    LOE = "loe"
+    APPORTIONED = "apportioned"
+
+    @property
+    def display_name(self) -> str:
+        """Get human-readable display name."""
+        names = {
+            EVMethod.ZERO_HUNDRED: "0/100 (Discrete)",
+            EVMethod.FIFTY_FIFTY: "50/50",
+            EVMethod.PERCENT_COMPLETE: "Percent Complete",
+            EVMethod.MILESTONE_WEIGHT: "Milestone Weight",
+            EVMethod.LOE: "Level of Effort",
+            EVMethod.APPORTIONED: "Apportioned Effort",
+        }
+        return names[self]
+
+    @property
+    def description(self) -> str:
+        """Get description of the method."""
+        descriptions = {
+            EVMethod.ZERO_HUNDRED: "0% until complete, then 100%",
+            EVMethod.FIFTY_FIFTY: "50% at start, 100% at finish",
+            EVMethod.PERCENT_COMPLETE: "Based on reported percent complete",
+            EVMethod.MILESTONE_WEIGHT: "Based on completed milestone weights",
+            EVMethod.LOE: "Equals planned value (BCWP = BCWS)",
+            EVMethod.APPORTIONED: "Based on related activity's earned value",
+        }
+        return descriptions[self]
+
+    @property
+    def recommended_duration(self) -> str:
+        """Get recommended task duration for this method."""
+        durations = {
+            EVMethod.ZERO_HUNDRED: "< 1 month",
+            EVMethod.FIFTY_FIFTY: "1-2 months",
+            EVMethod.PERCENT_COMPLETE: "Any duration",
+            EVMethod.MILESTONE_WEIGHT: "3+ months",
+            EVMethod.LOE: "Any duration (support work)",
+            EVMethod.APPORTIONED: "Tied to base activity",
+        }
+        return durations[self]
+
+    @property
+    def requires_milestones(self) -> bool:
+        """Check if method requires milestone definitions."""
+        return self == EVMethod.MILESTONE_WEIGHT
+
+    @property
+    def requires_base_activity(self) -> bool:
+        """Check if method requires a base activity reference."""
+        return self == EVMethod.APPORTIONED
+
+
 class ActivityStatus(str, Enum):
     """
     Activity execution status.

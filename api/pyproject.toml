@@ -121,15 +121,25 @@ select = [
     "RUF",    # Ruff-specific rules
 ]
 ignore = [
-    "E501",   # line too long (handled by formatter)
-    "B008",   # do not perform function calls in argument defaults
+    "E501",    # line too long (handled by formatter)
+    "B008",    # do not perform function calls in argument defaults
     "PLR0913", # too many arguments
     "PLR2004", # magic value comparison
+    "PLW0603", # global statement (needed for module-level singletons in database.py)
+    "RUF022",  # __all__ not sorted (we use logical grouping)
+    "ERA001",  # commented code (allow explanatory comments in CPM formulas)
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["ARG", "PLR2004"]
+"tests/*" = ["ARG", "PLR2004", "RUF001", "PLC0415", "PLR0915", "F841", "B017", "C416", "SIM105", "PTH108"]
 "alembic/*" = ["ERA001"]
+"src/api/v1/endpoints/*" = ["ARG001", "PLC0415"]  # current_user for auth, in-func imports to avoid circular deps
+"src/models/base.py" = ["ARG001"]  # event listener requires signature
+"src/models/wbs.py" = ["ARG002"]  # TypeDecorator methods require signature
+"src/core/deps.py" = ["B904"]  # HTTPException re-raise pattern
+"src/config.py" = ["ERA001"]  # section comments
+"src/schemas/program.py" = ["SIM102"]  # nested ifs more readable for date validation
+"src/services/baseline_comparison.py" = ["SIM102", "SIM103"]  # nested ifs for clarity
 
 [tool.ruff.lint.isort]
 known-first-party = ["src"]

@@ -15,7 +15,9 @@ from src.core.exceptions import (
     NotFoundError,
     ValidationError,
 )
+from src.models.enums import EVMethod
 from src.models.evms_period import PeriodStatus
+from src.repositories.activity import ActivityRepository
 from src.repositories.evms_period import EVMSPeriodDataRepository, EVMSPeriodRepository
 from src.repositories.program import ProgramRepository
 from src.repositories.wbs import WBSElementRepository
@@ -30,6 +32,7 @@ from src.schemas.evms_period import (
     EVMSPeriodWithDataResponse,
     EVMSSummaryResponse,
 )
+from src.services.ev_methods import get_ev_method_info, validate_milestone_weights
 from src.services.evms import EVMSCalculator
 
 router = APIRouter()
@@ -504,3 +507,90 @@ async def get_evms_summary(
         )
 
     return response
+
+
+# =============================================================================
+# EV Method Endpoints
+# =============================================================================
+
+
+@router.get("/ev-methods")
+async def list_ev_methods() -> list[dict]:
+    """
+    List all available EV calculation methods.
+
+    Returns information about each method including:
+    - Value (used in API)
+    - Display name
+    - Description
+    - Recommended task duration
+    """
+    return get_ev_method_info()
+
+
+@router.post("/activities/{activity_id}/ev-method")
+async def set_activity_ev_method(
+    activity_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+    ev_method: Annotated[str, Query(description="EV method to set")],
+    milestones: list[dict] | None = None,
+) -> dict:
+    """
+    Set the EV calculation method for an activity.
+
+    For milestone-weight method, provide milestones with weights summing to 1.0.
+    """
+    activity_repo = ActivityRepository(db)
+    activity = await activity_repo.get_by_id(activity_id)
+
+    if not activity:
+        raise NotFoundError(f"Activity {activity_id} not found", "ACTIVITY_NOT_FOUND")
+
+    # Verify access
+    program_repo = ProgramRepository(db)
+    program = await program_repo.get_by_id(activity.program_id)
+
+    if program.owner_id != current_user.id and not current_user.is_admin:
+        raise AuthorizationError(
+            "Not authorized to modify this activity",
+            "NOT_AUTHORIZED",
+        )
+
+    # Validate EV method value
+    try:
+        method = EVMethod(ev_method)
+    except ValueError as e:
+        valid_methods = [m.value for m in EVMethod]
+        raise ValidationError(
+            f"Invalid EV method '{ev_method}'. Valid methods: {valid_methods}",
+            "INVALID_EV_METHOD",
+        ) from e
+
+    # Validate milestone weights if using milestone method
+    if method == EVMethod.MILESTONE_WEIGHT:
+        if not milestones:
+            raise ValidationError(
+                "Milestones are required for milestone-weight method",
+                "MILESTONES_REQUIRED",
+            )
+        if not validate_milestone_weights(milestones):
+            raise ValidationError(
+                "Milestone weights must sum to 1.0 (100%)",
+                "INVALID_MILESTONE_WEIGHTS",
+            )
+
+    # Update activity
+    update_dict = {"ev_method": method.value}
+    if milestones:
+        update_dict["milestones_json"] = milestones
+
+    await activity_repo.update(activity, update_dict)
+    await db.commit()
+
+    return {
+        "activity_id": str(activity_id),
+        "ev_method": method.value,
+        "ev_method_display": method.display_name,
+        "milestones": milestones,
+    }

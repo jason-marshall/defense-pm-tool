@@ -20,7 +20,7 @@ class TestMSProjectImporter:
     @pytest.fixture
     def sample_xml_path(self, tmp_path: Path) -> Path:
         """Create sample MS Project XML file."""
-        xml_content = '''<?xml version="1.0" encoding="UTF-8"?>
+        xml_content = """<?xml version="1.0" encoding="UTF-8"?>
 <Project xmlns="http://schemas.microsoft.com/project">
   <Name>Test Project</Name>
   <StartDate>2026-01-01T08:00:00</StartDate>
@@ -79,7 +79,7 @@ class TestMSProjectImporter:
       </PredecessorLink>
     </Task>
   </Tasks>
-</Project>'''
+</Project>"""
 
         xml_file = tmp_path / "test_project.xml"
         xml_file.write_text(xml_content)
@@ -88,7 +88,7 @@ class TestMSProjectImporter:
     @pytest.fixture
     def sample_xml_no_namespace(self, tmp_path: Path) -> Path:
         """Create sample MS Project XML without namespace."""
-        xml_content = '''<?xml version="1.0" encoding="UTF-8"?>
+        xml_content = """<?xml version="1.0" encoding="UTF-8"?>
 <Project>
   <Name>No Namespace Project</Name>
   <StartDate>2026-02-01T08:00:00</StartDate>
@@ -105,7 +105,7 @@ class TestMSProjectImporter:
       <Finish>2026-02-03T17:00:00</Finish>
     </Task>
   </Tasks>
-</Project>'''
+</Project>"""
 
         xml_file = tmp_path / "no_namespace.xml"
         xml_file.write_text(xml_content)
@@ -270,7 +270,7 @@ class TestMSProjectImporter:
 
     def test_missing_project_dates_adds_warnings(self, tmp_path: Path) -> None:
         """Should add warnings for missing project dates."""
-        xml_content = '''<?xml version="1.0" encoding="UTF-8"?>
+        xml_content = """<?xml version="1.0" encoding="UTF-8"?>
 <Project>
   <Name>No Dates Project</Name>
   <Tasks>
@@ -283,7 +283,7 @@ class TestMSProjectImporter:
       <Duration>PT8H0M0S</Duration>
     </Task>
   </Tasks>
-</Project>'''
+</Project>"""
 
         xml_file = tmp_path / "no_dates.xml"
         xml_file.write_text(xml_content)
@@ -296,12 +296,12 @@ class TestMSProjectImporter:
 
     def test_empty_tasks_adds_warning(self, tmp_path: Path) -> None:
         """Should add warning when no tasks element found."""
-        xml_content = '''<?xml version="1.0" encoding="UTF-8"?>
+        xml_content = """<?xml version="1.0" encoding="UTF-8"?>
 <Project>
   <Name>Empty Project</Name>
   <StartDate>2026-01-01T08:00:00</StartDate>
   <FinishDate>2026-12-31T17:00:00</FinishDate>
-</Project>'''
+</Project>"""
 
         xml_file = tmp_path / "empty.xml"
         xml_file.write_text(xml_content)
@@ -319,7 +319,7 @@ class TestDurationParsing:
 
     def test_parse_hours_only(self, tmp_path: Path) -> None:
         """Should parse duration with hours only."""
-        xml_content = '''<?xml version="1.0" encoding="UTF-8"?>
+        xml_content = """<?xml version="1.0" encoding="UTF-8"?>
 <Project>
   <Name>Test</Name>
   <StartDate>2026-01-01T08:00:00</StartDate>
@@ -333,7 +333,7 @@ class TestDurationParsing:
       <Duration>PT80H0M0S</Duration>
     </Task>
   </Tasks>
-</Project>'''
+</Project>"""
 
         xml_file = tmp_path / "test.xml"
         xml_file.write_text(xml_content)
@@ -345,7 +345,7 @@ class TestDurationParsing:
 
     def test_parse_hours_and_minutes(self, tmp_path: Path) -> None:
         """Should parse duration with hours and minutes."""
-        xml_content = '''<?xml version="1.0" encoding="UTF-8"?>
+        xml_content = """<?xml version="1.0" encoding="UTF-8"?>
 <Project>
   <Name>Test</Name>
   <StartDate>2026-01-01T08:00:00</StartDate>
@@ -359,7 +359,7 @@ class TestDurationParsing:
       <Duration>PT8H30M0S</Duration>
     </Task>
   </Tasks>
-</Project>'''
+</Project>"""
 
         xml_file = tmp_path / "test.xml"
         xml_file.write_text(xml_content)
@@ -371,7 +371,7 @@ class TestDurationParsing:
 
     def test_parse_zero_duration(self, tmp_path: Path) -> None:
         """Should parse zero duration (milestone)."""
-        xml_content = '''<?xml version="1.0" encoding="UTF-8"?>
+        xml_content = """<?xml version="1.0" encoding="UTF-8"?>
 <Project>
   <Name>Test</Name>
   <StartDate>2026-01-01T08:00:00</StartDate>
@@ -386,7 +386,7 @@ class TestDurationParsing:
       <Milestone>1</Milestone>
     </Task>
   </Tasks>
-</Project>'''
+</Project>"""
 
         xml_file = tmp_path / "test.xml"
         xml_file.write_text(xml_content)
@@ -404,7 +404,7 @@ class TestDependencyTypeParsing:
     @pytest.fixture
     def xml_with_deps(self, tmp_path: Path) -> Path:
         """Create XML with various dependency types."""
-        xml_content = '''<?xml version="1.0" encoding="UTF-8"?>
+        xml_content = """<?xml version="1.0" encoding="UTF-8"?>
 <Project>
   <Name>Deps Test</Name>
   <StartDate>2026-01-01T08:00:00</StartDate>
@@ -466,7 +466,7 @@ class TestDependencyTypeParsing:
       </PredecessorLink>
     </Task>
   </Tasks>
-</Project>'''
+</Project>"""
 
         xml_file = tmp_path / "deps.xml"
         xml_file.write_text(xml_content)
