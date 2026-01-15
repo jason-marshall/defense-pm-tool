@@ -64,3 +64,6 @@ web/dist/
 *.pem
 *.key
 credentials.json
+
+# Claude Code
+.claude/settings.local.json
