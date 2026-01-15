@@ -5,6 +5,7 @@ from uuid import uuid4
 
 import jwt
 import pytest
+from pydantic import ValidationError
 
 from src.config import settings
 from src.core.auth import (
@@ -269,8 +270,8 @@ class TestTokenPayload:
 
     def test_token_payload_has_required_fields(self):
         """TokenPayload should require all fields."""
-        # Missing 'type' field
-        with pytest.raises(Exception):
+        # Missing 'type' field - Pydantic raises ValidationError
+        with pytest.raises(ValidationError):
             TokenPayload(
                 sub="user-123",
                 exp=datetime.now(UTC),

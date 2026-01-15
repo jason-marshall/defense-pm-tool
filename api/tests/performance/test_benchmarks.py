@@ -2,12 +2,14 @@
 
 import time
 from dataclasses import dataclass
+from decimal import Decimal
 from uuid import UUID, uuid4
 
 import pytest
 
 from src.models.enums import DependencyType
 from src.services.cpm import CPMEngine
+from src.services.evms import EVMSCalculator
 
 
 @dataclass
@@ -196,7 +198,7 @@ class TestPerformanceBenchmarks:
         dependencies = self.create_chain_dependencies(activities)
 
         start = time.perf_counter()
-        engine = CPMEngine(activities, dependencies)
+        CPMEngine(activities, dependencies)
         elapsed_ms = (time.perf_counter() - start) * 1000
 
         # Target: Graph construction <100ms
@@ -210,10 +212,6 @@ class TestEVMSPerformance:
     @pytest.mark.benchmark
     def test_evms_calculations_batch(self):
         """Benchmark: EVMS metric calculations for batch of data."""
-        from decimal import Decimal
-
-        from src.services.evms import EVMSCalculator
-
         # Simulate calculating metrics for 1000 WBS elements
         count = 1000
         bcws_values = [Decimal(f"{(i + 1) * 1000}.00") for i in range(count)]

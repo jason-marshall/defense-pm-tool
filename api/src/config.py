@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
 
-    # Database (PostgreSQL)
+    # Database settings for PostgreSQL
     DATABASE_URL: PostgresDsn
     DATABASE_POOL_MIN_SIZE: int = 5
     DATABASE_POOL_MAX_SIZE: int = 20

@@ -156,9 +156,12 @@ class ProgramUpdate(BaseModel):
     @model_validator(mode="after")
     def validate_dates(self) -> "ProgramUpdate":
         """Validate date ordering if both dates are provided."""
-        if self.start_date is not None and self.end_date is not None:
-            if self.end_date < self.start_date:
-                raise ValueError("end_date must be on or after start_date")
+        if (
+            self.start_date is not None
+            and self.end_date is not None
+            and self.end_date < self.start_date
+        ):
+            raise ValueError("end_date must be on or after start_date")
         return self
 
 

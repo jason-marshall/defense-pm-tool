@@ -308,7 +308,7 @@ class TestProgramLifecycleE2E:
 
         # Verify critical path
         critical_path = engine.get_critical_path()
-        critical_ids = {aid for aid in critical_path}
+        critical_ids = set(critical_path)
 
         # Activities on critical path: A-001, A-002, A-003, A-005, A-006
         assert activities[0].id in critical_ids  # A-001
@@ -426,7 +426,7 @@ class TestEVMSWorkflowE2E:
 
         etc = EVMSCalculator.calculate_etc(eac, acwp)
         assert etc is not None
-        # ETC = EAC - ACWP
+        # ETC formula: EAC - ACWP
         assert float(etc) == pytest.approx(float(eac) - 220000, rel=0.01)
 
         vac = EVMSCalculator.calculate_vac(bac, eac)
@@ -437,9 +437,8 @@ class TestEVMSWorkflowE2E:
         # TCPI for completion at BAC
         tcpi = EVMSCalculator.calculate_tcpi(bac, bcwp, acwp, "bac")
         assert tcpi is not None
-        # TCPI = (BAC - BCWP) / (BAC - ACWP)
-        # = (1,000,000 - 200,000) / (1,000,000 - 220,000)
-        # = 800,000 / 780,000 ≈ 1.03
+        # TCPI formula: (BAC - BCWP) / (BAC - ACWP)
+        # (1,000,000 - 200,000) / (1,000,000 - 220,000) = 800,000 / 780,000 ≈ 1.03
         assert float(tcpi) == pytest.approx(1.03, rel=0.01)
 
     def test_evms_zero_division_handling(self) -> None:
@@ -1042,7 +1041,7 @@ class TestIntegrationScenarios:
 
         # Run CPM
         engine = CPMEngine(activities, dependencies)
-        results = engine.calculate()
+        engine.calculate()
 
         # Calculate EVMS from schedule data
         # BAC = sum of budgeted costs
@@ -1050,10 +1049,7 @@ class TestIntegrationScenarios:
         assert bac == Decimal("180000.00")
 
         # BCWP = sum of earned values (budgeted * % complete)
-        bcwp = sum(
-            a.budgeted_cost * a.percent_complete / Decimal("100")
-            for a in activities
-        )
+        bcwp = sum(a.budgeted_cost * a.percent_complete / Decimal("100") for a in activities)
         # 50000 * 1.0 + 100000 * 0.5 + 30000 * 0 = 100000
         assert bcwp == Decimal("100000.00")
 

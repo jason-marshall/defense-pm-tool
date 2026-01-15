@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, String
+from sqlalchemy import Boolean, DateTime, String, select
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.models.base import Base
@@ -24,7 +24,6 @@ class TestBaseRepositoryHelpers:
 
     def test_apply_soft_delete_filter_excludes_deleted(self):
         """Should exclude deleted records by default."""
-        from sqlalchemy import select
 
         # Create a mock session and repo
         class MockSession:
@@ -41,7 +40,6 @@ class TestBaseRepositoryHelpers:
 
     def test_apply_soft_delete_filter_includes_deleted(self):
         """Should include deleted records when requested."""
-        from sqlalchemy import select
 
         class MockSession:
             pass
@@ -57,7 +55,6 @@ class TestBaseRepositoryHelpers:
 
     def test_apply_ordering_ascending(self):
         """Should apply ascending order."""
-        from sqlalchemy import select
 
         class MockSession:
             pass
@@ -73,7 +70,6 @@ class TestBaseRepositoryHelpers:
 
     def test_apply_ordering_descending(self):
         """Should apply descending order with - prefix."""
-        from sqlalchemy import select
 
         class MockSession:
             pass
@@ -90,7 +86,6 @@ class TestBaseRepositoryHelpers:
 
     def test_apply_ordering_no_order(self):
         """Should not modify query when order_by is None."""
-        from sqlalchemy import select
 
         class MockSession:
             pass
@@ -106,7 +101,6 @@ class TestBaseRepositoryHelpers:
 
     def test_apply_filters(self):
         """Should apply filters to query."""
-        from sqlalchemy import select
 
         class MockSession:
             pass
@@ -122,7 +116,6 @@ class TestBaseRepositoryHelpers:
 
     def test_apply_filters_none(self):
         """Should not modify query when filters is None."""
-        from sqlalchemy import select
 
         class MockSession:
             pass
@@ -138,7 +131,6 @@ class TestBaseRepositoryHelpers:
 
     def test_apply_filters_ignores_invalid_field(self):
         """Should ignore filter for non-existent field."""
-        from sqlalchemy import select
 
         class MockSession:
             pass
@@ -154,7 +146,6 @@ class TestBaseRepositoryHelpers:
 
     def test_apply_ordering_ignores_invalid_field(self):
         """Should ignore order by for non-existent field."""
-        from sqlalchemy import select
 
         class MockSession:
             pass

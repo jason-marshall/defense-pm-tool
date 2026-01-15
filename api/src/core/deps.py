@@ -63,7 +63,7 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=e.message,
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from e
 
     # Verify token type is access token
     if payload.type != "access":
@@ -76,12 +76,12 @@ async def get_current_user(
     # Get user from database
     try:
         user_id = UUID(payload.sub)
-    except ValueError:
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token subject",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from e
 
     repo = UserRepository(db)
     user = await repo.get_by_id(user_id)

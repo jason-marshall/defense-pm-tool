@@ -45,7 +45,7 @@ class LtreeType(UserDefinedType):
         """Return the column type specification."""
         return "LTREE"
 
-    def bind_processor(self, dialect):
+    def bind_processor(self, _dialect):
         """Process value before binding to database."""
 
         def process(value):
@@ -53,7 +53,7 @@ class LtreeType(UserDefinedType):
 
         return process
 
-    def result_processor(self, dialect, coltype):
+    def result_processor(self, _dialect, _coltype):
         """Process value after retrieving from database."""
 
         def process(value):
