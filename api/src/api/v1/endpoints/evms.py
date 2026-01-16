@@ -594,3 +594,96 @@ async def set_activity_ev_method(
         "ev_method_display": method.display_name,
         "milestones": milestones,
     }
+
+
+# =============================================================================
+# EAC Methods Comparison Endpoint
+# =============================================================================
+
+
+@router.get("/eac-methods/{program_id}")
+async def calculate_all_eac_methods(
+    program_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+    period_id: Annotated[UUID | None, Query(description="Specific period ID")] = None,
+) -> list[dict]:
+    """
+    Calculate EAC using all available methods for comparison.
+
+    Returns EAC results from all applicable methods:
+    - CPI Method: BAC / CPI
+    - Typical Method: ACWP + (BAC - BCWP)
+    - Mathematical Method: ACWP + (BAC - BCWP) / CPI
+    - Comprehensive Method: ACWP + (BAC - BCWP) / (CPI x SPI)
+    - Composite Method: Weighted average based on completion %
+
+    Per EVMS GL 27, comparing multiple EAC methods helps identify
+    the most appropriate estimate for the program's situation.
+    """
+    # Verify program exists and user has access
+    program_repo = ProgramRepository(db)
+    program = await program_repo.get_by_id(program_id)
+
+    if not program:
+        raise NotFoundError(f"Program {program_id} not found", "PROGRAM_NOT_FOUND")
+
+    if program.owner_id != current_user.id and not current_user.is_admin:
+        raise AuthorizationError(
+            "Not authorized to view EAC methods for this program",
+            "NOT_AUTHORIZED",
+        )
+
+    # Get EVMS period data
+    period_repo = EVMSPeriodRepository(db)
+
+    if period_id:
+        period = await period_repo.get_by_id(period_id)
+        if not period:
+            raise NotFoundError(f"Period {period_id} not found", "PERIOD_NOT_FOUND")
+        if period.program_id != program_id:
+            raise ValidationError(
+                "Period does not belong to this program",
+                "PERIOD_PROGRAM_MISMATCH",
+            )
+    else:
+        # Use latest period
+        period = await period_repo.get_latest_period(program_id)
+
+    if not period:
+        raise NotFoundError(
+            "No EVMS periods found for this program",
+            "NO_PERIODS",
+        )
+
+    # Get cumulative values
+    bcws = period.cumulative_bcws or Decimal("0")
+    bcwp = period.cumulative_bcwp or Decimal("0")
+    acwp = period.cumulative_acwp or Decimal("0")
+    bac = program.budget_at_completion or Decimal("0")
+
+    if bac == 0:
+        raise ValidationError(
+            "Program BAC is zero - cannot calculate EAC methods",
+            "ZERO_BAC",
+        )
+
+    # Calculate all EAC methods
+    results = EVMSCalculator.calculate_all_eac_methods(
+        bcws=bcws,
+        bcwp=bcwp,
+        acwp=acwp,
+        bac=bac,
+    )
+
+    return [
+        {
+            "method": r.method.value,
+            "method_name": r.method.name,
+            "eac": str(r.eac),
+            "etc": str(r.etc),
+            "vac": str(r.vac),
+            "description": r.description,
+        }
+        for r in results
+    ]
