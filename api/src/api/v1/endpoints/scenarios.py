@@ -7,9 +7,11 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.deps import get_current_user, get_db
-from src.core.exceptions import NotFoundError, ValidationError
+from src.core.exceptions import AuthorizationError, NotFoundError, ValidationError
 from src.models.user import User
+from src.repositories.activity import ActivityRepository
 from src.repositories.baseline import BaselineRepository
+from src.repositories.dependency import DependencyRepository
 from src.repositories.program import ProgramRepository
 from src.repositories.scenario import ScenarioRepository
 from src.schemas.scenario import (
@@ -22,6 +24,7 @@ from src.schemas.scenario import (
     ScenarioSummary,
     ScenarioUpdate,
 )
+from src.services.scenario_simulation import ScenarioSimulationService
 
 router = APIRouter(prefix="/scenarios", tags=["scenarios"])
 
@@ -463,3 +466,220 @@ def _build_scenario_response(
         results_cache=scenario.results_cache,
         updated_at=scenario.updated_at,
     )
+
+
+# =============================================================================
+# Scenario Simulation Endpoints
+# =============================================================================
+
+
+@router.post("/{scenario_id}/simulate")
+async def simulate_scenario(
+    db: DbSession,
+    current_user: CurrentUser,
+    scenario_id: UUID,
+    iterations: int = Query(1000, ge=100, le=10000, description="Number of iterations"),
+    seed: int | None = Query(None, description="Random seed for reproducibility"),
+) -> dict:
+    """
+    Run Monte Carlo simulation on a scenario.
+
+    Applies scenario changes to activities and simulates through the CPM
+    network to evaluate schedule risk with the proposed changes.
+
+    Returns:
+    - Project duration distribution (P10, P50, P80, P90)
+    - Activity criticality (% of iterations on critical path)
+    - Top schedule risk drivers (sensitivity analysis)
+
+    Use this endpoint for what-if analysis to understand the impact
+    of proposed changes before committing them.
+    """
+    # Get scenario
+    scenario_repo = ScenarioRepository(db)
+    scenario = await scenario_repo.get_with_changes(scenario_id)
+
+    if not scenario:
+        raise NotFoundError(f"Scenario {scenario_id} not found", "SCENARIO_NOT_FOUND")
+
+    # Verify access
+    program_repo = ProgramRepository(db)
+    program = await program_repo.get(scenario.program_id)
+
+    if not program:
+        raise NotFoundError(f"Program {scenario.program_id} not found", "PROGRAM_NOT_FOUND")
+
+    if program.owner_id != current_user.id and not current_user.is_admin:
+        raise AuthorizationError(
+            "Not authorized to simulate this scenario",
+            "NOT_AUTHORIZED",
+        )
+
+    # Get activities and dependencies
+    activity_repo = ActivityRepository(db)
+    dependency_repo = DependencyRepository(db)
+
+    activities = await activity_repo.get_by_program(scenario.program_id)
+    dependencies = await dependency_repo.get_by_program(scenario.program_id)
+
+    if not activities:
+        raise ValidationError(
+            "No activities found for program - cannot simulate",
+            "NO_ACTIVITIES",
+        )
+
+    # Get scenario changes
+    changes = await scenario_repo.get_changes(scenario_id)
+
+    # Run simulation
+    service = ScenarioSimulationService(
+        activities=activities,
+        dependencies=dependencies,
+        scenario=scenario,
+        changes=changes,
+    )
+
+    output = service.simulate(iterations=iterations, seed=seed)
+
+    # Build response
+    return {
+        "scenario_id": str(scenario_id),
+        "scenario_name": scenario.name,
+        "iterations": output.iterations,
+        "elapsed_seconds": round(output.elapsed_seconds, 3),
+        "seed": output.seed,
+        "project_duration": {
+            "p10": round(output.project_duration_p10, 1),
+            "p50": round(output.project_duration_p50, 1),
+            "p80": round(output.project_duration_p80, 1),
+            "p90": round(output.project_duration_p90, 1),
+            "mean": round(output.project_duration_mean, 1),
+            "std": round(output.project_duration_std, 2),
+            "min": round(output.project_duration_min, 1),
+            "max": round(output.project_duration_max, 1),
+        },
+        "top_critical_activities": sorted(
+            [
+                {"activity_id": str(k), "criticality_pct": round(v, 1)}
+                for k, v in output.activity_criticality.items()
+                if v > 0
+            ],
+            key=lambda x: x["criticality_pct"],
+            reverse=True,
+        )[:10],
+        "top_sensitivity_drivers": sorted(
+            [
+                {"activity_id": str(k), "correlation": round(v, 3)}
+                for k, v in output.sensitivity.items()
+                if abs(v) > 0.1
+            ],
+            key=lambda x: abs(x["correlation"]),
+            reverse=True,
+        )[:10],
+        "changes_applied": len(changes),
+    }
+
+
+@router.post("/{scenario_id}/compare")
+async def compare_scenario_to_baseline(
+    db: DbSession,
+    current_user: CurrentUser,
+    scenario_id: UUID,
+    iterations: int = Query(1000, ge=100, le=10000, description="Number of iterations"),
+    seed: int | None = Query(None, description="Random seed for reproducibility"),
+) -> dict:
+    """
+    Compare scenario simulation to baseline (no changes).
+
+    Runs Monte Carlo simulation twice:
+    1. Without scenario changes (baseline)
+    2. With scenario changes applied
+
+    Returns comparison showing impact of the proposed changes
+    on project duration and risk.
+    """
+    from src.services.scenario_simulation import compare_scenario_simulations
+
+    # Get scenario
+    scenario_repo = ScenarioRepository(db)
+    scenario = await scenario_repo.get_with_changes(scenario_id)
+
+    if not scenario:
+        raise NotFoundError(f"Scenario {scenario_id} not found", "SCENARIO_NOT_FOUND")
+
+    # Verify access
+    program_repo = ProgramRepository(db)
+    program = await program_repo.get(scenario.program_id)
+
+    if not program:
+        raise NotFoundError(f"Program {scenario.program_id} not found", "PROGRAM_NOT_FOUND")
+
+    if program.owner_id != current_user.id and not current_user.is_admin:
+        raise AuthorizationError(
+            "Not authorized to compare this scenario",
+            "NOT_AUTHORIZED",
+        )
+
+    # Get activities and dependencies
+    activity_repo = ActivityRepository(db)
+    dependency_repo = DependencyRepository(db)
+
+    activities = await activity_repo.get_by_program(scenario.program_id)
+    dependencies = await dependency_repo.get_by_program(scenario.program_id)
+
+    if not activities:
+        raise ValidationError(
+            "No activities found for program - cannot compare",
+            "NO_ACTIVITIES",
+        )
+
+    # Get scenario changes
+    changes = await scenario_repo.get_changes(scenario_id)
+
+    # Run baseline simulation (no changes)
+    baseline_service = ScenarioSimulationService(
+        activities=activities,
+        dependencies=dependencies,
+        scenario=scenario,
+        changes=[],  # No changes for baseline
+    )
+    baseline_output = baseline_service.simulate(iterations=iterations, seed=seed)
+
+    # Run scenario simulation (with changes)
+    scenario_service = ScenarioSimulationService(
+        activities=activities,
+        dependencies=dependencies,
+        scenario=scenario,
+        changes=changes,
+    )
+    scenario_output = scenario_service.simulate(iterations=iterations, seed=seed)
+
+    # Compare results
+    comparison = compare_scenario_simulations(baseline_output, scenario_output)
+
+    return {
+        "scenario_id": str(scenario_id),
+        "scenario_name": scenario.name,
+        "iterations": iterations,
+        "baseline": {
+            "p50": round(baseline_output.project_duration_p50, 1),
+            "p90": round(baseline_output.project_duration_p90, 1),
+            "mean": round(baseline_output.project_duration_mean, 1),
+            "std": round(baseline_output.project_duration_std, 2),
+        },
+        "scenario": {
+            "p50": round(scenario_output.project_duration_p50, 1),
+            "p90": round(scenario_output.project_duration_p90, 1),
+            "mean": round(scenario_output.project_duration_mean, 1),
+            "std": round(scenario_output.project_duration_std, 2),
+        },
+        "comparison": {
+            "p50_delta": round(comparison.p50_delta, 1),
+            "p90_delta": round(comparison.p90_delta, 1),
+            "mean_delta": round(comparison.mean_delta, 1),
+            "std_delta": round(comparison.std_delta, 2),
+            "risk_improved": comparison.risk_improved,
+            "summary": comparison.summary,
+        },
+        "changes_applied": len(changes),
+    }
