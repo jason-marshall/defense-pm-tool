@@ -613,9 +613,11 @@ class TestBaseRepositoryGetOrRaise:
         """Should raise NotFoundError when not found."""
         record_id = uuid4()
 
-        with patch.object(repo, "get_by_id", new_callable=AsyncMock, return_value=None):
-            with pytest.raises(NotFoundError) as exc_info:
-                await repo.get_or_raise(record_id)
+        with (
+            patch.object(repo, "get_by_id", new_callable=AsyncMock, return_value=None),
+            pytest.raises(NotFoundError) as exc_info,
+        ):
+            await repo.get_or_raise(record_id)
 
         assert "Activity" in str(exc_info.value)
 

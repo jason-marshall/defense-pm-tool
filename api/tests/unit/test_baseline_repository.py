@@ -252,11 +252,11 @@ class TestBaselineRepositoryApproveBaseline:
         )
 
         # Mock get to return the baseline
-        with patch.object(repo, "get", new_callable=AsyncMock, return_value=baseline):
-            with patch.object(
-                repo, "get_approved_baseline", new_callable=AsyncMock, return_value=None
-            ):
-                result = await repo.approve_baseline(baseline_id, approver_id)
+        with (
+            patch.object(repo, "get", new_callable=AsyncMock, return_value=baseline),
+            patch.object(repo, "get_approved_baseline", new_callable=AsyncMock, return_value=None),
+        ):
+            result = await repo.approve_baseline(baseline_id, approver_id)
 
         assert result.is_approved is True
         assert result.approved_by_id == approver_id
@@ -295,11 +295,13 @@ class TestBaselineRepositoryApproveBaseline:
             created_by_id=uuid4(),
         )
 
-        with patch.object(repo, "get", new_callable=AsyncMock, return_value=new_baseline):
-            with patch.object(
+        with (
+            patch.object(repo, "get", new_callable=AsyncMock, return_value=new_baseline),
+            patch.object(
                 repo, "get_approved_baseline", new_callable=AsyncMock, return_value=old_baseline
-            ):
-                result = await repo.approve_baseline(baseline_id, approver_id)
+            ),
+        ):
+            result = await repo.approve_baseline(baseline_id, approver_id)
 
         assert result.is_approved is True
         assert old_baseline.is_approved is False
@@ -456,7 +458,7 @@ class TestBaselineRepositoryBuildScheduleSnapshot:
 
         mock_session.execute.side_effect = [mock_activity_result, mock_dep_result]
 
-        snapshot, count, finish = await repo._build_schedule_snapshot(program_id)
+        snapshot, count, _finish = await repo._build_schedule_snapshot(program_id)
 
         assert snapshot is not None
         assert count == 1
@@ -522,7 +524,7 @@ class TestBaselineRepositoryBuildScheduleSnapshot:
 
         mock_session.execute.side_effect = [mock_activity_result, mock_dep_result]
 
-        snapshot, count, finish = await repo._build_schedule_snapshot(program_id)
+        snapshot, _count, _finish = await repo._build_schedule_snapshot(program_id)
 
         assert len(snapshot["dependencies"]) == 1
         assert snapshot["dependencies"][0]["predecessor_id"] == str(act_id1)
@@ -601,7 +603,7 @@ class TestBaselineRepositoryBuildWbsCostSnapshot:
         mock_result.scalars.return_value.all.return_value = [wbs_elem]
         mock_session.execute.return_value = mock_result
 
-        wbs, cost, count, bac = await repo._build_wbs_cost_snapshot(program_id, True, False)
+        wbs, cost, count, _bac = await repo._build_wbs_cost_snapshot(program_id, True, False)
 
         assert wbs is not None
         assert cost is None
@@ -624,7 +626,7 @@ class TestBaselineRepositoryBuildWbsCostSnapshot:
         mock_result.scalars.return_value.all.return_value = [wbs_elem]
         mock_session.execute.return_value = mock_result
 
-        wbs, cost, count, bac = await repo._build_wbs_cost_snapshot(program_id, False, True)
+        wbs, cost, _count, _bac = await repo._build_wbs_cost_snapshot(program_id, False, True)
 
         assert wbs is None
         assert cost is not None
@@ -663,7 +665,7 @@ class TestBaselineRepositoryBuildWbsCostSnapshot:
         mock_result.scalars.return_value.all.return_value = [wbs1, wbs2, wbs3]
         mock_session.execute.return_value = mock_result
 
-        wbs, cost, count, bac = await repo._build_wbs_cost_snapshot(program_id, True, True)
+        _wbs, _cost, count, bac = await repo._build_wbs_cost_snapshot(program_id, True, True)
 
         assert count == 3
         assert bac == Decimal("100000.00")

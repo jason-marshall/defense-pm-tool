@@ -24,17 +24,17 @@ class EVMSReferenceCase:
     bcws: Decimal  # Budgeted Cost of Work Scheduled (Planned Value)
     bcwp: Decimal  # Budgeted Cost of Work Performed (Earned Value)
     acwp: Decimal  # Actual Cost of Work Performed (Actual Cost)
-    bac: Decimal   # Budget at Completion
+    bac: Decimal  # Budget at Completion
 
     # Expected outputs
-    expected_sv: Decimal        # Schedule Variance = BCWP - BCWS
-    expected_cv: Decimal        # Cost Variance = BCWP - ACWP
-    expected_spi: Decimal       # Schedule Performance Index = BCWP / BCWS
-    expected_cpi: Decimal       # Cost Performance Index = BCWP / ACWP
-    expected_eac_cpi: Decimal   # Estimate at Completion = BAC / CPI
+    expected_sv: Decimal  # Schedule Variance = BCWP - BCWS
+    expected_cv: Decimal  # Cost Variance = BCWP - ACWP
+    expected_spi: Decimal  # Schedule Performance Index = BCWP / BCWS
+    expected_cpi: Decimal  # Cost Performance Index = BCWP / ACWP
+    expected_eac_cpi: Decimal  # Estimate at Completion = BAC / CPI
     expected_eac_typical: Decimal  # EAC Typical = ACWP + (BAC - BCWP)
-    expected_etc: Decimal       # Estimate to Complete = EAC - ACWP
-    expected_vac: Decimal       # Variance at Completion = BAC - EAC
+    expected_etc: Decimal  # Estimate to Complete = EAC - ACWP
+    expected_vac: Decimal  # Variance at Completion = BAC - EAC
     expected_tcpi_bac: Decimal  # To Complete Performance Index (BAC) = (BAC - BCWP) / (BAC - ACWP)
     expected_tcpi_eac: Decimal | None  # TCPI (EAC) when applicable
 
@@ -49,7 +49,7 @@ EVMS_REFERENCE_CASES = [
         description="Program on track - CPI and SPI > 1.0",
         bcws=Decimal("100000.00"),
         bcwp=Decimal("110000.00"),  # Ahead of schedule
-        acwp=Decimal("95000.00"),   # Under budget
+        acwp=Decimal("95000.00"),  # Under budget
         bac=Decimal("500000.00"),
         expected_sv=Decimal("10000.00"),
         expected_cv=Decimal("15000.00"),
@@ -58,7 +58,7 @@ EVMS_REFERENCE_CASES = [
         expected_eac_cpi=Decimal("431818.18"),  # 500000 / 1.157894 = 431818.18
         expected_eac_typical=Decimal("485000.00"),  # 95000 + (500000 - 110000)
         expected_etc=Decimal("336818.18"),  # EAC - ACWP
-        expected_vac=Decimal("68181.82"),   # BAC - EAC
+        expected_vac=Decimal("68181.82"),  # BAC - EAC
         expected_tcpi_bac=Decimal("0.96"),  # (500000 - 110000) / (500000 - 95000) = 0.963
         expected_tcpi_eac=Decimal("1.00"),
     ),
@@ -220,8 +220,8 @@ MONTE_CARLO_REFERENCE = {
         ],
         # Expected results based on analytical calculation
         "expected_mean_duration": 41.0,  # Sum of modes
-        "expected_p50_range": (38, 44),   # Median should be close to mean
-        "expected_p90_range": (48, 56),   # 90th percentile range
+        "expected_p50_range": (38, 44),  # Median should be close to mean
+        "expected_p90_range": (48, 56),  # 90th percentile range
     },
     "parallel_paths": {
         "description": "Two parallel paths converging",
