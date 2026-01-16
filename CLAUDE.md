@@ -660,14 +660,15 @@ pytest -v -s
 - [x] 1173 tests passing (1032 unit + 141 integration)
 - [x] 80% test coverage achieved
 
-### 🔶 In Progress (Month 2 - Week 6)
-- [ ] Monte Carlo API endpoints (run simulation, get results)
-- [ ] CPM + Monte Carlo integration for schedule risk
-- [ ] Advanced EAC methods (EAC-CPI, EAC-SPI×CPI, regression-based)
-- [ ] EVMS validation against reference data (0.5% tolerance per Risk Playbook)
-- [ ] Scenario simulation with what-if analysis
-- [ ] S-curve confidence bands from Monte Carlo results
-- [ ] Enhanced dashboard with probabilistic forecasts
+### ✅ Completed (Month 2 - Week 6)
+- [x] Monte Carlo API endpoints (run simulation, get results)
+- [x] CPM + Monte Carlo integration for schedule risk
+- [x] Advanced EAC methods (CPI, Typical, Mathematical, Comprehensive, Independent, Composite)
+- [x] EVMS validation against reference data (0.5% tolerance per Risk Playbook)
+- [x] Scenario simulation with what-if analysis (simulate, compare endpoints)
+- [x] S-curve confidence bands from Monte Carlo results
+- [x] Enhanced S-curve endpoint with EAC/completion date ranges
+- [x] 1133+ unit tests passing, 80%+ coverage maintained
 
 ---
 
@@ -705,4 +706,4 @@ Run benchmarks: `cd api && python scripts/run_benchmarks.py`
 ---
 
 *Last Updated: January 2026*
-*Month 2, Week 6 - 1173 tests, 80% coverage*
+*Month 2, Week 6 Complete - 1133+ tests, 80%+ coverage*
