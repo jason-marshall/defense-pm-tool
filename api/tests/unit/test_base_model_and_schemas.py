@@ -4,8 +4,6 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from uuid import uuid4
 
-import pytest
-
 from src.models.activity import Activity
 from src.models.dependency import Dependency
 from src.models.enums import (

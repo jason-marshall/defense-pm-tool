@@ -2,14 +2,9 @@
 
 from datetime import date, datetime
 from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 from uuid import uuid4
 
-import pytest
-
-from src.models.activity import Activity
-from src.models.baseline import Baseline
-from src.models.wbs import WBSElement
 from src.services.baseline_comparison import (
     ActivityVariance,
     BaselineComparisonService,

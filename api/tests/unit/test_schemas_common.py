@@ -1,13 +1,11 @@
 """Unit tests for common schemas."""
 
-import pytest
-
 from src.schemas.common import (
-    PaginatedResponse,
-    FieldError,
     ErrorResponse,
+    FieldError,
     HealthResponse,
     MessageResponse,
+    PaginatedResponse,
 )
 
 

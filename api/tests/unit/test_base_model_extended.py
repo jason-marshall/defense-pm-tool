@@ -3,8 +3,6 @@
 from datetime import datetime
 from uuid import uuid4
 
-import pytest
-
 from src.models.activity import Activity
 from src.models.enums import ProgramStatus
 from src.models.program import Program
@@ -110,12 +108,14 @@ class TestBaseModelTableNameGeneration:
         """Test single word class name."""
         # User -> users
         from src.models.user import User
+
         assert User.__tablename__ == "users"
 
     def test_tablename_two_words(self):
         """Test two word class name (camelCase)."""
         # WBSElement -> wbs_elements
         from src.models.wbs import WBSElement
+
         assert WBSElement.__tablename__ == "wbs_elements"
 
     def test_tablename_ending_in_y(self):
@@ -124,6 +124,7 @@ class TestBaseModelTableNameGeneration:
         # Dependency -> dependencies
         from src.models.activity import Activity
         from src.models.dependency import Dependency
+
         assert Activity.__tablename__ == "activities"
         assert Dependency.__tablename__ == "dependencies"
 
@@ -131,6 +132,7 @@ class TestBaseModelTableNameGeneration:
         """Test class name ending in 's'."""
         # EVMSPeriod -> evms_periods (s + es = ses? No, it's evms_periods)
         from src.models.evms_period import EVMSPeriod
+
         assert EVMSPeriod.__tablename__ == "evms_periods"
 
 

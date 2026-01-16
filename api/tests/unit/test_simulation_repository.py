@@ -1,6 +1,5 @@
 """Unit tests for SimulationConfigRepository and SimulationResultRepository."""
 
-from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
@@ -208,9 +207,7 @@ class TestSimulationConfigRepositoryCreateConfig:
             activity_distributions={
                 activity_id: {"distribution": "triangular", "min": 5, "mode": 10, "max": 15}
             },
-            cost_distributions={
-                activity_id: {"distribution": "normal", "mean": 1000, "std": 100}
-            },
+            cost_distributions={activity_id: {"distribution": "normal", "mean": 1000, "std": 100}},
             scenario_id=scenario_id,
             description="Test description",
         )

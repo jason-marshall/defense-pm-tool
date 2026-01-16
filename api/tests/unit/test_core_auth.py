@@ -51,7 +51,7 @@ class TestPasswordHashing:
 
     def test_hash_unicode_password(self):
         """Test hashing password with unicode characters."""
-        password = "Test密码пароль"  # noqa: RUF001 - intentional mixed unicode for testing
+        password = "Test密码пароль"
         hashed = hash_password(password)
         assert verify_password(password, hashed) is True
 

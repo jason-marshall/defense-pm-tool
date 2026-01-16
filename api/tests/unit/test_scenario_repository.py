@@ -1,6 +1,5 @@
 """Unit tests for ScenarioRepository methods using mocks."""
 
-from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
@@ -28,7 +27,7 @@ class TestScenarioRepositoryGetWithChanges:
     @pytest.fixture
     def repo(self, mock_session):
         """Create repository with mock session."""
-        return ScenarioRepository(Scenario, mock_session)
+        return ScenarioRepository(mock_session)
 
     @pytest.mark.asyncio
     async def test_get_with_changes_found(self, repo, mock_session):
@@ -77,7 +76,7 @@ class TestScenarioRepositoryGetByProgram:
     @pytest.fixture
     def repo(self, mock_session):
         """Create repository with mock session."""
-        return ScenarioRepository(Scenario, mock_session)
+        return ScenarioRepository(mock_session)
 
     @pytest.mark.asyncio
     async def test_get_by_program_returns_list(self, repo, mock_session):
@@ -148,7 +147,7 @@ class TestScenarioRepositoryCountByProgram:
     @pytest.fixture
     def repo(self, mock_session):
         """Create repository with mock session."""
-        return ScenarioRepository(Scenario, mock_session)
+        return ScenarioRepository(mock_session)
 
     @pytest.mark.asyncio
     async def test_count_by_program_returns_count(self, repo, mock_session):
@@ -199,7 +198,7 @@ class TestScenarioRepositoryAddChange:
     @pytest.fixture
     def repo(self, mock_session):
         """Create repository with mock session."""
-        return ScenarioRepository(Scenario, mock_session)
+        return ScenarioRepository(mock_session)
 
     @pytest.mark.asyncio
     async def test_add_change_creates_change(self, repo, mock_session):
@@ -271,7 +270,7 @@ class TestScenarioRepositoryGetChanges:
     @pytest.fixture
     def repo(self, mock_session):
         """Create repository with mock session."""
-        return ScenarioRepository(Scenario, mock_session)
+        return ScenarioRepository(mock_session)
 
     @pytest.mark.asyncio
     async def test_get_changes_returns_list(self, repo, mock_session):
@@ -318,7 +317,7 @@ class TestScenarioRepositoryGetChangesForEntity:
     @pytest.fixture
     def repo(self, mock_session):
         """Create repository with mock session."""
-        return ScenarioRepository(Scenario, mock_session)
+        return ScenarioRepository(mock_session)
 
     @pytest.mark.asyncio
     async def test_get_changes_for_entity_returns_list(self, repo, mock_session):
@@ -354,7 +353,7 @@ class TestScenarioRepositoryRemoveChange:
     @pytest.fixture
     def repo(self, mock_session):
         """Create repository with mock session."""
-        return ScenarioRepository(Scenario, mock_session)
+        return ScenarioRepository(mock_session)
 
     @pytest.mark.asyncio
     async def test_remove_change_success(self, repo, mock_session):
@@ -416,7 +415,7 @@ class TestScenarioRepositoryUpdateCache:
     @pytest.fixture
     def repo(self, mock_session):
         """Create repository with mock session."""
-        return ScenarioRepository(Scenario, mock_session)
+        return ScenarioRepository(mock_session)
 
     @pytest.mark.asyncio
     async def test_update_cache_success(self, repo, mock_session):
@@ -462,7 +461,7 @@ class TestScenarioRepositoryMarkPromoted:
     @pytest.fixture
     def repo(self, mock_session):
         """Create repository with mock session."""
-        return ScenarioRepository(Scenario, mock_session)
+        return ScenarioRepository(mock_session)
 
     @pytest.mark.asyncio
     async def test_mark_promoted_success(self, repo, mock_session):
@@ -510,7 +509,7 @@ class TestScenarioRepositoryArchive:
     @pytest.fixture
     def repo(self, mock_session):
         """Create repository with mock session."""
-        return ScenarioRepository(Scenario, mock_session)
+        return ScenarioRepository(mock_session)
 
     @pytest.mark.asyncio
     async def test_archive_success(self, repo, mock_session):
@@ -554,7 +553,7 @@ class TestScenarioRepositoryBranchFromScenario:
     @pytest.fixture
     def repo(self, mock_session):
         """Create repository with mock session."""
-        return ScenarioRepository(Scenario, mock_session)
+        return ScenarioRepository(mock_session)
 
     @pytest.mark.asyncio
     async def test_branch_from_scenario_success(self, repo, mock_session):
@@ -584,9 +583,7 @@ class TestScenarioRepositoryBranchFromScenario:
             )
         ]
 
-        with patch.object(
-            repo, "get_with_changes", new_callable=AsyncMock, return_value=parent
-        ):
+        with patch.object(repo, "get_with_changes", new_callable=AsyncMock, return_value=parent):
             result = await repo.branch_from_scenario(
                 parent_id, "Branch", "Branched scenario", user_id
             )
@@ -604,12 +601,8 @@ class TestScenarioRepositoryBranchFromScenario:
         parent_id = uuid4()
         user_id = uuid4()
 
-        with patch.object(
-            repo, "get_with_changes", new_callable=AsyncMock, return_value=None
-        ):
-            result = await repo.branch_from_scenario(
-                parent_id, "Branch", None, user_id
-            )
+        with patch.object(repo, "get_with_changes", new_callable=AsyncMock, return_value=None):
+            result = await repo.branch_from_scenario(parent_id, "Branch", None, user_id)
 
         assert result is None
 
@@ -626,7 +619,7 @@ class TestScenarioRepositoryGetChangeSummary:
     @pytest.fixture
     def repo(self, mock_session):
         """Create repository with mock session."""
-        return ScenarioRepository(Scenario, mock_session)
+        return ScenarioRepository(mock_session)
 
     @pytest.mark.asyncio
     async def test_get_change_summary_empty(self, repo, mock_session):
@@ -655,9 +648,7 @@ class TestScenarioRepositoryGetChangeSummary:
             MagicMock(entity_type="wbs", change_type="delete"),
         ]
 
-        with patch.object(
-            repo, "get_changes", new_callable=AsyncMock, return_value=changes
-        ):
+        with patch.object(repo, "get_changes", new_callable=AsyncMock, return_value=changes):
             result = await repo.get_change_summary(scenario_id)
 
         assert result["total_changes"] == 5

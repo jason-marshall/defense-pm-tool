@@ -26,7 +26,7 @@ class TestBaselineRepositoryGetByProgram:
     @pytest.fixture
     def repo(self, mock_session):
         """Create repository with mock session."""
-        return BaselineRepository(Baseline, mock_session)
+        return BaselineRepository(mock_session)
 
     @pytest.mark.asyncio
     async def test_get_by_program_returns_list(self, repo, mock_session):
@@ -90,7 +90,7 @@ class TestBaselineRepositoryCountByProgram:
     @pytest.fixture
     def repo(self, mock_session):
         """Create repository with mock session."""
-        return BaselineRepository(Baseline, mock_session)
+        return BaselineRepository(mock_session)
 
     @pytest.mark.asyncio
     async def test_count_by_program_returns_count(self, repo, mock_session):
@@ -141,7 +141,7 @@ class TestBaselineRepositoryGetLatestVersion:
     @pytest.fixture
     def repo(self, mock_session):
         """Create repository with mock session."""
-        return BaselineRepository(Baseline, mock_session)
+        return BaselineRepository(mock_session)
 
     @pytest.mark.asyncio
     async def test_get_latest_version_returns_version(self, repo, mock_session):
@@ -180,7 +180,7 @@ class TestBaselineRepositoryGetApprovedBaseline:
     @pytest.fixture
     def repo(self, mock_session):
         """Create repository with mock session."""
-        return BaselineRepository(Baseline, mock_session)
+        return BaselineRepository(mock_session)
 
     @pytest.mark.asyncio
     async def test_get_approved_baseline_returns_baseline(self, repo, mock_session):
@@ -232,7 +232,7 @@ class TestBaselineRepositoryApproveBaseline:
     @pytest.fixture
     def repo(self, mock_session):
         """Create repository with mock session."""
-        return BaselineRepository(Baseline, mock_session)
+        return BaselineRepository(mock_session)
 
     @pytest.mark.asyncio
     async def test_approve_baseline_first(self, repo, mock_session):
@@ -253,7 +253,9 @@ class TestBaselineRepositoryApproveBaseline:
 
         # Mock get to return the baseline
         with patch.object(repo, "get", new_callable=AsyncMock, return_value=baseline):
-            with patch.object(repo, "get_approved_baseline", new_callable=AsyncMock, return_value=None):
+            with patch.object(
+                repo, "get_approved_baseline", new_callable=AsyncMock, return_value=None
+            ):
                 result = await repo.approve_baseline(baseline_id, approver_id)
 
         assert result.is_approved is True
@@ -294,7 +296,9 @@ class TestBaselineRepositoryApproveBaseline:
         )
 
         with patch.object(repo, "get", new_callable=AsyncMock, return_value=new_baseline):
-            with patch.object(repo, "get_approved_baseline", new_callable=AsyncMock, return_value=old_baseline):
+            with patch.object(
+                repo, "get_approved_baseline", new_callable=AsyncMock, return_value=old_baseline
+            ):
                 result = await repo.approve_baseline(baseline_id, approver_id)
 
         assert result.is_approved is True
@@ -325,7 +329,7 @@ class TestBaselineRepositoryCreateSnapshot:
     @pytest.fixture
     def repo(self, mock_session):
         """Create repository with mock session."""
-        return BaselineRepository(Baseline, mock_session)
+        return BaselineRepository(mock_session)
 
     @pytest.mark.asyncio
     async def test_create_snapshot_with_schedule(self, repo, mock_session):
@@ -334,26 +338,28 @@ class TestBaselineRepositoryCreateSnapshot:
         user_id = uuid4()
 
         # Mock the helper methods
-        with patch.object(repo, "get_latest_version", return_value=0):
-            with patch.object(
+        with (
+            patch.object(repo, "get_latest_version", return_value=0),
+            patch.object(
                 repo,
                 "_build_schedule_snapshot",
                 return_value=({"activities": []}, 5, date(2026, 6, 30)),
-            ):
-                with patch.object(
-                    repo,
-                    "_build_wbs_cost_snapshot",
-                    return_value=(None, None, 0, Decimal("0")),
-                ):
-                    result = await repo.create_snapshot(
-                        program_id=program_id,
-                        name="Test Snapshot",
-                        description="Test",
-                        created_by_id=user_id,
-                        include_schedule=True,
-                        include_cost=False,
-                        include_wbs=False,
-                    )
+            ),
+            patch.object(
+                repo,
+                "_build_wbs_cost_snapshot",
+                return_value=(None, None, 0, Decimal("0")),
+            ),
+        ):
+            result = await repo.create_snapshot(
+                program_id=program_id,
+                name="Test Snapshot",
+                description="Test",
+                created_by_id=user_id,
+                include_schedule=True,
+                include_cost=False,
+                include_wbs=False,
+            )
 
         assert result.name == "Test Snapshot"
         assert result.version == 1
@@ -367,24 +373,24 @@ class TestBaselineRepositoryCreateSnapshot:
         program_id = uuid4()
         user_id = uuid4()
 
-        with patch.object(repo, "get_latest_version", return_value=5):
-            with patch.object(
-                repo, "_build_schedule_snapshot", return_value=(None, 0, None)
-            ):
-                with patch.object(
-                    repo,
-                    "_build_wbs_cost_snapshot",
-                    return_value=(None, None, 0, Decimal("0")),
-                ):
-                    result = await repo.create_snapshot(
-                        program_id=program_id,
-                        name="Version 6",
-                        description=None,
-                        created_by_id=user_id,
-                        include_schedule=False,
-                        include_cost=False,
-                        include_wbs=False,
-                    )
+        with (
+            patch.object(repo, "get_latest_version", return_value=5),
+            patch.object(repo, "_build_schedule_snapshot", return_value=(None, 0, None)),
+            patch.object(
+                repo,
+                "_build_wbs_cost_snapshot",
+                return_value=(None, None, 0, Decimal("0")),
+            ),
+        ):
+            result = await repo.create_snapshot(
+                program_id=program_id,
+                name="Version 6",
+                description=None,
+                created_by_id=user_id,
+                include_schedule=False,
+                include_cost=False,
+                include_wbs=False,
+            )
 
         assert result.version == 6
 
@@ -401,7 +407,7 @@ class TestBaselineRepositoryBuildScheduleSnapshot:
     @pytest.fixture
     def repo(self, mock_session):
         """Create repository with mock session."""
-        return BaselineRepository(Baseline, mock_session)
+        return BaselineRepository(mock_session)
 
     @pytest.mark.asyncio
     async def test_build_schedule_snapshot_no_activities(self, repo, mock_session):
@@ -535,7 +541,7 @@ class TestBaselineRepositoryBuildWbsCostSnapshot:
     @pytest.fixture
     def repo(self, mock_session):
         """Create repository with mock session."""
-        return BaselineRepository(Baseline, mock_session)
+        return BaselineRepository(mock_session)
 
     @pytest.mark.asyncio
     async def test_build_wbs_cost_snapshot_no_elements(self, repo, mock_session):
@@ -546,9 +552,7 @@ class TestBaselineRepositoryBuildWbsCostSnapshot:
         mock_result.scalars.return_value.all.return_value = []
         mock_session.execute.return_value = mock_result
 
-        wbs, cost, count, bac = await repo._build_wbs_cost_snapshot(
-            program_id, True, True
-        )
+        wbs, cost, count, bac = await repo._build_wbs_cost_snapshot(program_id, True, True)
 
         assert wbs is None
         assert cost is None
@@ -572,9 +576,7 @@ class TestBaselineRepositoryBuildWbsCostSnapshot:
         mock_result.scalars.return_value.all.return_value = [wbs_elem]
         mock_session.execute.return_value = mock_result
 
-        wbs, cost, count, bac = await repo._build_wbs_cost_snapshot(
-            program_id, True, True
-        )
+        wbs, cost, count, bac = await repo._build_wbs_cost_snapshot(program_id, True, True)
 
         assert wbs is not None
         assert cost is not None
@@ -599,9 +601,7 @@ class TestBaselineRepositoryBuildWbsCostSnapshot:
         mock_result.scalars.return_value.all.return_value = [wbs_elem]
         mock_session.execute.return_value = mock_result
 
-        wbs, cost, count, bac = await repo._build_wbs_cost_snapshot(
-            program_id, True, False
-        )
+        wbs, cost, count, bac = await repo._build_wbs_cost_snapshot(program_id, True, False)
 
         assert wbs is not None
         assert cost is None
@@ -624,18 +624,14 @@ class TestBaselineRepositoryBuildWbsCostSnapshot:
         mock_result.scalars.return_value.all.return_value = [wbs_elem]
         mock_session.execute.return_value = mock_result
 
-        wbs, cost, count, bac = await repo._build_wbs_cost_snapshot(
-            program_id, False, True
-        )
+        wbs, cost, count, bac = await repo._build_wbs_cost_snapshot(program_id, False, True)
 
         assert wbs is None
         assert cost is not None
         assert cost["total_bac"] == str(Decimal("75000.00"))
 
     @pytest.mark.asyncio
-    async def test_build_wbs_cost_snapshot_total_bac_calculation(
-        self, repo, mock_session
-    ):
+    async def test_build_wbs_cost_snapshot_total_bac_calculation(self, repo, mock_session):
         """Should calculate total BAC from all WBS elements."""
         program_id = uuid4()
 
@@ -667,9 +663,7 @@ class TestBaselineRepositoryBuildWbsCostSnapshot:
         mock_result.scalars.return_value.all.return_value = [wbs1, wbs2, wbs3]
         mock_session.execute.return_value = mock_result
 
-        wbs, cost, count, bac = await repo._build_wbs_cost_snapshot(
-            program_id, True, True
-        )
+        wbs, cost, count, bac = await repo._build_wbs_cost_snapshot(program_id, True, True)
 
         assert count == 3
         assert bac == Decimal("100000.00")

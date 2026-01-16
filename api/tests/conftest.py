@@ -290,3 +290,40 @@ def inactive_user() -> User:
         is_active=False,
         role=UserRole.VIEWER,
     )
+
+
+@pytest_asyncio.fixture
+async def test_program(
+    client: AsyncClient,
+    auth_headers: dict[str, str],
+    sample_program_data: dict,
+) -> dict:
+    """Create a test program via API and return its data."""
+    response = await client.post(
+        "/api/v1/programs",
+        json=sample_program_data,
+        headers=auth_headers,
+    )
+    return response.json()
+
+
+@pytest_asyncio.fixture
+async def test_activity(
+    client: AsyncClient,
+    auth_headers: dict[str, str],
+    test_program: dict,
+) -> dict:
+    """Create a test activity via API and return its data."""
+    activity_data = {
+        "program_id": test_program["id"],
+        "name": "Test Activity",
+        "code": "ACT-001",
+        "duration": 10,
+        "budgeted_cost": "5000.00",
+    }
+    response = await client.post(
+        "/api/v1/activities",
+        json=activity_data,
+        headers=auth_headers,
+    )
+    return response.json()

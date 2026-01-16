@@ -1,6 +1,5 @@
 """Unit tests for UserRepository."""
 
-from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
@@ -254,7 +253,13 @@ class TestUserRepositoryGetActiveUsers:
         """Test getting active users with default pagination."""
         mock_session = AsyncMock()
         mock_users = [
-            User(id=uuid4(), email=f"user{i}@example.com", hashed_password="h", full_name=f"User {i}", is_active=True)
+            User(
+                id=uuid4(),
+                email=f"user{i}@example.com",
+                hashed_password="h",
+                full_name=f"User {i}",
+                is_active=True,
+            )
             for i in range(3)
         ]
 
@@ -275,7 +280,13 @@ class TestUserRepositoryGetActiveUsers:
         """Test getting active users with pagination."""
         mock_session = AsyncMock()
         mock_users = [
-            User(id=uuid4(), email="user@example.com", hashed_password="h", full_name="User", is_active=True)
+            User(
+                id=uuid4(),
+                email="user@example.com",
+                hashed_password="h",
+                full_name="User",
+                is_active=True,
+            )
         ]
 
         mock_result = MagicMock()

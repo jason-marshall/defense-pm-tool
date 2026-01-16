@@ -8,8 +8,8 @@ import pytest
 from src.models.enums import DependencyType
 from src.schemas.dependency import (
     DependencyCreate,
-    DependencyUpdate,
     DependencyResponse,
+    DependencyUpdate,
 )
 
 

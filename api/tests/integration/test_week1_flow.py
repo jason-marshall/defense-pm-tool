@@ -23,7 +23,7 @@ pytestmark = pytest.mark.asyncio
 class TestWeek1CompleteFlow:
     """End-to-end tests for Week 1 deliverables."""
 
-    async def test_complete_user_journey(  # noqa: PLR0915 - comprehensive integration test
+    async def test_complete_user_journey(
         self,
         client: AsyncClient,
         db_session: AsyncSession,

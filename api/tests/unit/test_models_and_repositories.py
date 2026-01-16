@@ -5,10 +5,10 @@ from uuid import uuid4
 
 import pytest
 
+from src.models.activity import Activity
 from src.models.dependency import Dependency
 from src.models.enums import DependencyType, ProgramStatus
 from src.models.program import Program
-from src.models.activity import Activity
 from src.models.wbs import WBSElement
 from src.repositories.activity import ActivityRepository
 from src.repositories.dependency import DependencyRepository

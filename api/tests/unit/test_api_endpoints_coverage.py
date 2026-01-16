@@ -1,16 +1,13 @@
 """Additional unit tests for API endpoint coverage."""
 
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 from uuid import uuid4
-
-import pytest
 
 from src.models.activity import Activity
 from src.models.baseline import Baseline
 from src.models.dependency import Dependency, DependencyType
-from src.models.program import Program
-from src.models.scenario import Scenario, ScenarioChange, ScenarioStatus, ChangeType, EntityType
+from src.models.scenario import ChangeType, EntityType, Scenario, ScenarioChange, ScenarioStatus
 from src.models.simulation import SimulationConfig, SimulationResult, SimulationStatus
 from src.models.wbs import WBSElement
 

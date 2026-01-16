@@ -387,9 +387,7 @@ class TestBaselineComparisonServiceCompareSchedule:
             comparison_date=datetime.now(),
         )
 
-        await service._compare_schedule(
-            baseline, {"ACT-001": current_act}, result, False
-        )
+        await service._compare_schedule(baseline, {"ACT-001": current_act}, result, False)
 
         assert result.critical_path_changed is False
         assert result.activities_unchanged == 1

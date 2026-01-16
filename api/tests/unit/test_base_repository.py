@@ -1,6 +1,6 @@
 """Unit tests for BaseRepository methods."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
@@ -438,7 +438,7 @@ class TestBaseRepositoryRestore:
             code="ACT-001",
             name="Test",
             duration=5,
-            deleted_at=datetime.now(timezone.utc),
+            deleted_at=datetime.now(UTC),
         )
 
         with patch.object(repo, "get_by_id", new_callable=AsyncMock, return_value=existing):
