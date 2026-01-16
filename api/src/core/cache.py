@@ -110,7 +110,7 @@ class CacheManager:
                 return json.loads(data)
             logger.debug("cache_miss", key=key)
             return None
-        except aioaioredis.RedisError as e:
+        except aioredis.RedisError as e:
             logger.warning("cache_get_error", key=key, error=str(e))
             return None
         except json.JSONDecodeError as e:
@@ -145,7 +145,7 @@ class CacheManager:
                 await self._redis.set(key, serialized)  # type: ignore
             logger.debug("cache_set", key=key, ttl=ttl)
             return True
-        except (aioaioredis.RedisError, TypeError, ValueError) as e:
+        except (aioredis.RedisError, TypeError, ValueError) as e:
             logger.warning("cache_set_error", key=key, error=str(e))
             return False
 
@@ -166,7 +166,7 @@ class CacheManager:
             await self._redis.delete(key)  # type: ignore
             logger.debug("cache_delete", key=key)
             return True
-        except aioaioredis.RedisError as e:
+        except aioredis.RedisError as e:
             logger.warning("cache_delete_error", key=key, error=str(e))
             return False
 
@@ -193,7 +193,7 @@ class CacheManager:
                 logger.debug("cache_delete_pattern", pattern=pattern, count=deleted)
                 return deleted
             return 0
-        except aioaioredis.RedisError as e:
+        except aioredis.RedisError as e:
             logger.warning("cache_delete_pattern_error", pattern=pattern, error=str(e))
             return 0
 
@@ -265,7 +265,7 @@ class CacheManager:
                 "used_memory_human": info.get("used_memory_human"),
                 "uptime_in_seconds": info.get("uptime_in_seconds"),
             }
-        except aioaioredis.RedisError as e:
+        except aioredis.RedisError as e:
             return {"status": "unhealthy", "error": str(e)}
 
 

@@ -539,3 +539,277 @@ class TestImportedDataclasses:
         )
 
         assert project.warnings == []
+
+
+class TestConstraintParsing:
+    """Tests for constraint type parsing."""
+
+    @pytest.fixture
+    def xml_with_must_finish_on(self, tmp_path: Path) -> Path:
+        """Create XML with Must Finish On constraint (type 6)."""
+        xml_content = """<?xml version="1.0" encoding="UTF-8"?>
+<Project>
+  <Name>Constraint Test</Name>
+  <StartDate>2026-01-01T08:00:00</StartDate>
+  <FinishDate>2026-12-31T17:00:00</FinishDate>
+  <Tasks>
+    <Task>
+      <UID>1</UID>
+      <Name>Must Finish On Task</Name>
+      <WBS>1</WBS>
+      <OutlineLevel>1</OutlineLevel>
+      <Duration>PT8H0M0S</Duration>
+      <ConstraintType>6</ConstraintType>
+      <ConstraintDate>2026-03-15T17:00:00</ConstraintDate>
+    </Task>
+  </Tasks>
+</Project>"""
+        xml_file = tmp_path / "must_finish.xml"
+        xml_file.write_text(xml_content)
+        return xml_file
+
+    @pytest.fixture
+    def xml_with_must_start_on(self, tmp_path: Path) -> Path:
+        """Create XML with Must Start On constraint (type 7)."""
+        xml_content = """<?xml version="1.0" encoding="UTF-8"?>
+<Project>
+  <Name>Constraint Test</Name>
+  <StartDate>2026-01-01T08:00:00</StartDate>
+  <FinishDate>2026-12-31T17:00:00</FinishDate>
+  <Tasks>
+    <Task>
+      <UID>1</UID>
+      <Name>Must Start On Task</Name>
+      <WBS>1</WBS>
+      <OutlineLevel>1</OutlineLevel>
+      <Duration>PT8H0M0S</Duration>
+      <ConstraintType>7</ConstraintType>
+      <ConstraintDate>2026-03-15T08:00:00</ConstraintDate>
+    </Task>
+  </Tasks>
+</Project>"""
+        xml_file = tmp_path / "must_start.xml"
+        xml_file.write_text(xml_content)
+        return xml_file
+
+    def test_must_finish_on_converted_to_fnlt(self, xml_with_must_finish_on: Path) -> None:
+        """Should convert Must Finish On (type 6) to FNLT with warning."""
+        importer = MSProjectImporter(xml_with_must_finish_on)
+        project = importer.parse()
+
+        task = project.tasks[0]
+        assert task.constraint_type == "fnlt"
+        assert task.constraint_date is not None
+        # Should have warning about conversion
+        assert any("Must Finish On" in w or "Must Start On" in w for w in project.warnings)
+
+    def test_must_start_on_converted_to_snet(self, xml_with_must_start_on: Path) -> None:
+        """Should convert Must Start On (type 7) to SNET with warning."""
+        importer = MSProjectImporter(xml_with_must_start_on)
+        project = importer.parse()
+
+        task = project.tasks[0]
+        assert task.constraint_type == "snet"
+        assert task.constraint_date is not None
+        # Should have warning about conversion
+        assert any("Must Finish On" in w or "Must Start On" in w for w in project.warnings)
+
+    @pytest.fixture
+    def xml_with_all_constraints(self, tmp_path: Path) -> Path:
+        """Create XML with all constraint types."""
+        xml_content = """<?xml version="1.0" encoding="UTF-8"?>
+<Project>
+  <Name>All Constraints</Name>
+  <StartDate>2026-01-01T08:00:00</StartDate>
+  <FinishDate>2026-12-31T17:00:00</FinishDate>
+  <Tasks>
+    <Task>
+      <UID>1</UID><Name>ASAP</Name><WBS>1</WBS><OutlineLevel>1</OutlineLevel>
+      <Duration>PT8H0M0S</Duration>
+      <ConstraintType>0</ConstraintType>
+    </Task>
+    <Task>
+      <UID>2</UID><Name>ALAP</Name><WBS>2</WBS><OutlineLevel>1</OutlineLevel>
+      <Duration>PT8H0M0S</Duration>
+      <ConstraintType>1</ConstraintType>
+    </Task>
+    <Task>
+      <UID>3</UID><Name>SNLT</Name><WBS>3</WBS><OutlineLevel>1</OutlineLevel>
+      <Duration>PT8H0M0S</Duration>
+      <ConstraintType>3</ConstraintType>
+      <ConstraintDate>2026-02-01T08:00:00</ConstraintDate>
+    </Task>
+    <Task>
+      <UID>4</UID><Name>FNET</Name><WBS>4</WBS><OutlineLevel>1</OutlineLevel>
+      <Duration>PT8H0M0S</Duration>
+      <ConstraintType>4</ConstraintType>
+      <ConstraintDate>2026-02-15T17:00:00</ConstraintDate>
+    </Task>
+    <Task>
+      <UID>5</UID><Name>FNLT</Name><WBS>5</WBS><OutlineLevel>1</OutlineLevel>
+      <Duration>PT8H0M0S</Duration>
+      <ConstraintType>5</ConstraintType>
+      <ConstraintDate>2026-02-28T17:00:00</ConstraintDate>
+    </Task>
+  </Tasks>
+</Project>"""
+        xml_file = tmp_path / "all_constraints.xml"
+        xml_file.write_text(xml_content)
+        return xml_file
+
+    def test_asap_alap_constraints_ignored(self, xml_with_all_constraints: Path) -> None:
+        """Should return None for ASAP (0) and ALAP (1) constraints."""
+        importer = MSProjectImporter(xml_with_all_constraints)
+        project = importer.parse()
+
+        asap_task = next(t for t in project.tasks if t.name == "ASAP")
+        alap_task = next(t for t in project.tasks if t.name == "ALAP")
+
+        assert asap_task.constraint_type is None
+        assert alap_task.constraint_type is None
+
+    def test_snlt_constraint(self, xml_with_all_constraints: Path) -> None:
+        """Should parse SNLT constraint (type 3)."""
+        importer = MSProjectImporter(xml_with_all_constraints)
+        project = importer.parse()
+
+        task = next(t for t in project.tasks if t.name == "SNLT")
+        assert task.constraint_type == "snlt"
+        assert task.constraint_date is not None
+
+    def test_fnet_constraint(self, xml_with_all_constraints: Path) -> None:
+        """Should parse FNET constraint (type 4)."""
+        importer = MSProjectImporter(xml_with_all_constraints)
+        project = importer.parse()
+
+        task = next(t for t in project.tasks if t.name == "FNET")
+        assert task.constraint_type == "fnet"
+        assert task.constraint_date is not None
+
+    def test_fnlt_constraint(self, xml_with_all_constraints: Path) -> None:
+        """Should parse FNLT constraint (type 5)."""
+        importer = MSProjectImporter(xml_with_all_constraints)
+        project = importer.parse()
+
+        task = next(t for t in project.tasks if t.name == "FNLT")
+        assert task.constraint_type == "fnlt"
+        assert task.constraint_date is not None
+
+
+class TestSummaryTasks:
+    """Tests for summary task parsing."""
+
+    @pytest.fixture
+    def xml_with_summary_tasks(self, tmp_path: Path) -> Path:
+        """Create XML with summary and non-summary tasks."""
+        xml_content = """<?xml version="1.0" encoding="UTF-8"?>
+<Project>
+  <Name>Summary Tasks</Name>
+  <StartDate>2026-01-01T08:00:00</StartDate>
+  <FinishDate>2026-12-31T17:00:00</FinishDate>
+  <Tasks>
+    <Task>
+      <UID>1</UID>
+      <Name>Phase 1</Name>
+      <WBS>1</WBS>
+      <OutlineLevel>1</OutlineLevel>
+      <Duration>PT80H0M0S</Duration>
+      <Summary>1</Summary>
+    </Task>
+    <Task>
+      <UID>2</UID>
+      <Name>Task 1.1</Name>
+      <WBS>1.1</WBS>
+      <OutlineLevel>2</OutlineLevel>
+      <Duration>PT40H0M0S</Duration>
+      <Summary>0</Summary>
+    </Task>
+  </Tasks>
+</Project>"""
+        xml_file = tmp_path / "summary.xml"
+        xml_file.write_text(xml_content)
+        return xml_file
+
+    def test_summary_task_flag(self, xml_with_summary_tasks: Path) -> None:
+        """Should correctly identify summary tasks."""
+        importer = MSProjectImporter(xml_with_summary_tasks)
+        project = importer.parse()
+
+        summary = next(t for t in project.tasks if t.name == "Phase 1")
+        regular = next(t for t in project.tasks if t.name == "Task 1.1")
+
+        assert summary.is_summary is True
+        assert regular.is_summary is False
+
+
+class TestDateTimeParsing:
+    """Tests for datetime parsing edge cases."""
+
+    @pytest.fixture
+    def xml_with_timezone(self, tmp_path: Path) -> Path:
+        """Create XML with timezone in dates."""
+        xml_content = """<?xml version="1.0" encoding="UTF-8"?>
+<Project>
+  <Name>Timezone Test</Name>
+  <StartDate>2026-01-01T08:00:00Z</StartDate>
+  <FinishDate>2026-12-31T17:00:00+00:00</FinishDate>
+  <Tasks>
+    <Task>
+      <UID>1</UID>
+      <Name>Task</Name>
+      <WBS>1</WBS>
+      <OutlineLevel>1</OutlineLevel>
+      <Duration>PT8H0M0S</Duration>
+      <Start>2026-01-15T08:00:00Z</Start>
+      <Finish>2026-01-15T17:00:00+05:30</Finish>
+    </Task>
+  </Tasks>
+</Project>"""
+        xml_file = tmp_path / "timezone.xml"
+        xml_file.write_text(xml_content)
+        return xml_file
+
+    def test_parse_dates_with_timezone(self, xml_with_timezone: Path) -> None:
+        """Should parse dates with timezone suffixes."""
+        importer = MSProjectImporter(xml_with_timezone)
+        project = importer.parse()
+
+        assert project.start_date is not None
+        assert project.finish_date is not None
+        assert project.tasks[0].start is not None
+        assert project.tasks[0].finish is not None
+
+
+class TestMissingTaskData:
+    """Tests for tasks with missing optional data."""
+
+    @pytest.fixture
+    def xml_minimal_task(self, tmp_path: Path) -> Path:
+        """Create XML with minimal task data."""
+        xml_content = """<?xml version="1.0" encoding="UTF-8"?>
+<Project>
+  <Name>Minimal</Name>
+  <StartDate>2026-01-01T08:00:00</StartDate>
+  <FinishDate>2026-12-31T17:00:00</FinishDate>
+  <Tasks>
+    <Task>
+      <UID>1</UID>
+    </Task>
+  </Tasks>
+</Project>"""
+        xml_file = tmp_path / "minimal.xml"
+        xml_file.write_text(xml_content)
+        return xml_file
+
+    def test_minimal_task_has_defaults(self, xml_minimal_task: Path) -> None:
+        """Should use defaults for missing task fields."""
+        importer = MSProjectImporter(xml_minimal_task)
+        project = importer.parse()
+
+        task = project.tasks[0]
+        assert task.name == "Task 1"  # Default name
+        assert task.wbs == "1"  # Default WBS
+        assert task.outline_level == 1
+        assert task.duration_hours == 0
+        assert task.is_milestone is False
+        assert task.is_summary is False

@@ -1,9 +1,13 @@
 """Unit tests for Dependency schemas."""
 
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from src.models.enums import DependencyType
-from src.schemas.dependency import DependencyCreate, DependencyUpdate
+from src.schemas.dependency import DependencyCreate, DependencyResponse, DependencyUpdate
+
+# Helpers
+NOW = datetime.now(UTC)
 
 
 class TestDependencyCreate:
@@ -84,3 +88,107 @@ class TestDependencyUpdate:
         """Test partial update."""
         update = DependencyUpdate(lag=5)
         assert update.lag == 5
+
+
+class TestDependencyResponseProperties:
+    """Tests for DependencyResponse computed properties."""
+
+    def test_has_lag_true(self) -> None:
+        """Should return True for non-zero lag."""
+        dep = DependencyResponse(
+            id=uuid4(),
+            predecessor_id=uuid4(),
+            successor_id=uuid4(),
+            dependency_type=DependencyType.FS,
+            lag=5,
+            created_at=NOW,
+            updated_at=NOW,
+        )
+        assert dep.has_lag is True
+
+    def test_has_lag_false(self) -> None:
+        """Should return False for zero lag."""
+        dep = DependencyResponse(
+            id=uuid4(),
+            predecessor_id=uuid4(),
+            successor_id=uuid4(),
+            dependency_type=DependencyType.FS,
+            lag=0,
+            created_at=NOW,
+            updated_at=NOW,
+        )
+        assert dep.has_lag is False
+
+    def test_has_lead_true(self) -> None:
+        """Should return True for negative lag."""
+        dep = DependencyResponse(
+            id=uuid4(),
+            predecessor_id=uuid4(),
+            successor_id=uuid4(),
+            dependency_type=DependencyType.FS,
+            lag=-3,
+            created_at=NOW,
+            updated_at=NOW,
+        )
+        assert dep.has_lead is True
+
+    def test_has_lead_false(self) -> None:
+        """Should return False for non-negative lag."""
+        dep = DependencyResponse(
+            id=uuid4(),
+            predecessor_id=uuid4(),
+            successor_id=uuid4(),
+            dependency_type=DependencyType.FS,
+            lag=0,
+            created_at=NOW,
+            updated_at=NOW,
+        )
+        assert dep.has_lead is False
+
+    def test_dependency_description_fs_no_lag(self) -> None:
+        """Should describe FS dependency without lag."""
+        pred_id = uuid4()
+        succ_id = uuid4()
+        dep = DependencyResponse(
+            id=uuid4(),
+            predecessor_id=pred_id,
+            successor_id=succ_id,
+            dependency_type=DependencyType.FS,
+            lag=0,
+            created_at=NOW,
+            updated_at=NOW,
+        )
+        desc = dep.dependency_description
+        assert "finishes before" in desc
+        assert str(pred_id) in desc
+        assert str(succ_id) in desc
+
+    def test_dependency_description_with_lag(self) -> None:
+        """Should include lag in description."""
+        dep = DependencyResponse(
+            id=uuid4(),
+            predecessor_id=uuid4(),
+            successor_id=uuid4(),
+            dependency_type=DependencyType.SS,
+            lag=5,
+            created_at=NOW,
+            updated_at=NOW,
+        )
+        desc = dep.dependency_description
+        assert "starts before" in desc
+        assert "5 day lag" in desc
+
+    def test_dependency_description_with_lead(self) -> None:
+        """Should include lead in description."""
+        dep = DependencyResponse(
+            id=uuid4(),
+            predecessor_id=uuid4(),
+            successor_id=uuid4(),
+            dependency_type=DependencyType.FF,
+            lag=-2,
+            created_at=NOW,
+            updated_at=NOW,
+        )
+        desc = dep.dependency_description
+        assert "finishes before" in desc
+        assert "2 day lead" in desc

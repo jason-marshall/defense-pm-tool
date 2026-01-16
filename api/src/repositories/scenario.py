@@ -5,6 +5,7 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.models.scenario import Scenario, ScenarioChange
@@ -15,6 +16,10 @@ class ScenarioRepository(BaseRepository[Scenario]):
     """Repository for Scenario CRUD operations."""
 
     model = Scenario
+
+    def __init__(self, session: AsyncSession) -> None:
+        """Initialize with Scenario model."""
+        super().__init__(Scenario, session)
 
     async def get_with_changes(self, scenario_id: UUID) -> Scenario | None:
         """Get scenario with its changes eagerly loaded."""

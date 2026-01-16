@@ -6,6 +6,7 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.activity import Activity
 from src.models.baseline import Baseline
@@ -18,6 +19,10 @@ class BaselineRepository(BaseRepository[Baseline]):
     """Repository for Baseline CRUD operations and snapshot creation."""
 
     model = Baseline
+
+    def __init__(self, session: AsyncSession) -> None:
+        """Initialize with Baseline model."""
+        super().__init__(Baseline, session)
 
     async def get_by_program(
         self,
