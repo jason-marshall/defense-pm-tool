@@ -687,3 +687,136 @@ async def calculate_all_eac_methods(
         }
         for r in results
     ]
+
+
+# =============================================================================
+# Enhanced S-Curve Endpoint
+# =============================================================================
+
+
+@router.get("/s-curve-enhanced/{program_id}")
+async def get_enhanced_scurve(
+    program_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> dict:
+    """
+    Get S-curve with Monte Carlo confidence bands.
+
+    Returns historical BCWS/BCWP/ACWP data with forecast ranges derived
+    from Monte Carlo simulation results.
+
+    Response includes:
+    - Historical data points with cumulative BCWS, BCWP, ACWP
+    - EAC range (P10/P50/P90) based on simulation uncertainty
+    - Completion date range (P10/P50/P90) from duration simulation
+    - Percent complete
+    """
+    from src.repositories.simulation import (
+        SimulationConfigRepository,
+        SimulationResultRepository,
+    )
+    from src.services.scurve_enhanced import (
+        EnhancedSCurveService,
+        build_simulation_metrics_from_result,
+    )
+
+    # Verify program exists and user has access
+    program_repo = ProgramRepository(db)
+    program = await program_repo.get_by_id(program_id)
+
+    if not program:
+        raise NotFoundError(f"Program {program_id} not found", "PROGRAM_NOT_FOUND")
+
+    if program.owner_id != current_user.id and not current_user.is_admin:
+        raise AuthorizationError(
+            "Not authorized to view S-curve for this program",
+            "NOT_AUTHORIZED",
+        )
+
+    # Get EVMS periods for S-curve data
+    period_repo = EVMSPeriodRepository(db)
+    periods = await period_repo.get_by_program(program_id, limit=1000)
+
+    # Sort by period end date (ascending for chronological order)
+    periods = sorted(periods, key=lambda p: p.period_end)
+
+    # Get latest simulation result if available
+    simulation_metrics = None
+    config_repo = SimulationConfigRepository(db)
+    result_repo = SimulationResultRepository(db)
+
+    configs = await config_repo.get_by_program(program_id, limit=1)
+    if configs:
+        latest_result = await result_repo.get_completed_by_config(configs[0].id)
+        if latest_result:
+            simulation_metrics = build_simulation_metrics_from_result(latest_result)
+
+    # Generate enhanced S-curve
+    service = EnhancedSCurveService(
+        program_id=program_id,
+        periods=periods,
+        bac=program.budget_at_completion or Decimal("0"),
+        simulation_metrics=simulation_metrics,
+        start_date=program.start_date,
+    )
+
+    result = service.generate()
+
+    # Build response
+    response: dict = {
+        "program_id": str(result.program_id),
+        "bac": str(result.bac),
+        "current_period": result.current_period,
+        "percent_complete": str(result.percent_complete),
+        "simulation_available": result.simulation_available,
+        "data_points": [
+            {
+                "period_number": dp.period_number,
+                "period_date": dp.period_date.isoformat(),
+                "period_name": dp.period_name,
+                "bcws": str(dp.bcws),
+                "bcwp": str(dp.bcwp),
+                "acwp": str(dp.acwp),
+                "cumulative_bcws": str(dp.cumulative_bcws),
+                "cumulative_bcwp": str(dp.cumulative_bcwp),
+                "cumulative_acwp": str(dp.cumulative_acwp),
+                "is_forecast": dp.is_forecast,
+            }
+            for dp in result.data_points
+        ],
+    }
+
+    # Add EAC range if available
+    if result.eac_range:
+        response["eac_range"] = {
+            "p10": str(result.eac_range.p10),
+            "p50": str(result.eac_range.p50),
+            "p90": str(result.eac_range.p90),
+            "method": result.eac_range.method,
+        }
+
+    # Add completion range if available
+    if result.completion_range:
+        response["completion_range"] = {
+            "p10_days": result.completion_range.p10_days,
+            "p50_days": result.completion_range.p50_days,
+            "p90_days": result.completion_range.p90_days,
+            "p10_date": (
+                result.completion_range.p10_date.isoformat()
+                if result.completion_range.p10_date
+                else None
+            ),
+            "p50_date": (
+                result.completion_range.p50_date.isoformat()
+                if result.completion_range.p50_date
+                else None
+            ),
+            "p90_date": (
+                result.completion_range.p90_date.isoformat()
+                if result.completion_range.p90_date
+                else None
+            ),
+        }
+
+    return response
