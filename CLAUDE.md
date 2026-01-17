@@ -672,22 +672,31 @@ pytest -v -s
 
 ### ✅ Completed (Month 2 - Week 7)
 - [x] Monte Carlo performance optimization (<5s target for network MC)
-- [x] OptimizedNetworkMonteCarloEngine with vectorized CPM (6x speedup)
+- [x] OptimizedNetworkMonteCarloEngine with vectorized CPM (7x speedup)
 - [x] Activity correlation modeling with Cholesky decomposition
 - [x] CPR Format 3 (Baseline) report with time-phased PMB
 - [x] Tornado chart / sensitivity visualization endpoint
 - [x] Simulation results caching with 24-hour TTL
-- [x] Week 7 integration tests (8 tests)
-- [x] 1346+ tests passing (1338 unit + 8 new integration)
-- [x] 80%+ test coverage maintained
+- [x] Week 7 E2E integration tests (8 tests)
+- [x] Dashboard performance baselines established
+- [x] 1516 tests passing (1338 unit + 178 integration)
+- [x] 81% test coverage achieved
 
 **Month 2 EVMS Integration Complete**
 
-### ⏳ Upcoming (Week 8 / Month 3 Prep)
-- [ ] Dashboard polish and performance
-- [ ] CPR Format 5 report
-- [ ] Jira integration foundation
-- [ ] Security hardening preparation
+### 🔶 In Progress (Month 2 - Week 8 Final)
+- [ ] Dashboard performance optimization (<3s target)
+- [ ] S-curve polish and export functionality
+- [ ] CPR Format 5 schema and foundation
+- [ ] Variance Analysis service foundation
+- [ ] Month 2 completion documentation
+- [ ] Month 3 preparation
+
+### ⏳ Upcoming (Month 3)
+- Week 9: CPR Format 1, 3, 5 all generating
+- Week 10: Jira integration syncing
+- Week 11: What-if scenarios working
+- Week 12: Security hardened, 80% coverage maintained
 
 ---
 
@@ -729,6 +738,29 @@ Week 7 optimizations achieved <5s target for network Monte Carlo:
 
 Run MC benchmarks: `cd api && pytest tests/performance/test_monte_carlo_benchmarks.py -v -s`
 
+## Dashboard Performance Baselines (Week 8)
+
+Current baselines established for dashboard optimization:
+
+| Endpoint | Baseline | Target | Status |
+|----------|----------|--------|--------|
+| EVMS Summary (10 activities) | 26.6ms | <500ms | ✅ |
+| S-curve Enhanced | 30.7ms | <2000ms | ✅ |
+| WBS Tree | 4.7ms | <500ms | ✅ |
+| Activities List (10) | 28.0ms | <500ms | ✅ |
+| Schedule Calculation (10) | 49.4ms | <1000ms | ✅ |
+| Full Dashboard Load | 64.9ms | <3000ms | ✅ |
+| Activities List (50) | 48.2ms | <1000ms | ✅ |
+| Schedule Calculation (50) | 89.0ms | <2000ms | ✅ |
+
+**Optimization strategies for Week 8:**
+- Database query optimization with eager loading
+- Redis caching for computed values
+- Async concurrent endpoint fetching
+- Response pagination for large datasets
+
+Run dashboard benchmarks: `cd api && pytest tests/performance/test_dashboard_benchmarks.py -v -s`
+
 ---
 
 ## Important Notes for Claude Code
@@ -746,5 +778,5 @@ Run MC benchmarks: `cd api && pytest tests/performance/test_monte_carlo_benchmar
 ---
 
 *Last Updated: January 2026*
-*Month 2, Week 7 Complete - 1346+ tests, 80%+ coverage*
-*Month 2 EVMS Integration Complete*
+*Month 2, Week 8 In Progress - 1525+ tests, 81% coverage*
+*Dashboard Performance Baselines Established*
