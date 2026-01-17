@@ -668,7 +668,20 @@ pytest -v -s
 - [x] Scenario simulation with what-if analysis (simulate, compare endpoints)
 - [x] S-curve confidence bands from Monte Carlo results
 - [x] Enhanced S-curve endpoint with EAC/completion date ranges
-- [x] 1133+ unit tests passing, 80%+ coverage maintained
+- [x] 1198 unit tests passing, 80%+ coverage maintained
+
+### 🔶 In Progress (Month 2 - Week 7)
+- [ ] Monte Carlo performance optimization (<5s target for network MC)
+- [ ] Activity correlation modeling
+- [ ] CPR Format 3 (Baseline) report
+- [ ] Tornado chart / sensitivity visualization
+- [ ] Simulation results caching
+
+### ⏳ Upcoming (Week 8 / Month 3 Prep)
+- [ ] Dashboard polish and performance
+- [ ] CPR Format 5 report
+- [ ] Jira integration foundation
+- [ ] Security hardening preparation
 
 ---
 
@@ -689,6 +702,27 @@ Established baselines for Week 4 optimization targets:
 
 Run benchmarks: `cd api && python scripts/run_benchmarks.py`
 
+## Monte Carlo Performance Baselines (Week 6)
+
+Established baselines for Week 7 optimization targets:
+
+| Benchmark | Current | Target | Status |
+|-----------|---------|--------|--------|
+| Basic MC (100 activities, 1000 iter) | 50ms | <100ms | ✅ |
+| Basic MC (100 activities, 5000 iter) | 40ms | <500ms | ✅ |
+| Basic MC (100 mixed distributions) | 17ms | <100ms | ✅ |
+| Network MC (50 chain, 1000 iter) | 5.2s | <5s | 🔶 |
+| Network MC (100 chain, 500 iter) | 5.5s | <5s | 🔶 |
+| Network MC (100 parallel, 500 iter) | 7.1s | <5s | 🔶 |
+| Network MC (75 mixed, 1000 iter) | 7.9s | <5s | 🔶 |
+
+**Optimization opportunities identified:**
+- Basic MC is highly optimized (NumPy vectorization)
+- Network MC bottleneck: CPM calculations per iteration
+- Week 7 focus: Vectorize network path calculations
+
+Run MC benchmarks: `cd api && pytest tests/performance/test_monte_carlo_benchmarks.py -v -s`
+
 ---
 
 ## Important Notes for Claude Code
@@ -706,4 +740,4 @@ Run benchmarks: `cd api && python scripts/run_benchmarks.py`
 ---
 
 *Last Updated: January 2026*
-*Month 2, Week 6 Complete - 1133+ tests, 80%+ coverage*
+*Month 2, Week 7 In Progress - 1198 unit tests, 80%+ coverage*
