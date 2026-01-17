@@ -35,3 +35,6 @@ structlog>=24.1.0
 # Month 2 - Monte Carlo and Analysis
 numpy>=1.26.0
 scipy>=1.12.0
+
+# Visualization and Export
+matplotlib>=3.8.0
