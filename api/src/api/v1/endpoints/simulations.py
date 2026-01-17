@@ -28,6 +28,7 @@ from src.services.monte_carlo import (
     parse_distribution_params,
 )
 from src.services.monte_carlo_optimized import OptimizedNetworkMonteCarloEngine
+from src.services.tornado_chart import TornadoChartService
 
 router = APIRouter()
 
@@ -782,3 +783,134 @@ async def get_simulation_result(
         duration_seconds=result.duration_seconds,
         progress_percent=progress,
     )
+
+
+# ============================================================================
+# Sensitivity Analysis Endpoints
+# ============================================================================
+
+
+@router.get("/{config_id}/results/{result_id}/tornado")
+async def get_tornado_chart(
+    db: DbSession,
+    current_user: CurrentUser,
+    config_id: UUID,
+    result_id: UUID,
+    top_n: int = Query(10, ge=1, le=50, description="Number of top drivers to include"),
+) -> dict:
+    """
+    Get tornado chart data for sensitivity analysis.
+
+    Shows top N activities by impact on project duration.
+    Bars are sorted by absolute correlation (highest impact first).
+
+    The tornado chart visualizes:
+    - Activity name and rank
+    - Correlation with project duration
+    - Impact range (low to high estimate effect on project)
+    - Base (mean) project duration reference line
+
+    Returns:
+        Tornado chart data with bars for visualization
+    """
+    # Get simulation result
+    result_repo = SimulationResultRepository(db)
+    result = await result_repo.get_by_id(result_id)
+
+    if not result or result.config_id != config_id:
+        raise NotFoundError(
+            f"SimulationResult {result_id} not found", "SIMULATION_RESULT_NOT_FOUND"
+        )
+
+    # Get config for activity info
+    config_repo = SimulationConfigRepository(db)
+    config = await config_repo.get_by_id(config_id)
+
+    if not config:
+        raise NotFoundError(
+            f"SimulationConfig {config_id} not found", "SIMULATION_CONFIG_NOT_FOUND"
+        )
+
+    # Verify access
+    program_repo = ProgramRepository(db)
+    program = await program_repo.get_by_id(config.program_id)
+
+    if not program:
+        raise NotFoundError(f"Program {config.program_id} not found", "PROGRAM_NOT_FOUND")
+
+    if program.owner_id != current_user.id and not current_user.is_admin:
+        raise AuthorizationError("Access denied to this program")
+
+    # Get activity names
+    activity_repo = ActivityRepository(db)
+    activities = await activity_repo.get_by_program(config.program_id)
+    activity_names = {a.id: a.name for a in activities}
+
+    # Get activity ranges from config distributions
+    activity_ranges: dict[UUID, tuple[float, float]] = {}
+    for act_id_str, params in (config.activity_distributions or {}).items():
+        try:
+            act_id = UUID(act_id_str)
+            min_val = float(params.get("min_value", params.get("min", 0)))
+            max_val = float(params.get("max_value", params.get("max", min_val + 10)))
+            activity_ranges[act_id] = (min_val, max_val)
+        except (ValueError, TypeError):
+            continue
+
+    # Get sensitivity data from result
+    # Sensitivity may be in duration_results or activity_results
+    sensitivity_raw: dict = {}
+    if result.duration_results and "sensitivity" in result.duration_results:
+        sensitivity_raw = result.duration_results.get("sensitivity", {})
+    elif result.activity_results:
+        # Extract sensitivity from activity_results if available
+        for act_id_str, stats in result.activity_results.items():
+            if isinstance(stats, dict) and "sensitivity" in stats:
+                sensitivity_raw[act_id_str] = stats["sensitivity"]
+
+    if not sensitivity_raw:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No sensitivity data found in simulation result. "
+            "Run a network simulation with sensitivity analysis enabled.",
+        )
+
+    # Convert string UUIDs to UUID objects
+    sensitivity = {UUID(k): float(v) for k, v in sensitivity_raw.items()}
+
+    # Get base duration from result
+    base_duration = 0.0
+    if result.duration_results:
+        base_duration = float(result.duration_results.get("mean", 0))
+
+    # Generate tornado chart
+    service = TornadoChartService(
+        sensitivity=sensitivity,
+        activity_names=activity_names,
+        base_duration=base_duration,
+        activity_ranges=activity_ranges,
+    )
+
+    chart_data = service.generate(top_n)
+
+    return {
+        "base_project_duration": chart_data.base_project_duration,
+        "top_drivers_count": chart_data.top_drivers_count,
+        "min_duration": chart_data.min_duration,
+        "max_duration": chart_data.max_duration,
+        "chart_range": chart_data.chart_range,
+        "bars": [
+            {
+                "activity_id": str(bar.activity_id),
+                "activity_name": bar.activity_name,
+                "correlation": bar.correlation,
+                "low_impact": bar.low_impact,
+                "high_impact": bar.high_impact,
+                "base_value": bar.base_value,
+                "impact_range": bar.impact_range,
+                "rank": bar.rank,
+                "impact_direction": bar.impact_direction,
+            }
+            for bar in chart_data.bars
+        ],
+    }
