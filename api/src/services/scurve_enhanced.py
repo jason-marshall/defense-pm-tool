@@ -200,9 +200,7 @@ class EnhancedSCurveService:
         eac_range = self._calculate_eac_range() if self.simulation else None
 
         # Calculate completion range if simulation available
-        completion_range = (
-            self._calculate_completion_range() if self.simulation else None
-        )
+        completion_range = self._calculate_completion_range() if self.simulation else None
 
         return EnhancedSCurveResponse(
             program_id=self.program_id,
@@ -225,15 +223,9 @@ class EnhancedSCurveService:
             bcwp = getattr(period, "bcwp", Decimal("0")) or Decimal("0")
             acwp = getattr(period, "acwp", Decimal("0")) or Decimal("0")
 
-            cumulative_bcws = (
-                getattr(period, "cumulative_bcws", Decimal("0")) or Decimal("0")
-            )
-            cumulative_bcwp = (
-                getattr(period, "cumulative_bcwp", Decimal("0")) or Decimal("0")
-            )
-            cumulative_acwp = (
-                getattr(period, "cumulative_acwp", Decimal("0")) or Decimal("0")
-            )
+            cumulative_bcws = getattr(period, "cumulative_bcws", Decimal("0")) or Decimal("0")
+            cumulative_bcwp = getattr(period, "cumulative_bcwp", Decimal("0")) or Decimal("0")
+            cumulative_acwp = getattr(period, "cumulative_acwp", Decimal("0")) or Decimal("0")
 
             period_date = getattr(period, "period_end", date.today())
             period_name = getattr(period, "period_name", f"Period {i}")
@@ -261,9 +253,7 @@ class EnhancedSCurveService:
             return Decimal("0")
 
         latest = self.periods[-1]
-        cumulative_bcwp = (
-            getattr(latest, "cumulative_bcwp", Decimal("0")) or Decimal("0")
-        )
+        cumulative_bcwp = getattr(latest, "cumulative_bcwp", Decimal("0")) or Decimal("0")
 
         return (cumulative_bcwp / self.bac * 100).quantize(Decimal("0.01"))
 
@@ -299,9 +289,7 @@ class EnhancedSCurveService:
         # Apply duration uncertainty to cost estimate
         # Higher duration uncertainty = higher cost uncertainty
         if self.simulation.duration_mean > 0:
-            uncertainty_factor = (
-                self.simulation.duration_std / self.simulation.duration_mean
-            )
+            uncertainty_factor = self.simulation.duration_std / self.simulation.duration_mean
         else:
             uncertainty_factor = 0.1  # Default 10% uncertainty
 

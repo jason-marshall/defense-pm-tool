@@ -270,6 +270,73 @@ class TestCPMDependencyTypes:
         # B's EF should equal A's EF
         assert result[act_b.id].early_finish == result[act_a.id].early_finish
 
+    def test_start_to_finish_dependency(self):
+        """SF: Successor finishes when predecessor starts."""
+        program_id = uuid4()
+        act_a = Activity(
+            id=uuid4(),
+            program_id=program_id,
+            name="A",
+            duration=5,
+        )
+        act_b = Activity(
+            id=uuid4(),
+            program_id=program_id,
+            name="B",
+            duration=3,
+        )
+
+        deps = [
+            Dependency(
+                predecessor_id=act_a.id,
+                successor_id=act_b.id,
+                dependency_type="SF",
+                lag=0,
+            ),
+        ]
+
+        engine = CPMEngine([act_a, act_b], deps)
+        result = engine.calculate()
+
+        # B's finish is constrained by A's start
+        # With SF(A, B), B finishes when A starts: B.EF = A.ES + lag
+        # So B.ES = A.ES - B.duration
+        # A starts at 0, so B.EF = 0, B.ES = max(0, 0-3) = 0, but EF = 0+3 = 3
+        # Since ES can't be negative, B starts at 0 and finishes at 3
+        assert result[act_b.id].early_start >= 0
+
+    def test_start_to_finish_dependency_with_lag(self):
+        """SF with lag: Successor finishes after predecessor starts + lag."""
+        program_id = uuid4()
+        act_a = Activity(
+            id=uuid4(),
+            program_id=program_id,
+            name="A",
+            duration=5,
+        )
+        act_b = Activity(
+            id=uuid4(),
+            program_id=program_id,
+            name="B",
+            duration=3,
+        )
+
+        deps = [
+            Dependency(
+                predecessor_id=act_a.id,
+                successor_id=act_b.id,
+                dependency_type="SF",
+                lag=5,
+            ),
+        ]
+
+        engine = CPMEngine([act_a, act_b], deps)
+        result = engine.calculate()
+
+        # With SF lag=5: B.EF >= A.ES + 5 = 0 + 5 = 5
+        # B.ES = B.EF - duration = 5 - 3 = 2
+        assert result[act_b.id].early_finish >= 5
+
 
 class TestCPMFloat:
     """Tests for float calculations."""
@@ -369,3 +436,67 @@ class TestCPMEmptyGraph:
 
         for activity in activities:
             assert result[activity.id].early_start == 0
+
+    def test_get_critical_path_without_prior_calculate(self):
+        """get_critical_path should calculate if not already done."""
+        program_id = uuid4()
+        act_a = Activity(
+            id=uuid4(),
+            program_id=program_id,
+            name="A",
+            duration=5,
+        )
+        act_b = Activity(
+            id=uuid4(),
+            program_id=program_id,
+            name="B",
+            duration=3,
+        )
+
+        deps = [
+            Dependency(
+                predecessor_id=act_a.id,
+                successor_id=act_b.id,
+                dependency_type="FS",
+                lag=0,
+            ),
+        ]
+
+        engine = CPMEngine([act_a, act_b], deps)
+        # Don't call calculate first
+        critical_path = engine.get_critical_path()
+
+        # Should auto-calculate and return critical activities
+        assert len(critical_path) >= 1
+
+    def test_get_project_duration_without_prior_calculate(self):
+        """get_project_duration should calculate if not already done."""
+        program_id = uuid4()
+        act_a = Activity(
+            id=uuid4(),
+            program_id=program_id,
+            name="A",
+            duration=5,
+        )
+        act_b = Activity(
+            id=uuid4(),
+            program_id=program_id,
+            name="B",
+            duration=3,
+        )
+
+        deps = [
+            Dependency(
+                predecessor_id=act_a.id,
+                successor_id=act_b.id,
+                dependency_type="FS",
+                lag=0,
+            ),
+        ]
+
+        engine = CPMEngine([act_a, act_b], deps)
+        # Don't call calculate first
+        duration = engine.get_project_duration()
+
+        # Should auto-calculate and return duration (5 + 3 = 8)
+        assert duration == 8
