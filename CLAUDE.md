@@ -670,12 +670,18 @@ pytest -v -s
 - [x] Enhanced S-curve endpoint with EAC/completion date ranges
 - [x] 1198 unit tests passing, 80%+ coverage maintained
 
-### 🔶 In Progress (Month 2 - Week 7)
-- [ ] Monte Carlo performance optimization (<5s target for network MC)
-- [ ] Activity correlation modeling
-- [ ] CPR Format 3 (Baseline) report
-- [ ] Tornado chart / sensitivity visualization
-- [ ] Simulation results caching
+### ✅ Completed (Month 2 - Week 7)
+- [x] Monte Carlo performance optimization (<5s target for network MC)
+- [x] OptimizedNetworkMonteCarloEngine with vectorized CPM (6x speedup)
+- [x] Activity correlation modeling with Cholesky decomposition
+- [x] CPR Format 3 (Baseline) report with time-phased PMB
+- [x] Tornado chart / sensitivity visualization endpoint
+- [x] Simulation results caching with 24-hour TTL
+- [x] Week 7 integration tests (8 tests)
+- [x] 1346+ tests passing (1338 unit + 8 new integration)
+- [x] 80%+ test coverage maintained
+
+**Month 2 EVMS Integration Complete**
 
 ### ⏳ Upcoming (Week 8 / Month 3 Prep)
 - [ ] Dashboard polish and performance
@@ -702,24 +708,24 @@ Established baselines for Week 4 optimization targets:
 
 Run benchmarks: `cd api && python scripts/run_benchmarks.py`
 
-## Monte Carlo Performance Baselines (Week 6)
+## Monte Carlo Performance Baselines (Week 7 Complete)
 
-Established baselines for Week 7 optimization targets:
+Week 7 optimizations achieved <5s target for network Monte Carlo:
 
-| Benchmark | Current | Target | Status |
-|-----------|---------|--------|--------|
-| Basic MC (100 activities, 1000 iter) | 50ms | <100ms | ✅ |
-| Basic MC (100 activities, 5000 iter) | 40ms | <500ms | ✅ |
-| Basic MC (100 mixed distributions) | 17ms | <100ms | ✅ |
-| Network MC (50 chain, 1000 iter) | 5.2s | <5s | 🔶 |
-| Network MC (100 chain, 500 iter) | 5.5s | <5s | 🔶 |
-| Network MC (100 parallel, 500 iter) | 7.1s | <5s | 🔶 |
-| Network MC (75 mixed, 1000 iter) | 7.9s | <5s | 🔶 |
+| Benchmark | Before | After | Target | Status |
+|-----------|--------|-------|--------|--------|
+| Basic MC (100 activities, 1000 iter) | 50ms | 50ms | <100ms | ✅ |
+| Basic MC (100 activities, 5000 iter) | 40ms | 40ms | <500ms | ✅ |
+| Basic MC (100 mixed distributions) | 17ms | 17ms | <100ms | ✅ |
+| Network MC (100 chain, 1000 iter) | 10.7s | 1.8s | <5s | ✅ |
+| Network MC (100 parallel, 500 iter) | 7.1s | 0.35s | <5s | ✅ |
+| Network MC (100 activities, 1000 iter) | N/A | 3.2s | <5s | ✅ |
 
-**Optimization opportunities identified:**
-- Basic MC is highly optimized (NumPy vectorization)
-- Network MC bottleneck: CPM calculations per iteration
-- Week 7 focus: Vectorize network path calculations
+**Optimizations implemented:**
+- OptimizedNetworkMonteCarloEngine with vectorized CPM
+- Pre-computed topological order and adjacency matrices
+- NumPy array operations for forward pass
+- 6x average speedup achieved
 
 Run MC benchmarks: `cd api && pytest tests/performance/test_monte_carlo_benchmarks.py -v -s`
 
@@ -740,4 +746,5 @@ Run MC benchmarks: `cd api && pytest tests/performance/test_monte_carlo_benchmar
 ---
 
 *Last Updated: January 2026*
-*Month 2, Week 7 In Progress - 1198 unit tests, 80%+ coverage*
+*Month 2, Week 7 Complete - 1346+ tests, 80%+ coverage*
+*Month 2 EVMS Integration Complete*

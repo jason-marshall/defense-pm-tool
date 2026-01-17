@@ -976,7 +976,9 @@ async def get_tornado_chart(
     sensitivity = {UUID(k): float(v) for k, v in sensitivity_raw.items()}
 
     # Get base duration from result
-    base_duration = float(result.duration_results.get("mean", 0)) if result.duration_results else 0.0
+    base_duration = (
+        float(result.duration_results.get("mean", 0)) if result.duration_results else 0.0
+    )
 
     # Generate tornado chart
     service = TornadoChartService(
