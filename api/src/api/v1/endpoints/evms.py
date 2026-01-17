@@ -845,3 +845,79 @@ async def get_enhanced_scurve(
     response["from_cache"] = False
 
     return response
+
+
+# =============================================================================
+# S-Curve Export Endpoint
+# =============================================================================
+
+
+@router.get("/s-curve/{program_id}/export")
+async def export_scurve(
+    program_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+    format: Annotated[str, Query(description="Export format: png or svg")] = "png",
+    width: Annotated[int, Query(description="Image width in inches", ge=6, le=24)] = 12,
+    height: Annotated[int, Query(description="Image height in inches", ge=4, le=18)] = 8,
+    dpi: Annotated[int, Query(description="DPI for PNG export", ge=72, le=300)] = 150,
+    title: Annotated[str | None, Query(description="Custom chart title")] = None,
+    show_confidence_bands: Annotated[
+        bool, Query(description="Show Monte Carlo confidence bands")
+    ] = True,
+) -> bytes:
+    """
+    Export S-curve chart as PNG or SVG image.
+
+    Generates a publication-quality S-curve visualization with:
+    - Planned Value (BCWS) line
+    - Earned Value (BCWP) line
+    - Actual Cost (ACWP) line
+    - Optional confidence bands from Monte Carlo simulation
+
+    Returns the image file as bytes with appropriate content type.
+    """
+    from fastapi.responses import Response
+
+    from src.services.scurve_export import SCurveExportConfig, scurve_exporter
+
+    # Validate format
+    format_lower = format.lower()
+    if format_lower not in ["png", "svg"]:
+        raise ValidationError(
+            f"Invalid export format '{format}'. Use 'png' or 'svg'.",
+            "INVALID_FORMAT",
+        )
+
+    # Get the enhanced S-curve data (reuse the endpoint logic)
+    scurve_data = await get_enhanced_scurve(
+        program_id=program_id,
+        db=db,
+        current_user=current_user,
+        skip_cache=False,
+    )
+
+    # Create export config
+    config = SCurveExportConfig(
+        width=width,
+        height=height,
+        dpi=dpi,
+        title=title or f"S-Curve Analysis - Program {program_id}",
+        show_confidence_bands=show_confidence_bands,
+    )
+
+    # Export to requested format
+    if format_lower == "png":
+        image_bytes = scurve_exporter.export_png(scurve_data, config)
+        media_type = "image/png"
+        filename = f"scurve_{program_id}.png"
+    else:
+        image_bytes = scurve_exporter.export_svg(scurve_data, config)
+        media_type = "image/svg+xml"
+        filename = f"scurve_{program_id}.svg"
+
+    return Response(
+        content=image_bytes,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
