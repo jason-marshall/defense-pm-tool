@@ -32,6 +32,7 @@ from src.schemas.evms_period import (
     EVMSPeriodWithDataResponse,
     EVMSSummaryResponse,
 )
+from src.services.dashboard_cache import dashboard_cache
 from src.services.ev_methods import get_ev_method_info, validate_milestone_weights
 from src.services.evms import EVMSCalculator
 
@@ -149,6 +150,9 @@ async def create_period(
     await db.commit()
     await db.refresh(period)
 
+    # Invalidate dashboard caches for this program
+    await dashboard_cache.invalidate_on_period_update(period_in.program_id)
+
     return EVMSPeriodResponse.model_validate(period)
 
 
@@ -187,6 +191,9 @@ async def update_period(
     await db.commit()
     await db.refresh(updated)
 
+    # Invalidate dashboard caches for this program
+    await dashboard_cache.invalidate_on_period_update(period.program_id)
+
     return EVMSPeriodResponse.model_validate(updated)
 
 
@@ -220,8 +227,14 @@ async def delete_period(
             "PERIOD_APPROVED",
         )
 
+    # Store program_id before deletion
+    program_id_for_cache = period.program_id
+
     await repo.delete(period_id)
     await db.commit()
+
+    # Invalidate dashboard caches for this program
+    await dashboard_cache.invalidate_on_period_update(program_id_for_cache)
 
 
 @router.post(
@@ -699,6 +712,7 @@ async def get_enhanced_scurve(
     program_id: UUID,
     db: DbSession,
     current_user: CurrentUser,
+    skip_cache: Annotated[bool, Query(description="Skip cache and fetch fresh data")] = False,
 ) -> dict:
     """
     Get S-curve with Monte Carlo confidence bands.
@@ -733,6 +747,13 @@ async def get_enhanced_scurve(
             "Not authorized to view S-curve for this program",
             "NOT_AUTHORIZED",
         )
+
+    # Check cache first
+    if not skip_cache:
+        cached = await dashboard_cache.get_scurve(program_id, enhanced=True)
+        if cached:
+            cached["from_cache"] = True
+            return cached
 
     # Get EVMS periods for S-curve data
     period_repo = EVMSPeriodRepository(db)
@@ -818,5 +839,9 @@ async def get_enhanced_scurve(
                 else None
             ),
         }
+
+    # Cache the result
+    await dashboard_cache.set_scurve(program_id, response, enhanced=True)
+    response["from_cache"] = False
 
     return response
