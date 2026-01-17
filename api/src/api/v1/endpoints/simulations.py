@@ -7,6 +7,8 @@ from fastapi import APIRouter, HTTPException, Query, status
 from src.api.v1.endpoints.dependencies import CurrentUser, DbSession
 from src.core.exceptions import AuthorizationError, NotFoundError
 from src.models.simulation import SimulationStatus
+from src.repositories.activity import ActivityRepository
+from src.repositories.dependency import DependencyRepository
 from src.repositories.program import ProgramRepository
 from src.repositories.simulation import SimulationConfigRepository, SimulationResultRepository
 from src.schemas.simulation import (
@@ -25,6 +27,7 @@ from src.services.monte_carlo import (
     SimulationInput,
     parse_distribution_params,
 )
+from src.services.monte_carlo_optimized import OptimizedNetworkMonteCarloEngine
 
 router = APIRouter()
 
@@ -517,6 +520,168 @@ async def run_simulation(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Simulation failed: {e!s}",
+        ) from e
+
+
+@router.post("/{config_id}/run-network", response_model=SimulationResultResponse)
+async def run_network_simulation(
+    db: DbSession,
+    current_user: CurrentUser,
+    config_id: UUID,
+    run_request: SimulationRunRequest | None = None,
+) -> SimulationResultResponse:
+    """
+    Run a network-aware Monte Carlo simulation using optimized engine.
+
+    This endpoint uses the OptimizedNetworkMonteCarloEngine which:
+    - Pre-computes network topology once
+    - Vectorizes CPM forward pass across all iterations
+    - Achieves <5s for 1000 iterations with 100 activities
+
+    Returns additional network-aware metrics:
+    - Activity criticality (% of iterations on critical path)
+    - Sensitivity (correlation with project duration)
+    - Activity finish date distributions
+    """
+    config_repo = SimulationConfigRepository(db)
+    config = await config_repo.get_by_id(config_id)
+
+    if not config:
+        raise NotFoundError(
+            f"SimulationConfig {config_id} not found", "SIMULATION_CONFIG_NOT_FOUND"
+        )
+
+    # Verify program access
+    program_repo = ProgramRepository(db)
+    program = await program_repo.get_by_id(config.program_id)
+
+    if not program:
+        raise NotFoundError(f"Program {config.program_id} not found", "PROGRAM_NOT_FOUND")
+
+    if program.owner_id != current_user.id and not current_user.is_admin:
+        raise AuthorizationError("Access denied to this program")
+
+    # Parse seed from request
+    seed = run_request.seed if run_request else None
+
+    # Create result record
+    result_repo = SimulationResultRepository(db)
+    result = await result_repo.create_result(config_id, seed=seed)
+    await result_repo.mark_running(result.id)
+    await db.commit()
+
+    try:
+        # Fetch activities and dependencies for the program
+        activity_repo = ActivityRepository(db)
+        dependency_repo = DependencyRepository(db)
+
+        activities = await activity_repo.get_by_program(config.program_id)
+        dependencies = await dependency_repo.get_by_program(config.program_id)
+
+        if not activities:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No activities found for program. Network simulation requires activities.",
+            )
+
+        # Parse distributions from config
+        distributions = {}
+        for activity_id, dist_data in config.activity_distributions.items():
+            distributions[UUID(activity_id)] = parse_distribution_params(dist_data)
+
+        # Run optimized network simulation
+        engine = OptimizedNetworkMonteCarloEngine(seed=seed)
+        output = engine.simulate(
+            activities=activities,
+            dependencies=dependencies,
+            distributions=distributions,
+            iterations=config.iterations,
+        )
+
+        # Convert output to storage format
+        duration_results = {
+            "p10": output.project_duration_p10,
+            "p50": output.project_duration_p50,
+            "p80": output.project_duration_p80,
+            "p90": output.project_duration_p90,
+            "mean": output.project_duration_mean,
+            "std": output.project_duration_std,
+            "min": output.project_duration_min,
+            "max": output.project_duration_max,
+        }
+
+        duration_histogram = None
+        if output.duration_histogram_bins is not None:
+            duration_histogram = {
+                "bins": output.duration_histogram_bins.tolist(),
+                "counts": output.duration_histogram_counts.tolist()
+                if output.duration_histogram_counts is not None
+                else [],
+            }
+
+        # Build activity stats from criticality and sensitivity
+        activity_stats = {}
+        for act_id in output.activity_criticality:
+            act_id_str = str(act_id)
+            activity_stats[act_id_str] = {
+                "criticality": output.activity_criticality.get(act_id, 0.0),
+                "sensitivity": output.sensitivity.get(act_id, 0.0),
+            }
+            if act_id in output.activity_finish_distributions:
+                activity_stats[act_id_str]["finish_distribution"] = (
+                    output.activity_finish_distributions[act_id]
+                )
+
+        # Mark completed
+        completed_result = await result_repo.mark_completed(
+            result_id=result.id,
+            duration_results=duration_results,
+            cost_results=None,
+            duration_histogram=duration_histogram,
+            cost_histogram=None,
+            activity_results=activity_stats,
+            iterations_completed=output.iterations,
+        )
+        await db.commit()
+
+        if not completed_result:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to save simulation result",
+            )
+
+        # Build response
+        return SimulationResultResponse(
+            id=completed_result.id,
+            config_id=completed_result.config_id,
+            status=completed_result.status,
+            started_at=completed_result.started_at,
+            completed_at=completed_result.completed_at,
+            iterations_completed=completed_result.iterations_completed,
+            duration_results=DurationResultsSchema(**duration_results),
+            cost_results=None,
+            duration_histogram=HistogramSchema(
+                bins=duration_histogram["bins"],
+                counts=[int(c) for c in duration_histogram["counts"]],
+            )
+            if duration_histogram
+            else None,
+            cost_histogram=None,
+            activity_stats=activity_stats,
+            random_seed=completed_result.random_seed,
+            duration_seconds=output.elapsed_seconds,
+            progress_percent=100.0,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Mark failed
+        await result_repo.mark_failed(result.id, str(e))
+        await db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Network simulation failed: {e!s}",
         ) from e
 
 

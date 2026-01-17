@@ -339,3 +339,149 @@ class TestMonteCarloPerformanceBenchmarks:
         print(f"\nBasic MC (100 mixed distributions, 1000 iter): {elapsed:.3f}s")
         assert output is not None
         assert elapsed < 5.0, f"Basic MC exceeded 5s target: {elapsed:.3f}s"
+
+
+class TestOptimizedMonteCarloPerformance:
+    """Performance benchmarks for optimized Monte Carlo engine."""
+
+    @pytest.mark.benchmark
+    def test_optimized_network_mc_100_chain_1000_iter(self):
+        """Optimized: Network MC with 100-activity chain, 1000 iterations."""
+        from src.services.monte_carlo_optimized import OptimizedNetworkMonteCarloEngine
+
+        activities = []
+        dependencies = []
+        distributions = {}
+
+        prev_id = None
+        for _ in range(100):
+            act_id = uuid4()
+            activities.append(MockActivity(act_id, 5))
+            distributions[act_id] = DistributionParams(
+                distribution=DistributionType.TRIANGULAR,
+                min_value=3,
+                mode=5,
+                max_value=8,
+            )
+            if prev_id:
+                dependencies.append(MockDependency(prev_id, act_id))
+            prev_id = act_id
+
+        engine = OptimizedNetworkMonteCarloEngine(seed=42)
+
+        start = time.perf_counter()
+        output = engine.simulate(activities, dependencies, distributions, iterations=1000)
+        elapsed = time.perf_counter() - start
+
+        print(f"\nOptimized MC (100 chain, 1000 iter): {elapsed:.3f}s")
+        assert output is not None
+        assert elapsed < 5.0, f"Optimized MC exceeded 5s target: {elapsed:.3f}s"
+
+    @pytest.mark.benchmark
+    def test_optimized_network_mc_100_parallel_1000_iter(self):
+        """Optimized: Network MC with 100 parallel activities, 1000 iterations."""
+        from src.services.monte_carlo_optimized import OptimizedNetworkMonteCarloEngine
+
+        start_id = uuid4()
+        end_id = uuid4()
+
+        activities = [MockActivity(start_id, 0)]
+        dependencies = []
+        distributions = {
+            start_id: DistributionParams(
+                distribution=DistributionType.TRIANGULAR,
+                min_value=0,
+                mode=0,
+                max_value=0,
+            ),
+        }
+
+        for i in range(100):
+            act_id = uuid4()
+            activities.append(MockActivity(act_id, 10))
+            distributions[act_id] = DistributionParams(
+                distribution=DistributionType.TRIANGULAR,
+                min_value=5 + i % 10,
+                mode=10 + i % 10,
+                max_value=20 + i % 10,
+            )
+            dependencies.append(MockDependency(start_id, act_id))
+            dependencies.append(MockDependency(act_id, end_id))
+
+        activities.append(MockActivity(end_id, 0))
+        distributions[end_id] = DistributionParams(
+            distribution=DistributionType.TRIANGULAR,
+            min_value=0,
+            mode=0,
+            max_value=0,
+        )
+
+        engine = OptimizedNetworkMonteCarloEngine(seed=42)
+
+        start = time.perf_counter()
+        output = engine.simulate(activities, dependencies, distributions, iterations=1000)
+        elapsed = time.perf_counter() - start
+
+        print(f"\nOptimized MC (100 parallel, 1000 iter): {elapsed:.3f}s")
+        assert output is not None
+        assert elapsed < 5.0, f"Optimized MC exceeded 5s target: {elapsed:.3f}s"
+
+    @pytest.mark.benchmark
+    def test_comparison_original_vs_optimized(self):
+        """Compare original vs optimized engines side-by-side."""
+        from src.services.monte_carlo_optimized import OptimizedNetworkMonteCarloEngine
+
+        # Create 50-activity chain
+        activities = []
+        dependencies = []
+        distributions = {}
+
+        prev_id = None
+        for _ in range(50):
+            act_id = uuid4()
+            activities.append(MockActivity(act_id, 5))
+            distributions[act_id] = DistributionParams(
+                distribution=DistributionType.TRIANGULAR,
+                min_value=3,
+                mode=5,
+                max_value=8,
+            )
+            if prev_id:
+                dependencies.append(MockDependency(prev_id, act_id))
+            prev_id = act_id
+
+        # Run original engine
+        original_engine = NetworkMonteCarloEngine(seed=42)
+        original_input = NetworkSimulationInput(
+            activities=activities,
+            dependencies=dependencies,
+            duration_distributions=distributions,
+            iterations=500,
+        )
+
+        start = time.perf_counter()
+        original_output = original_engine.simulate(original_input)
+        original_elapsed = time.perf_counter() - start
+
+        # Run optimized engine
+        optimized_engine = OptimizedNetworkMonteCarloEngine(seed=42)
+
+        start = time.perf_counter()
+        optimized_output = optimized_engine.simulate(
+            activities, dependencies, distributions, iterations=500
+        )
+        optimized_elapsed = time.perf_counter() - start
+
+        print("\n=== Comparison (50 chain, 500 iter) ===")
+        print(f"Original: {original_elapsed:.3f}s")
+        print(f"Optimized: {optimized_elapsed:.3f}s")
+        print(f"Speedup: {original_elapsed / optimized_elapsed:.1f}x")
+
+        # Results should be similar (same seed)
+        assert (
+            abs(original_output.project_duration_mean - optimized_output.project_duration_mean)
+            < 1.0
+        )
+
+        # Optimized should be faster
+        assert optimized_elapsed < original_elapsed
