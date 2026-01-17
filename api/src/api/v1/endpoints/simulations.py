@@ -28,6 +28,7 @@ from src.services.monte_carlo import (
     parse_distribution_params,
 )
 from src.services.monte_carlo_optimized import OptimizedNetworkMonteCarloEngine
+from src.services.simulation_cache import simulation_cache
 from src.services.tornado_chart import TornadoChartService
 
 router = APIRouter()
@@ -294,7 +295,10 @@ async def update_simulation_config(
     config_id: UUID,
     update_data: SimulationConfigUpdate,
 ) -> SimulationConfigResponse:
-    """Update a simulation configuration."""
+    """Update a simulation configuration.
+
+    Invalidates cached results when distributions or iterations change.
+    """
     config_repo = SimulationConfigRepository(db)
     config = await config_repo.get_by_id(config_id)
 
@@ -309,6 +313,13 @@ async def update_simulation_config(
 
     if program and program.owner_id != current_user.id and not current_user.is_admin:
         raise AuthorizationError("Access denied")
+
+    # Check if we need to invalidate cache (distributions or iterations changed)
+    should_invalidate = (
+        update_data.iterations is not None
+        or update_data.activity_distributions is not None
+        or update_data.cost_distributions is not None
+    )
 
     # Update fields
     if update_data.name is not None:
@@ -327,6 +338,10 @@ async def update_simulation_config(
             k: v.model_dump(by_alias=True, exclude_none=True)
             for k, v in update_data.cost_distributions.items()
         }
+
+    # Invalidate cache if simulation parameters changed
+    if should_invalidate and simulation_cache.is_available:
+        await simulation_cache.invalidate_config(config_id)
 
     await db.commit()
 
@@ -351,7 +366,10 @@ async def delete_simulation_config(
     current_user: CurrentUser,
     config_id: UUID,
 ) -> None:
-    """Delete a simulation configuration (soft delete)."""
+    """Delete a simulation configuration (soft delete).
+
+    Also invalidates all cached results for this configuration.
+    """
     config_repo = SimulationConfigRepository(db)
     config = await config_repo.get_by_id(config_id)
 
@@ -366,6 +384,10 @@ async def delete_simulation_config(
 
     if program and program.owner_id != current_user.id and not current_user.is_admin:
         raise AuthorizationError("Access denied")
+
+    # Invalidate all cached results for this config
+    if simulation_cache.is_available:
+        await simulation_cache.invalidate_config(config_id)
 
     await config_repo.delete(config_id)
     await db.commit()
@@ -735,8 +757,21 @@ async def get_simulation_result(
     current_user: CurrentUser,
     config_id: UUID,
     result_id: UUID,
+    use_cache: bool = Query(True, description="Use cached result if available"),
 ) -> SimulationResultResponse:
-    """Get detailed results for a specific simulation run."""
+    """Get detailed results for a specific simulation run.
+
+    Results are cached for 24 hours to improve performance.
+    Set use_cache=false to bypass the cache and get fresh data.
+    """
+    # Try to get from cache first
+    if use_cache and simulation_cache.is_available:
+        cached = await simulation_cache.get_result(config_id, result_id)
+        if cached is not None:
+            # Return cached response with cache indicator
+            response = SimulationResultResponse(**cached)
+            return response
+
     result_repo = SimulationResultRepository(db)
     result = await result_repo.get_by_id(result_id)
 
@@ -753,6 +788,28 @@ async def get_simulation_result(
         if config and config.iterations > 0
         else 0
     )
+
+    response_data = {
+        "id": result.id,
+        "config_id": result.config_id,
+        "status": result.status,
+        "started_at": result.started_at,
+        "completed_at": result.completed_at,
+        "iterations_completed": result.iterations_completed,
+        "duration_results": result.duration_results,
+        "cost_results": result.cost_results,
+        "duration_histogram": result.duration_histogram,
+        "cost_histogram": result.cost_histogram,
+        "activity_stats": result.activity_results,
+        "error_message": result.error_message,
+        "random_seed": result.random_seed,
+        "duration_seconds": result.duration_seconds,
+        "progress_percent": progress,
+    }
+
+    # Cache the result for future requests
+    if simulation_cache.is_available:
+        await simulation_cache.set_result(config_id, response_data, result_id)
 
     return SimulationResultResponse(
         id=result.id,
@@ -790,6 +847,51 @@ async def get_simulation_result(
 # ============================================================================
 
 
+def _extract_sensitivity_data(result) -> dict[str, float]:
+    """Extract sensitivity data from simulation result.
+
+    Args:
+        result: SimulationResult with duration_results or activity_results
+
+    Returns:
+        Dictionary mapping activity ID strings to sensitivity values
+    """
+    # Sensitivity may be in duration_results or activity_results
+    if result.duration_results and "sensitivity" in result.duration_results:
+        return result.duration_results.get("sensitivity", {})
+
+    if not result.activity_results:
+        return {}
+
+    # Extract sensitivity from activity_results if available
+    sensitivity_raw: dict[str, float] = {}
+    for act_id_str, stats in result.activity_results.items():
+        if isinstance(stats, dict) and "sensitivity" in stats:
+            sensitivity_raw[act_id_str] = stats["sensitivity"]
+    return sensitivity_raw
+
+
+def _extract_activity_ranges(distributions: dict | None) -> dict[UUID, tuple[float, float]]:
+    """Extract activity duration ranges from distributions config.
+
+    Args:
+        distributions: Activity distributions from config
+
+    Returns:
+        Dictionary mapping activity UUIDs to (min, max) tuples
+    """
+    activity_ranges: dict[UUID, tuple[float, float]] = {}
+    for act_id_str, params in (distributions or {}).items():
+        try:
+            act_id = UUID(act_id_str)
+            min_val = float(params.get("min_value", params.get("min", 0)))
+            max_val = float(params.get("max_value", params.get("max", min_val + 10)))
+            activity_ranges[act_id] = (min_val, max_val)
+        except (ValueError, TypeError):
+            continue
+    return activity_ranges
+
+
 @router.get("/{config_id}/results/{result_id}/tornado")
 async def get_tornado_chart(
     db: DbSession,
@@ -797,6 +899,7 @@ async def get_tornado_chart(
     config_id: UUID,
     result_id: UUID,
     top_n: int = Query(10, ge=1, le=50, description="Number of top drivers to include"),
+    use_cache: bool = Query(True, description="Use cached tornado chart if available"),
 ) -> dict:
     """
     Get tornado chart data for sensitivity analysis.
@@ -810,9 +913,19 @@ async def get_tornado_chart(
     - Impact range (low to high estimate effect on project)
     - Base (mean) project duration reference line
 
+    Tornado charts are cached for 24 hours per top_n value.
+    Set use_cache=false to bypass the cache.
+
     Returns:
         Tornado chart data with bars for visualization
     """
+    # Try to get from cache first
+    if use_cache and simulation_cache.is_available:
+        cached = await simulation_cache.get_tornado(config_id, result_id, top_n)
+        if cached is not None:
+            cached["from_cache"] = True
+            return cached
+
     # Get simulation result
     result_repo = SimulationResultRepository(db)
     result = await result_repo.get_by_id(result_id)
@@ -847,26 +960,10 @@ async def get_tornado_chart(
     activity_names = {a.id: a.name for a in activities}
 
     # Get activity ranges from config distributions
-    activity_ranges: dict[UUID, tuple[float, float]] = {}
-    for act_id_str, params in (config.activity_distributions or {}).items():
-        try:
-            act_id = UUID(act_id_str)
-            min_val = float(params.get("min_value", params.get("min", 0)))
-            max_val = float(params.get("max_value", params.get("max", min_val + 10)))
-            activity_ranges[act_id] = (min_val, max_val)
-        except (ValueError, TypeError):
-            continue
+    activity_ranges = _extract_activity_ranges(config.activity_distributions)
 
     # Get sensitivity data from result
-    # Sensitivity may be in duration_results or activity_results
-    sensitivity_raw: dict = {}
-    if result.duration_results and "sensitivity" in result.duration_results:
-        sensitivity_raw = result.duration_results.get("sensitivity", {})
-    elif result.activity_results:
-        # Extract sensitivity from activity_results if available
-        for act_id_str, stats in result.activity_results.items():
-            if isinstance(stats, dict) and "sensitivity" in stats:
-                sensitivity_raw[act_id_str] = stats["sensitivity"]
+    sensitivity_raw = _extract_sensitivity_data(result)
 
     if not sensitivity_raw:
         raise HTTPException(
@@ -879,9 +976,7 @@ async def get_tornado_chart(
     sensitivity = {UUID(k): float(v) for k, v in sensitivity_raw.items()}
 
     # Get base duration from result
-    base_duration = 0.0
-    if result.duration_results:
-        base_duration = float(result.duration_results.get("mean", 0))
+    base_duration = float(result.duration_results.get("mean", 0)) if result.duration_results else 0.0
 
     # Generate tornado chart
     service = TornadoChartService(
@@ -893,7 +988,7 @@ async def get_tornado_chart(
 
     chart_data = service.generate(top_n)
 
-    return {
+    response = {
         "base_project_duration": chart_data.base_project_duration,
         "top_drivers_count": chart_data.top_drivers_count,
         "min_duration": chart_data.min_duration,
@@ -913,4 +1008,11 @@ async def get_tornado_chart(
             }
             for bar in chart_data.bars
         ],
+        "from_cache": False,
     }
+
+    # Cache the tornado chart
+    if simulation_cache.is_available:
+        await simulation_cache.set_tornado(config_id, result_id, top_n, response)
+
+    return response
