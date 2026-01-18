@@ -9,6 +9,7 @@ from src.api.v1.endpoints import (
     dependencies,
     evms,
     import_export,
+    management_reserve,
     programs,
     reports,
     scenarios,
@@ -97,4 +98,10 @@ api_router.include_router(
     variance_explanations.router,
     prefix="/variance-explanations",
     tags=["Variance Explanations"],
+)
+
+api_router.include_router(
+    management_reserve.router,
+    prefix="/mr",
+    tags=["Management Reserve"],
 )
