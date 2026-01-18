@@ -1,5 +1,6 @@
 """Report generation endpoints."""
 
+import hashlib
 from dataclasses import asdict
 from decimal import Decimal
 from typing import Annotated, Any, cast
@@ -14,15 +15,26 @@ from src.repositories.baseline import BaselineRepository
 from src.repositories.evms_period import EVMSPeriodRepository
 from src.repositories.management_reserve_log import ManagementReserveLogRepository
 from src.repositories.program import ProgramRepository
+from src.repositories.report_audit import ReportAuditRepository
 from src.repositories.variance_explanation import VarianceExplanationRepository
 from src.repositories.wbs import WBSElementRepository
 from src.schemas.cpr_format5 import Format5ExportConfig
+from src.schemas.report_audit import (
+    ReportAuditListResponse,
+    ReportAuditResponse,
+    ReportAuditStats,
+)
 from src.services.cpr_format3_generator import CPRFormat3Generator
 from src.services.cpr_format5_generator import CPRFormat5Generator
 from src.services.report_generator import ReportGenerator
 from src.services.report_pdf_generator import PDFConfig, ReportPDFGenerator
 
 router = APIRouter()
+
+
+def _compute_checksum(data: bytes) -> str:
+    """Compute SHA256 checksum of data."""
+    return hashlib.sha256(data).hexdigest()
 
 
 @router.get("/cpr/{program_id}")
@@ -450,6 +462,22 @@ async def generate_cpr_format1_pdf(
 
     filename = f"CPR_Format1_{program.code}_{period.period_name.replace(' ', '_')}.pdf"
 
+    # Log audit trail
+    audit_repo = ReportAuditRepository(db)
+    await audit_repo.log_generation(
+        report_type="cpr_format_1",
+        program_id=program_id,
+        generated_by=None,  # Format 1 doesn't require auth in current impl
+        parameters={
+            "period_id": str(period_id) if period_id else None,
+            "landscape": landscape,
+        },
+        file_format="pdf",
+        file_size=len(pdf_bytes),
+        checksum=_compute_checksum(pdf_bytes),
+    )
+    await db.commit()
+
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
@@ -517,6 +545,22 @@ async def generate_cpr_format3_pdf(
     pdf_bytes = pdf_generator.generate_format3_pdf(report)
 
     filename = f"CPR_Format3_{program.code}_{baseline.name.replace(' ', '_')}.pdf"
+
+    # Log audit trail
+    audit_repo = ReportAuditRepository(db)
+    await audit_repo.log_generation(
+        report_type="cpr_format_3",
+        program_id=program_id,
+        generated_by=current_user.id,
+        parameters={
+            "baseline_id": str(baseline_id) if baseline_id else None,
+            "landscape": landscape,
+        },
+        file_format="pdf",
+        file_size=len(pdf_bytes),
+        checksum=_compute_checksum(pdf_bytes),
+    )
+    await db.commit()
 
     return Response(
         content=pdf_bytes,
@@ -617,8 +661,160 @@ async def generate_cpr_format5_pdf(
     period_name = latest_period.period_name.replace(" ", "_") if latest_period else "current"
     filename = f"CPR_Format5_{program.code}_{period_name}.pdf"
 
+    # Log audit trail
+    audit_repo = ReportAuditRepository(db)
+    await audit_repo.log_generation(
+        report_type="cpr_format_5",
+        program_id=program_id,
+        generated_by=current_user.id,
+        parameters={
+            "periods_to_include": periods_to_include,
+            "variance_threshold": str(variance_threshold),
+            "include_mr": include_mr,
+            "include_explanations": include_explanations,
+            "manager_etc": str(manager_etc) if manager_etc else None,
+            "landscape": landscape,
+        },
+        file_format="pdf",
+        file_size=len(pdf_bytes),
+        checksum=_compute_checksum(pdf_bytes),
+    )
+    await db.commit()
+
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+# ============================================================================
+# Report Audit Endpoints
+# ============================================================================
+
+
+@router.get("/audit/{program_id}", response_model=ReportAuditListResponse)
+async def get_report_audit_history(
+    program_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+    report_type: Annotated[str | None, Query(description="Filter by report type")] = None,
+    page: Annotated[int, Query(ge=1, description="Page number")] = 1,
+    per_page: Annotated[int, Query(ge=1, le=100, description="Items per page")] = 20,
+) -> ReportAuditListResponse:
+    """
+    Get report generation audit history for a program.
+
+    Returns paginated list of all report generations for compliance tracking.
+    """
+    # Verify program exists
+    program_repo = ProgramRepository(db)
+    program = await program_repo.get_by_id(program_id)
+    if not program:
+        raise NotFoundError(f"Program {program_id} not found", "PROGRAM_NOT_FOUND")
+
+    # Check authorization
+    if program.owner_id != current_user.id and not current_user.is_admin:
+        raise AuthorizationError("Access denied to this program")
+
+    # Get audit entries
+    audit_repo = ReportAuditRepository(db)
+    entries = await audit_repo.get_by_program(program_id, report_type=report_type)
+
+    # Calculate pagination
+    total = len(entries)
+    skip = (page - 1) * per_page
+    paginated = entries[skip : skip + per_page]
+
+    return ReportAuditListResponse(
+        items=[ReportAuditResponse.model_validate(e) for e in paginated],
+        total=total,
+        page=page,
+        per_page=per_page,
+        pages=(total + per_page - 1) // per_page if total > 0 else 1,
+    )
+
+
+@router.get("/audit/{program_id}/stats", response_model=ReportAuditStats)
+async def get_report_audit_stats(
+    program_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> ReportAuditStats:
+    """
+    Get statistics about report generations for a program.
+
+    Returns counts by type, format, and total size.
+    """
+    # Verify program exists
+    program_repo = ProgramRepository(db)
+    program = await program_repo.get_by_id(program_id)
+    if not program:
+        raise NotFoundError(f"Program {program_id} not found", "PROGRAM_NOT_FOUND")
+
+    # Check authorization
+    if program.owner_id != current_user.id and not current_user.is_admin:
+        raise AuthorizationError("Access denied to this program")
+
+    # Get all audit entries
+    audit_repo = ReportAuditRepository(db)
+    entries = await audit_repo.get_by_program(program_id)
+
+    # Calculate statistics
+    by_type: dict[str, int] = {}
+    by_format: dict[str, int] = {}
+    total_size = 0
+    last_generated = None
+
+    for entry in entries:
+        # Count by type
+        by_type[entry.report_type] = by_type.get(entry.report_type, 0) + 1
+
+        # Count by format
+        if entry.file_format:
+            by_format[entry.file_format] = by_format.get(entry.file_format, 0) + 1
+
+        # Sum file sizes
+        if entry.file_size:
+            total_size += entry.file_size
+
+        # Track most recent
+        if last_generated is None or entry.generated_at > last_generated:
+            last_generated = entry.generated_at
+
+    return ReportAuditStats(
+        total_reports=len(entries),
+        by_type=by_type,
+        by_format=by_format,
+        total_size_bytes=total_size,
+        last_generated=last_generated,
+    )
+
+
+@router.get("/audit/{program_id}/recent", response_model=list[ReportAuditResponse])
+async def get_recent_report_generations(
+    program_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+    limit: Annotated[int, Query(ge=1, le=50, description="Number of entries")] = 10,
+) -> list[ReportAuditResponse]:
+    """
+    Get recent report generations for a program.
+
+    Returns the most recent report generations for quick access.
+    """
+    # Verify program exists
+    program_repo = ProgramRepository(db)
+    program = await program_repo.get_by_id(program_id)
+    if not program:
+        raise NotFoundError(f"Program {program_id} not found", "PROGRAM_NOT_FOUND")
+
+    # Check authorization
+    if program.owner_id != current_user.id and not current_user.is_admin:
+        raise AuthorizationError("Access denied to this program")
+
+    # Get recent entries
+    audit_repo = ReportAuditRepository(db)
+    entries = await audit_repo.get_recent(program_id, limit=limit)
+
+    return [ReportAuditResponse.model_validate(e) for e in entries]
