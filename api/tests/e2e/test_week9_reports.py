@@ -807,9 +807,7 @@ class TestWeek9CompleteWorkflowIntegration:
         latest = factory.periods[-1]
 
         # Calculate EAC using class methods
-        eac = EVMSCalculator.calculate_eac(
-            program.budget_at_completion, latest.acwp, latest.bcwp
-        )
+        eac = EVMSCalculator.calculate_eac(program.budget_at_completion, latest.acwp, latest.bcwp)
 
         # Current MR available
         current_mr = factory.mr_logs[-1].ending_mr

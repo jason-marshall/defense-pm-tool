@@ -268,12 +268,18 @@ docker-compose -f docker-compose.prod.yml up -d
 
 ## Roadmap
 
-### Month 3 Week 10 (In Progress)
+### Month 3 Week 10 (In Progress) - Jira Integration
 
-- Jira REST API client
-- Work package to Epic sync
-- Activity to Issue sync
-- Bi-directional sync
+**Work Package Sync**
+- Jira REST API client wrapper with token encryption
+- WBS Element to Epic mapping and sync
+- Activity to Issue mapping and sync
+- Variance alert to Issue creation
+
+**Real-time Updates**
+- Webhook handler for Jira events
+- Bi-directional status sync
+- Conflict resolution handling
 
 ### Future (Week 11-12)
 - Scenario comparison UI
