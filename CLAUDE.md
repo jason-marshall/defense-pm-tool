@@ -701,10 +701,17 @@ pytest -v -s
 - [x] 1600+ tests, 80%+ coverage maintained
 
 ### 🔶 In Progress (Month 3 - Week 10)
-- [ ] Jira REST API client
-- [ ] Work package to Epic sync
+- [ ] Jira REST API client wrapper
+- [ ] Jira integration model & migration
+- [ ] WBS to Epic sync
 - [ ] Activity to Issue sync
-- [ ] Bi-directional sync
+- [ ] Variance alert to Issue creation
+- [ ] Webhook handler for real-time updates
+- [ ] Week 10 integration tests
+
+**Dependencies Added:**
+- jira>=3.5.0 (Jira REST API client)
+- cryptography>=42.0.0 (token encryption)
 
 ---
 
@@ -763,10 +770,13 @@ pytest -v -s
 - [x] Week 9 E2E integration tests
 
 ### 🔶 In Progress (Week 10: Jira Integration - Days 64-70)
-- [ ] Jira REST API client
-- [ ] Work package sync
-- [ ] Issue creation from variance
-- [ ] Bi-directional sync
+- [ ] Jira REST API client wrapper with auth handling
+- [ ] JiraIntegration model with encrypted token storage
+- [ ] WBS Element to Epic sync service
+- [ ] Activity to Issue sync service
+- [ ] Variance alert to Issue creation
+- [ ] Webhook handler for Jira events
+- [ ] Week 10 integration tests
 
 ### Week 11: What-if Views (Days 71-77)
 - [ ] Scenario comparison UI
@@ -861,5 +871,5 @@ Run dashboard benchmarks: `cd api && pytest tests/performance/test_dashboard_ben
 ---
 
 *Last Updated: January 2026*
-*Month 3, Week 9 Complete - 1600+ tests, 80%+ coverage*
-*Week 9: CPR Reports, PDF Export, Variance Tracking*
+*Month 3, Week 10 Starting - 1600+ tests, 80%+ coverage*
+*Week 10 Focus: Jira Integration for Work Package Sync*

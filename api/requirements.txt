@@ -41,3 +41,7 @@ matplotlib>=3.8.0
 
 # PDF Generation (Month 3)
 reportlab>=4.0.0
+
+# Jira Integration (Week 10)
+jira>=3.5.0
+cryptography>=42.0.0
