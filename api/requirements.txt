@@ -38,3 +38,6 @@ scipy>=1.12.0
 
 # Visualization and Export
 matplotlib>=3.8.0
+
+# PDF Generation (Month 3)
+reportlab>=4.0.0
