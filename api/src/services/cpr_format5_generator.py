@@ -1,13 +1,12 @@
 """CPR Format 5 (EVMS) report generator.
 
 Generates detailed EVMS report with variance analysis per DFARS requirements.
-Full implementation in Week 9.
 
 CPR Format 5 provides:
 - Monthly/quarterly BCWS, BCWP, ACWP data
 - Variance percentages and trends
 - Management Reserve (MR) changes
-- Estimate at Completion (EAC) analysis
+- Estimate at Completion (EAC) analysis with 6 methods
 - Narrative variance explanations for significant variances
 """
 
@@ -17,7 +16,9 @@ from decimal import Decimal
 import structlog
 
 from src.models.evms_period import EVMSPeriod
+from src.models.management_reserve_log import ManagementReserveLog
 from src.models.program import Program
+from src.models.variance_explanation import VarianceExplanation as VarianceExplanationModel
 from src.schemas.cpr_format5 import (
     CPRFormat5Report,
     EACAnalysis,
@@ -34,14 +35,19 @@ logger = structlog.get_logger(__name__)
 class CPRFormat5Generator:
     """Generate CPR Format 5 (EVMS) report.
 
-    Note: This is the foundation/skeleton for Week 9 implementation.
-    Full variance analysis and MR tracking will be added in Week 9.
+    Implements full CPR Format 5 report generation with:
+    - Time-phased BCWS/BCWP/ACWP data
+    - All 6 EAC calculation methods per GL 27
+    - Variance explanations from repository
+    - Management Reserve tracking
 
     Example usage:
         generator = CPRFormat5Generator(
             program=program,
             periods=periods,
             config=Format5ExportConfig(periods_to_include=12),
+            variance_explanations=explanations,
+            mr_logs=mr_logs,
         )
         report = generator.generate()
     """
@@ -51,6 +57,9 @@ class CPRFormat5Generator:
         program: Program,
         periods: list[EVMSPeriod],
         config: Format5ExportConfig | None = None,
+        variance_explanations: list[VarianceExplanationModel] | None = None,
+        mr_logs: list[ManagementReserveLog] | None = None,
+        manager_etc: Decimal | None = None,
     ) -> None:
         """Initialize CPR Format 5 generator.
 
@@ -58,19 +67,22 @@ class CPRFormat5Generator:
             program: Program to generate report for
             periods: List of EVMS periods (will be sorted by date)
             config: Optional export configuration
+            variance_explanations: Optional list of variance explanations
+            mr_logs: Optional list of management reserve log entries
+            manager_etc: Optional manager's estimate to complete (for independent EAC)
         """
         self.program = program
         self.periods = sorted(periods, key=lambda p: p.period_start)
         self.config = config or Format5ExportConfig()
+        self.variance_explanations_data = variance_explanations or []
+        self.mr_logs = mr_logs or []
+        self.manager_etc = manager_etc
 
     def generate(self) -> CPRFormat5Report:
         """Generate the CPR Format 5 report.
 
-        Week 8: Returns skeleton with basic data.
-        Week 9: Full implementation with variance analysis.
-
         Returns:
-            Complete CPRFormat5Report dataclass
+            Complete CPRFormat5Report dataclass with all sections
         """
         logger.info(
             "generating_cpr_format5",
@@ -111,14 +123,20 @@ class CPRFormat5Generator:
             vac = Decimal("0")
             percent_complete = percent_spent = Decimal("0")
 
-        # Build EAC analysis (comparing different methods)
+        # Build EAC analysis with all 6 methods
         eac_analysis = self._build_eac_analysis(latest, bac) if latest else None
 
-        # TODO Week 9: Add variance explanations
-        variance_explanations = self._build_variance_explanations() if latest else []
+        # Build variance explanations from provided data
+        variance_explanations = self._build_variance_explanations()
 
-        # TODO Week 9: Add MR tracking
+        # Build MR rows from provided data
         mr_rows = self._build_mr_rows()
+
+        # Get current MR from latest log entry
+        current_mr = Decimal("0")
+        if self.mr_logs:
+            latest_mr = self.mr_logs[-1]
+            current_mr = latest_mr.ending_mr
 
         report = CPRFormat5Report(
             program_name=self.program.name,
@@ -137,6 +155,7 @@ class CPRFormat5Generator:
             percent_spent=percent_spent.quantize(Decimal("0.01")),
             period_rows=period_rows,
             mr_rows=mr_rows,
+            current_mr=current_mr,
             variance_explanations=variance_explanations,
             eac_analysis=eac_analysis,
             generated_at=date.today(),
@@ -147,6 +166,7 @@ class CPRFormat5Generator:
             program_code=self.program.code,
             period_rows=len(period_rows),
             variance_explanations=len(variance_explanations),
+            mr_rows=len(mr_rows),
         )
 
         return report
@@ -246,74 +266,194 @@ class CPRFormat5Generator:
         return rows
 
     def _build_eac_analysis(self, latest_period: EVMSPeriod, bac: Decimal) -> EACAnalysis:
-        """Build EAC analysis comparing different estimation methods.
+        """Build EAC analysis with all 6 estimation methods.
+
+        Per EVMS GL 27, multiple EAC methods should be compared:
+        1. CPI: BAC / CPI
+        2. SPI: BAC / SPI
+        3. Composite: ACWP + (BAC - BCWP) / (CPI * SPI)
+        4. Typical: ACWP + (BAC - BCWP)
+        5. Atypical/Mathematical: ACWP + (BAC - BCWP) / CPI
+        6. Management: Bottom-up estimate from program manager
 
         Args:
             latest_period: Most recent EVMS period
             bac: Budget at Completion
 
         Returns:
-            EACAnalysis with different EAC methods
+            EACAnalysis with all 6 EAC methods
         """
         bcwp = latest_period.cumulative_bcwp
         acwp = latest_period.cumulative_acwp
         bcws = latest_period.cumulative_bcws
 
-        # EAC using CPI method: BAC / CPI
-        eac_cpi = EVMSCalculator.calculate_eac(bac, acwp, bcwp, "cpi") or bac
-
-        # EAC using SPI x CPI method: ACWP + (BAC - BCWP) / (CPI x SPI)
+        # Calculate indices
         cpi = (bcwp / acwp) if acwp > 0 else Decimal("1")
         spi = (bcwp / bcws) if bcws > 0 else Decimal("1")
 
-        if cpi > 0 and spi > 0:
-            remaining = bac - bcwp
-            eac_spi_cpi = acwp + (remaining / (cpi * spi))
-        else:
-            eac_spi_cpi = bac
+        # Remaining work
+        remaining = bac - bcwp
 
-        # Management estimate (placeholder - would come from separate input)
-        # For now, use the CPI method as management estimate
-        eac_management = eac_cpi
+        # 1. EAC using CPI method: BAC / CPI
+        eac_cpi = (bac / cpi).quantize(Decimal("0.01")) if cpi > 0 else bac
+
+        # 2. EAC using SPI method: BAC / SPI
+        eac_spi = (bac / spi).quantize(Decimal("0.01")) if spi > 0 else None
+
+        # 3. EAC Composite/Comprehensive: ACWP + (BAC - BCWP) / (CPI * SPI)
+        if cpi > 0 and spi > 0:
+            efficiency_factor = cpi * spi
+            eac_composite = (acwp + (remaining / efficiency_factor)).quantize(Decimal("0.01"))
+        else:
+            eac_composite = bac
+
+        # 4. EAC Typical: ACWP + (BAC - BCWP)
+        eac_typical = (acwp + remaining).quantize(Decimal("0.01"))
+
+        # 5. EAC Atypical/Mathematical: ACWP + (BAC - BCWP) / CPI
+        if cpi > 0:
+            eac_atypical = (acwp + (remaining / cpi)).quantize(Decimal("0.01"))
+        else:
+            eac_atypical = bac
+
+        # 6. EAC Management: Use manager's ETC if provided, otherwise None
+        eac_management = None
+        if self.manager_etc is not None:
+            eac_management = (acwp + self.manager_etc).quantize(Decimal("0.01"))
+
+        # Collect valid EAC values for comparison
+        valid_eacs = [eac_cpi, eac_composite, eac_typical, eac_atypical]
+        if eac_spi is not None:
+            valid_eacs.append(eac_spi)
+        if eac_management is not None:
+            valid_eacs.append(eac_management)
+
+        # Calculate range and average
+        eac_range_low = min(valid_eacs)
+        eac_range_high = max(valid_eacs)
+        eac_average = (sum(valid_eacs) / len(valid_eacs)).quantize(Decimal("0.01"))
+
+        # Select EAC and rationale
+        # Default logic: Use CPI method as primary, but consider composite for troubled projects
+        if cpi < Decimal("0.90") and spi < Decimal("0.90"):
+            # Significant cost and schedule issues - use composite
+            eac_selected = eac_composite
+            selection_rationale = (
+                "Composite method selected due to significant cost and schedule issues "
+                f"(CPI={cpi:.2f}, SPI={spi:.2f})"
+            )
+        elif cpi < Decimal("0.95"):
+            # Cost issues expected to continue - use CPI method
+            eac_selected = eac_cpi
+            selection_rationale = (
+                f"CPI method selected - historical cost efficiency (CPI={cpi:.2f}) "
+                "expected to continue"
+            )
+        else:
+            # Normal performance - use CPI method
+            eac_selected = eac_cpi
+            selection_rationale = (
+                "CPI method selected per standard practice - "
+                "program performing within acceptable parameters"
+            )
 
         return EACAnalysis(
-            eac_cpi=eac_cpi.quantize(Decimal("0.01")),
-            eac_spi_cpi=eac_spi_cpi.quantize(Decimal("0.01")),
-            eac_management=eac_management.quantize(Decimal("0.01")),
-            eac_selected=eac_cpi.quantize(Decimal("0.01")),
-            selection_rationale="CPI method selected per standard practice",
+            eac_cpi=eac_cpi,
+            eac_spi=eac_spi,
+            eac_composite=eac_composite,
+            eac_typical=eac_typical,
+            eac_atypical=eac_atypical,
+            eac_management=eac_management,
+            eac_selected=eac_selected,
+            selection_rationale=selection_rationale,
+            eac_range_low=eac_range_low,
+            eac_range_high=eac_range_high,
+            eac_average=eac_average,
         )
 
     def _build_variance_explanations(self) -> list[VarianceExplanation]:
-        """Build variance explanations for significant variances.
+        """Build variance explanations from provided model data.
 
-        TODO Week 9: Full implementation with WBS-level variance analysis.
+        Converts VarianceExplanation model instances to schema dataclasses,
+        filtering by the configured threshold.
 
         Returns:
-            List of variance explanations (empty for Week 8 skeleton)
+            List of VarianceExplanation schema objects
         """
-        # Placeholder for Week 9 implementation
-        # Will analyze WBS-level variances and generate explanations
-        # for items exceeding variance_threshold_percent
-        return []
+        if not self.config.include_explanations:
+            return []
+
+        explanations = []
+        threshold = abs(self.config.variance_threshold_percent)
+
+        for ve in self.variance_explanations_data:
+            # Only include if variance exceeds threshold
+            if abs(ve.variance_percent) >= threshold:
+                # Get WBS info if available
+                wbs_code = ""
+                wbs_name = ""
+                if ve.wbs is not None:
+                    wbs_code = ve.wbs.wbs_code
+                    wbs_name = ve.wbs.name
+
+                explanations.append(
+                    VarianceExplanation(
+                        wbs_code=wbs_code,
+                        wbs_name=wbs_name,
+                        variance_type=ve.variance_type,
+                        variance_amount=ve.variance_amount,
+                        variance_percent=ve.variance_percent,
+                        explanation=ve.explanation,
+                        corrective_action=ve.corrective_action,
+                        expected_resolution_date=ve.expected_resolution,
+                    )
+                )
+
+        # Sort by variance percent (absolute value, descending)
+        explanations.sort(key=lambda x: abs(x.variance_percent), reverse=True)
+
+        return explanations
 
     def _build_mr_rows(self) -> list[ManagementReserveRow]:
-        """Build Management Reserve tracking rows.
+        """Build Management Reserve tracking rows from log data.
 
-        TODO Week 9: Full implementation with MR change tracking.
+        Converts ManagementReserveLog model instances to schema dataclasses.
 
         Returns:
-            List of MR rows (empty for Week 8 skeleton)
+            List of ManagementReserveRow schema objects
         """
-        # Placeholder for Week 9 implementation
-        # Will track MR changes across periods
-        return []
+        if not self.config.include_mr:
+            return []
+
+        rows = []
+
+        for log in self.mr_logs:
+            # Get period name if available
+            period_name = ""
+            if log.period is not None:
+                period_name = log.period.period_name
+
+            rows.append(
+                ManagementReserveRow(
+                    period_name=period_name,
+                    beginning_mr=log.beginning_mr,
+                    changes_in=log.changes_in,
+                    changes_out=log.changes_out,
+                    ending_mr=log.ending_mr,
+                    reason=log.reason,
+                )
+            )
+
+        return rows
 
 
 def generate_format5_report(
     program: Program,
     periods: list[EVMSPeriod],
     config: Format5ExportConfig | None = None,
+    variance_explanations: list[VarianceExplanationModel] | None = None,
+    mr_logs: list[ManagementReserveLog] | None = None,
+    manager_etc: Decimal | None = None,
 ) -> CPRFormat5Report:
     """Convenience function to generate CPR Format 5 report.
 
@@ -321,9 +461,19 @@ def generate_format5_report(
         program: Program to generate report for
         periods: List of EVMS periods
         config: Optional export configuration
+        variance_explanations: Optional list of variance explanations
+        mr_logs: Optional list of management reserve log entries
+        manager_etc: Optional manager's estimate to complete
 
     Returns:
         Generated CPRFormat5Report
     """
-    generator = CPRFormat5Generator(program, periods, config)
+    generator = CPRFormat5Generator(
+        program=program,
+        periods=periods,
+        config=config,
+        variance_explanations=variance_explanations,
+        mr_logs=mr_logs,
+        manager_etc=manager_etc,
+    )
     return generator.generate()

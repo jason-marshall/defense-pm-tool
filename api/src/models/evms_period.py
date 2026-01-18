@@ -14,7 +14,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.models.base import Base
 
 if TYPE_CHECKING:
+    from src.models.management_reserve_log import ManagementReserveLog
     from src.models.program import Program
+    from src.models.variance_explanation import VarianceExplanation
     from src.models.wbs import WBSElement
 
 
@@ -123,6 +125,21 @@ class EVMSPeriod(Base):
 
     period_data: Mapped[list["EVMSPeriodData"]] = relationship(
         "EVMSPeriodData",
+        back_populates="period",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+
+    # Week 9: Variance and MR log relationships
+    variance_explanations: Mapped[list["VarianceExplanation"]] = relationship(
+        "VarianceExplanation",
+        back_populates="period",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+
+    management_reserve_logs: Mapped[list["ManagementReserveLog"]] = relationship(
+        "ManagementReserveLog",
         back_populates="period",
         cascade="all, delete-orphan",
         lazy="selectin",

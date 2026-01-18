@@ -151,17 +151,26 @@ class TestEACAnalysis:
     """Tests for EACAnalysis dataclass."""
 
     def test_create_eac_analysis(self):
-        """Should create EAC analysis with all methods."""
+        """Should create EAC analysis with all 6 methods."""
         analysis = EACAnalysis(
             eac_cpi=Decimal("1050000"),
-            eac_spi_cpi=Decimal("1080000"),
+            eac_spi=Decimal("1100000"),
+            eac_composite=Decimal("1080000"),
+            eac_typical=Decimal("1000000"),
+            eac_atypical=Decimal("1050000"),
             eac_management=Decimal("1060000"),
             eac_selected=Decimal("1060000"),
             selection_rationale="Management estimate validated by bottom-up analysis",
+            eac_range_low=Decimal("1000000"),
+            eac_range_high=Decimal("1100000"),
+            eac_average=Decimal("1056666.67"),
         )
 
         assert analysis.eac_cpi == Decimal("1050000")
-        assert analysis.eac_spi_cpi == Decimal("1080000")
+        assert analysis.eac_spi == Decimal("1100000")
+        assert analysis.eac_composite == Decimal("1080000")
+        assert analysis.eac_typical == Decimal("1000000")
+        assert analysis.eac_atypical == Decimal("1050000")
         assert analysis.eac_selected == Decimal("1060000")
 
 
@@ -508,7 +517,7 @@ class TestCPRFormat5Generator:
         assert report.percent_spent == Decimal("49.00")  # 490000 / 1000000 * 100
 
     def test_generate_eac_analysis(self):
-        """Should build EAC analysis with different methods."""
+        """Should build EAC analysis with all 6 methods."""
         program = create_mock_program(bac=Decimal("1000000"))
         periods = [
             create_mock_period(
@@ -525,9 +534,17 @@ class TestCPRFormat5Generator:
         report = generator.generate()
 
         assert report.eac_analysis is not None
+        # All 6 methods present (eac_management may be None without manager_etc)
         assert report.eac_analysis.eac_cpi > Decimal("1000000")  # Over budget
-        assert report.eac_analysis.eac_spi_cpi > report.eac_analysis.eac_cpi  # Worse
+        assert report.eac_analysis.eac_spi is not None
+        assert report.eac_analysis.eac_composite > report.eac_analysis.eac_cpi  # Worse with CPI*SPI
+        assert report.eac_analysis.eac_typical is not None
+        assert report.eac_analysis.eac_atypical is not None
         assert report.eac_analysis.selection_rationale is not None
+        # Range metrics
+        assert report.eac_analysis.eac_range_low is not None
+        assert report.eac_analysis.eac_range_high is not None
+        assert report.eac_analysis.eac_average is not None
 
     def test_generate_with_zero_bac(self):
         """Should handle zero BAC gracefully."""

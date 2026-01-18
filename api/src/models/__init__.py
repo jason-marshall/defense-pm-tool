@@ -32,10 +32,13 @@ from src.models.enums import (
     UserRole,
 )
 from src.models.evms_period import EVMSPeriod, EVMSPeriodData, PeriodStatus
+from src.models.management_reserve_log import ManagementReserveLog
 from src.models.program import Program
+from src.models.report_audit import ReportAudit
 
 # Import models
 from src.models.user import User
+from src.models.variance_explanation import VarianceExplanation
 from src.models.wbs import LtreeType, WBSElement
 
 __all__ = [
@@ -49,13 +52,16 @@ __all__ = [
     "EVMSPeriod",
     "EVMSPeriodData",
     "LtreeType",
+    "ManagementReserveLog",
     "PeriodStatus",
     "Program",
     "ProgramStatus",
+    "ReportAudit",
     "SoftDeleteMixin",
     # Models
     "User",
     # Enums
     "UserRole",
+    "VarianceExplanation",
     "WBSElement",
 ]

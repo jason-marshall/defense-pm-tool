@@ -15,7 +15,10 @@ from src.models.enums import ProgramStatus
 
 if TYPE_CHECKING:
     from src.models.activity import Activity
+    from src.models.management_reserve_log import ManagementReserveLog
+    from src.models.report_audit import ReportAudit
     from src.models.user import User
+    from src.models.variance_explanation import VarianceExplanation
     from src.models.wbs import WBSElement
 
 
@@ -136,6 +139,28 @@ class Program(Base):
         cascade="all, delete-orphan",
         lazy="selectin",
         order_by="Activity.code",
+    )
+
+    # Week 9: Variance and audit relationships
+    variance_explanations: Mapped[list["VarianceExplanation"]] = relationship(
+        "VarianceExplanation",
+        back_populates="program",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+
+    management_reserve_logs: Mapped[list["ManagementReserveLog"]] = relationship(
+        "ManagementReserveLog",
+        back_populates="program",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+
+    report_audits: Mapped[list["ReportAudit"]] = relationship(
+        "ReportAudit",
+        back_populates="program",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )
 
     # Table-level configuration
