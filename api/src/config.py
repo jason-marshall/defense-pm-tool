@@ -56,6 +56,9 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     BCRYPT_ROUNDS: int = 12
 
+    # Encryption - Salt for token encryption (Jira API tokens, etc.)
+    ENCRYPTION_SALT: str = "defense-pm-tool-encryption-salt"
+
     # CORS
     CORS_ORIGINS: list[str] = [
         "http://localhost:5173",
