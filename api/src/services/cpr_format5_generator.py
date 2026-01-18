@@ -311,10 +311,7 @@ class CPRFormat5Generator:
         eac_typical = (acwp + remaining).quantize(Decimal("0.01"))
 
         # 5. EAC Atypical/Mathematical: ACWP + (BAC - BCWP) / CPI
-        if cpi > 0:
-            eac_atypical = (acwp + (remaining / cpi)).quantize(Decimal("0.01"))
-        else:
-            eac_atypical = bac
+        eac_atypical = (acwp + (remaining / cpi)).quantize(Decimal("0.01")) if cpi > 0 else bac
 
         # 6. EAC Management: Use manager's ETC if provided, otherwise None
         eac_management = None
