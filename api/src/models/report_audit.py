@@ -7,8 +7,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.models.base import Base
@@ -68,7 +67,7 @@ class ReportAudit(Base):
     )
 
     parameters: Mapped[dict[str, Any] | None] = mapped_column(
-        JSONB,
+        JSON,
         nullable=True,
         comment="Report generation parameters",
     )
