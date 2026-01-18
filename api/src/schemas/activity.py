@@ -127,7 +127,7 @@ class ActivityCreate(ActivityBase):
         description="Earned value calculation method",
         examples=["percent_complete", "0/100", "50/50", "loe"],
     )
-    milestones_json: list[dict] | None = Field(
+    milestones_json: list[dict[str, object]] | None = Field(
         default=None,
         description="Milestones for milestone-weight EV method",
         examples=[[{"name": "Design", "weight": 0.25, "is_complete": False}]],
@@ -248,7 +248,7 @@ class ActivityUpdate(BaseModel):
         default=None,
         description="Earned value calculation method",
     )
-    milestones_json: list[dict] | None = Field(
+    milestones_json: list[dict[str, object]] | None = Field(
         default=None,
         description="Milestones for milestone-weight EV method",
     )
@@ -530,7 +530,7 @@ class ActivityResponse(BaseModel):
         default=EVMethod.PERCENT_COMPLETE.value,
         description="Earned value calculation method",
     )
-    milestones_json: list[dict] | None = Field(
+    milestones_json: list[dict[str, object]] | None = Field(
         default=None,
         description="Milestones for milestone-weight EV method",
     )

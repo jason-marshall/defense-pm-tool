@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar
 from uuid import UUID, uuid4
 
 from src.core.exceptions import ValidationError
@@ -48,7 +48,7 @@ class ImportedTask:
     finish: datetime | None
     is_milestone: bool
     is_summary: bool
-    predecessors: list[dict] = field(default_factory=list)
+    predecessors: list[dict[str, Any]] = field(default_factory=list)
     constraint_type: str | None = None
     constraint_date: datetime | None = None
     percent_complete: Decimal = field(default_factory=lambda: Decimal("0"))
@@ -153,9 +153,9 @@ class MSProjectImporter:
             warnings=self.warnings,
         )
 
-    def _parse_tasks(self, root: ET.Element, ns: dict) -> list[ImportedTask]:
+    def _parse_tasks(self, root: ET.Element, ns: dict[str, str]) -> list[ImportedTask]:
         """Parse all tasks from XML."""
-        tasks = []
+        tasks: list[ImportedTask] = []
 
         tasks_element = root.find("msp:Tasks", ns) if ns else root.find("Tasks")
         if tasks_element is None:
@@ -171,7 +171,7 @@ class MSProjectImporter:
 
         return tasks
 
-    def _parse_task(self, elem: ET.Element, ns: dict) -> ImportedTask | None:
+    def _parse_task(self, elem: ET.Element, ns: dict[str, str]) -> ImportedTask | None:
         """Parse a single task element."""
         uid = self._get_int(elem, "UID", ns)
         if uid is None:
@@ -230,7 +230,7 @@ class MSProjectImporter:
         )
 
     def _parse_constraint(
-        self, elem: ET.Element, ns: dict, task_name: str
+        self, elem: ET.Element, ns: dict[str, str], task_name: str
     ) -> tuple[str | None, datetime | None]:
         """Parse constraint type and date for a task."""
         constraint_type_id = self._get_int(elem, "ConstraintType", ns)
@@ -258,7 +258,7 @@ class MSProjectImporter:
 
         return None, None
 
-    def _parse_predecessors(self, elem: ET.Element, ns: dict) -> list[dict]:
+    def _parse_predecessors(self, elem: ET.Element, ns: dict[str, str]) -> list[dict[str, Any]]:
         """Parse predecessor links for a task."""
         predecessors = []
 
@@ -342,12 +342,12 @@ class MSProjectImporter:
         except ValueError:
             return None
 
-    def _get_text(self, elem: ET.Element, tag: str, ns: dict) -> str | None:
+    def _get_text(self, elem: ET.Element, tag: str, ns: dict[str, str]) -> str | None:
         """Get text content of child element."""
         child = elem.find(f"msp:{tag}", ns) if ns else elem.find(tag)
         return child.text if child is not None else None
 
-    def _get_int(self, elem: ET.Element, tag: str, ns: dict) -> int | None:
+    def _get_int(self, elem: ET.Element, tag: str, ns: dict[str, str]) -> int | None:
         """Get integer content of child element."""
         text = self._get_text(elem, tag, ns)
         if text is None:
@@ -361,8 +361,8 @@ class MSProjectImporter:
 async def import_msproject_to_program(
     importer: MSProjectImporter,
     program_id: UUID,
-    session,
-) -> dict:
+    session: Any,
+) -> dict[str, Any]:
     """
     Import parsed MS Project data into database.
 
@@ -384,7 +384,7 @@ async def import_msproject_to_program(
     created_wbs_codes: dict[str, UUID] = {}
 
     # Statistics
-    stats: dict = {
+    stats: dict[str, Any] = {
         "tasks_imported": 0,
         "dependencies_imported": 0,
         "wbs_elements_created": 0,
@@ -411,11 +411,11 @@ async def import_msproject_to_program(
 async def _import_task(
     task: ImportedTask,
     program_id: UUID,
-    session,
+    session: Any,
     wbs_repo: WBSElementRepository,
     uid_to_id: dict[int, UUID],
     created_wbs_codes: dict[str, UUID],
-    stats: dict,
+    stats: dict[str, Any],
 ) -> None:
     """Import a single task as either WBS element or activity."""
     try:
@@ -432,9 +432,9 @@ async def _import_task(
 async def _create_wbs_element(
     task: ImportedTask,
     program_id: UUID,
-    session,
+    session: Any,
     created_wbs_codes: dict[str, UUID],
-    stats: dict,
+    stats: dict[str, Any],
 ) -> None:
     """Create WBS element for a summary task."""
     if task.wbs in created_wbs_codes:
@@ -463,11 +463,11 @@ async def _create_wbs_element(
 async def _create_activity(
     task: ImportedTask,
     program_id: UUID,
-    session,
+    session: Any,
     wbs_repo: WBSElementRepository,
     uid_to_id: dict[int, UUID],
     created_wbs_codes: dict[str, UUID],
-    stats: dict,
+    stats: dict[str, Any],
 ) -> None:
     """Create activity for a non-summary task."""
     activity_id = uuid4()
@@ -512,10 +512,10 @@ async def _create_activity(
 async def _get_or_create_wbs(
     wbs_code: str,
     program_id: UUID,
-    session,
+    session: Any,
     wbs_repo: WBSElementRepository,
     created_wbs_codes: dict[str, UUID],
-    stats: dict,
+    stats: dict[str, Any],
 ) -> UUID:
     """Get existing WBS ID or create a new minimal WBS element."""
     wbs_id = created_wbs_codes.get(wbs_code)
@@ -547,8 +547,8 @@ async def _get_or_create_wbs(
 def _create_dependencies(
     task: ImportedTask,
     uid_to_id: dict[int, UUID],
-    session,
-    stats: dict,
+    session: Any,
+    stats: dict[str, Any],
 ) -> None:
     """Create dependencies for a task."""
     if task.is_summary:

@@ -256,8 +256,11 @@ class CPRFormat3Generator:
         # Try to get from baseline creation date
         if self.baseline.created_at:
             if hasattr(self.baseline.created_at, "date"):
-                return self.baseline.created_at.date()
-            return self.baseline.created_at
+                created_date: date = self.baseline.created_at.date()
+                return created_date
+            if isinstance(self.baseline.created_at, date):
+                return self.baseline.created_at
+            return None
 
         # Fall back to first period start
         if self.periods:

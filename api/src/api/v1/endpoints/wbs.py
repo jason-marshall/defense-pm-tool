@@ -32,6 +32,8 @@ async def list_wbs_elements(
     return WBSListResponse(
         items=[WBSElementResponse.model_validate(e) for e in elements],
         total=len(elements),
+        page=1,
+        page_size=len(elements) if elements else 1,
     )
 
 

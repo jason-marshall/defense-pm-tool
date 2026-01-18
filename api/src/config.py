@@ -40,14 +40,14 @@ class Settings(BaseSettings):
     PORT: int = 8000
 
     # Database settings for PostgreSQL
-    DATABASE_URL: PostgresDsn
+    DATABASE_URL: PostgresDsn = "postgresql://dev_user:dev_password@localhost:5432/defense_pm_dev"  # type: ignore[assignment]
     DATABASE_POOL_MIN_SIZE: int = 5
     DATABASE_POOL_MAX_SIZE: int = 20
     DATABASE_POOL_RECYCLE: int = 3600  # Recycle connections after 1 hour
     DATABASE_ECHO: bool = False  # Log SQL queries (useful for debugging)
 
     # Redis
-    REDIS_URL: RedisDsn
+    REDIS_URL: RedisDsn = "redis://localhost:6379/0"  # type: ignore[assignment]
 
     # Authentication - SECRET_KEY is required in production
     SECRET_KEY: str = ""

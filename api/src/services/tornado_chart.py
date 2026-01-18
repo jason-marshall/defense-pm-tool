@@ -13,6 +13,7 @@ Per architecture: Probabilistic Analysis Module sensitivity visualization.
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from typing import Any
 from uuid import UUID
 
 
@@ -279,9 +280,9 @@ class TornadoChartService:
 
 
 def build_tornado_from_simulation_result(
-    result: Mapping[str, float | dict],
+    result: Mapping[str, float | dict[str, Any]],
     activity_names: Mapping[UUID, str],
-    activity_distributions: Mapping[str, dict],
+    activity_distributions: Mapping[str, dict[str, Any]],
 ) -> TornadoChartData:
     """Build tornado chart from a simulation result.
 
@@ -299,12 +300,13 @@ def build_tornado_from_simulation_result(
     # Extract sensitivity data
     sensitivity_raw = result.get("sensitivity", {})
     if isinstance(sensitivity_raw, dict):
-        sensitivity = {UUID(k): float(v) for k, v in sensitivity_raw.items()}
+        sensitivity: dict[UUID, float] = {UUID(k): float(v) for k, v in sensitivity_raw.items()}
     else:
         sensitivity = {}
 
     # Extract base duration
-    base_duration = float(result.get("mean", 0))
+    mean_val = result.get("mean", 0)
+    base_duration = float(mean_val) if isinstance(mean_val, (int, float, str)) else 0.0
 
     # Extract activity ranges from distributions
     activity_ranges: dict[UUID, tuple[float, float]] = {}

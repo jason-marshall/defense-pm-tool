@@ -328,7 +328,8 @@ class CPRFormat5Generator:
         # Calculate range and average
         eac_range_low = min(valid_eacs)
         eac_range_high = max(valid_eacs)
-        eac_average = (sum(valid_eacs) / len(valid_eacs)).quantize(Decimal("0.01"))
+        eac_sum = sum(valid_eacs, Decimal("0"))
+        eac_average = (eac_sum / len(valid_eacs)).quantize(Decimal("0.01"))
 
         # Select EAC and rationale
         # Default logic: Use CPI method as primary, but consider composite for troubled projects

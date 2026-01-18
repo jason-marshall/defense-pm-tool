@@ -15,7 +15,9 @@ import matplotlib
 matplotlib.use("Agg")  # Non-interactive backend for server use
 import matplotlib.pyplot as plt
 import structlog
+from matplotlib.axes import Axes
 from matplotlib.figure import Figure
+from matplotlib.ticker import FuncFormatter
 
 logger = structlog.get_logger(__name__)
 
@@ -213,7 +215,7 @@ class SCurveExporter:
             ax.legend(loc="upper left", fontsize=config.font_size - 1)
 
         # Format y-axis with currency formatting
-        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"${x:,.0f}"))
+        ax.yaxis.set_major_formatter(FuncFormatter(lambda x, _: f"${x:,.0f}"))
 
         plt.tight_layout()
         return fig
@@ -254,7 +256,7 @@ class SCurveExporter:
 
     def _plot_confidence_bands(
         self,
-        ax: plt.Axes,
+        ax: Axes,
         data: dict[str, Any],
         config: SCurveExportConfig,
     ) -> None:

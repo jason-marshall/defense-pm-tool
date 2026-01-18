@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
 from io import BytesIO
-from typing import Any
+from typing import Any, cast
 
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT
@@ -180,7 +180,7 @@ class ReportPDFGenerator:
     def _get_page_size(self) -> tuple[float, float]:
         """Get page size based on configuration."""
         if self.config.landscape_mode:
-            return landscape(self.config.page_size)
+            return cast("tuple[float, float]", landscape(self.config.page_size))
         return self.config.page_size
 
     def _format_currency(self, value: Decimal | None) -> str:

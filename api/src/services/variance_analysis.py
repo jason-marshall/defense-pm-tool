@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
 from enum import Enum
+from typing import Any
 from uuid import UUID
 
 import structlog
@@ -204,7 +205,7 @@ class VarianceAnalysisService:
 
     def detect_significant_variances(
         self,
-        period_data: list[dict],
+        period_data: list[dict[str, Any]],
         threshold_percent: Decimal | None = None,
     ) -> list[VarianceAlert]:
         """Detect WBS elements with significant variances.
@@ -230,9 +231,9 @@ class VarianceAnalysisService:
         alerts: list[VarianceAlert] = []
 
         for data in period_data:
-            wbs_id = data.get("wbs_id")
-            wbs_code = data.get("wbs_code", "")
-            wbs_name = data.get("wbs_name", "")
+            wbs_id: UUID = data.get("wbs_id")  # type: ignore[assignment]
+            wbs_code: str = data.get("wbs_code", "")
+            wbs_name: str = data.get("wbs_name", "")
             period_name = data.get("period_name", "")
 
             # Get cumulative BCWS for percentage calculation
@@ -350,7 +351,7 @@ class VarianceAnalysisService:
         wbs_id: UUID,
         wbs_code: str,
         variance_type: VarianceType,
-        period_history: list[dict],
+        period_history: list[dict[str, Any]],
         threshold_percent: Decimal | None = None,
     ) -> VarianceTrend:
         """Build variance trend for a specific WBS element.
@@ -416,8 +417,8 @@ class VarianceAnalysisService:
         self,
         program_id: UUID,
         period_name: str,
-        period_data: list[dict],
-        historical_data: dict[UUID, list[dict]] | None = None,
+        period_data: list[dict[str, Any]],
+        historical_data: dict[UUID, list[dict[str, Any]]] | None = None,
     ) -> VarianceAnalysisResult:
         """Perform complete variance analysis for a program.
 

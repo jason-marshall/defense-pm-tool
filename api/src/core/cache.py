@@ -1,5 +1,7 @@
 """Redis caching utilities for the Defense PM Tool."""
 
+from __future__ import annotations
+
 import hashlib
 import json
 from typing import Any, TypeVar
@@ -57,23 +59,23 @@ class CacheManager:
     Provides methods for caching and invalidation of application data.
     """
 
-    def __init__(self, redis_client: aioredis.Redis | None = None) -> None:
+    def __init__(self, redis_client: aioredis.Redis[bytes] | None = None) -> None:
         """
         Initialize cache manager.
 
         Args:
             redis_client: Optional Redis client. If not provided, will be set later.
         """
-        self._redis: aioredis.Redis | None = redis_client
+        self._redis: aioredis.Redis[bytes] | None = redis_client
         self._enabled = True
 
     @property
-    def redis(self) -> aioredis.Redis | None:
+    def redis(self) -> aioredis.Redis[bytes] | None:
         """Get Redis client."""
         return self._redis
 
     @redis.setter
-    def redis(self, client: aioredis.Redis) -> None:
+    def redis(self, client: aioredis.Redis[bytes]) -> None:
         """Set Redis client."""
         self._redis = client
 
@@ -258,7 +260,7 @@ class CacheManager:
             return {"status": "disabled", "message": "Redis client not configured"}
 
         try:
-            info = await self._redis.info()  # type: ignore
+            info = await self._redis.info()
             return {
                 "status": "healthy",
                 "connected_clients": info.get("connected_clients"),
@@ -293,7 +295,7 @@ def compute_activities_hash(activities_data: list[dict[str, Any]]) -> str:
     return hash_obj.hexdigest()[:16]
 
 
-async def init_redis() -> aioredis.Redis:
+async def init_redis() -> aioredis.Redis[bytes]:
     """
     Initialize Redis connection.
 
@@ -310,7 +312,7 @@ async def init_redis() -> aioredis.Redis:
     return client
 
 
-async def close_redis(client: aioredis.Redis) -> None:
+async def close_redis(client: aioredis.Redis[bytes]) -> None:
     """
     Close Redis connection.
 

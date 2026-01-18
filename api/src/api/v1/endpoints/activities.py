@@ -101,6 +101,9 @@ async def get_activity(
     program_repo = ProgramRepository(db)
     program = await program_repo.get_by_id(activity.program_id)
 
+    if not program:
+        raise NotFoundError(f"Program {activity.program_id} not found", "PROGRAM_NOT_FOUND")
+
     if program.owner_id != current_user.id and not current_user.is_admin:
         raise AuthorizationError(
             "Not authorized to view this activity",
@@ -180,6 +183,9 @@ async def update_activity(
     program_repo = ProgramRepository(db)
     program = await program_repo.get_by_id(activity.program_id)
 
+    if not program:
+        raise NotFoundError(f"Program {activity.program_id} not found", "PROGRAM_NOT_FOUND")
+
     if program.owner_id != current_user.id and not current_user.is_admin:
         raise AuthorizationError(
             "Not authorized to modify this activity",
@@ -212,6 +218,9 @@ async def delete_activity(
     # Verify access through program
     program_repo = ProgramRepository(db)
     program = await program_repo.get_by_id(activity.program_id)
+
+    if not program:
+        raise NotFoundError(f"Program {activity.program_id} not found", "PROGRAM_NOT_FOUND")
 
     if program.owner_id != current_user.id and not current_user.is_admin:
         raise AuthorizationError(

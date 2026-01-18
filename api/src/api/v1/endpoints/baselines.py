@@ -1,14 +1,12 @@
 """API endpoints for Baseline management."""
 
-from typing import Annotated
+from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Query, status
 
-from src.core.deps import get_current_user, get_db
+from src.core.deps import CurrentUser, DbSession
 from src.core.exceptions import NotFoundError, ValidationError
-from src.models.user import User
 from src.repositories.baseline import BaselineRepository
 from src.repositories.program import ProgramRepository
 from src.schemas.baseline import (
@@ -22,9 +20,7 @@ from src.schemas.baseline import (
 
 router = APIRouter(prefix="/baselines", tags=["baselines"])
 
-# Type aliases for cleaner signatures
-DbSession = Annotated[AsyncSession, Depends(get_db)]
-CurrentUser = Annotated[User, Depends(get_current_user)]
+# Note: DbSession and CurrentUser imported from src.core.deps
 
 
 @router.get("", response_model=BaselineListResponse)
@@ -186,7 +182,7 @@ async def delete_baseline(
             "APPROVED_BASELINE_DELETE",
         )
 
-    await repo.soft_delete(baseline_id)
+    await repo.delete(baseline_id)
     await db.commit()
 
 
@@ -254,7 +250,7 @@ async def compare_baseline(
     current_user: CurrentUser,
     baseline_id: UUID,
     include_details: bool = Query(True, description="Include detailed activity/WBS variances"),
-) -> dict:
+) -> dict[str, Any]:
     """
     Compare a baseline to the current program state.
 

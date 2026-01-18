@@ -15,6 +15,7 @@ Per architecture: Probabilistic Analysis Module correlation modeling.
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import Any
 from uuid import UUID
 
 import numpy as np
@@ -340,7 +341,7 @@ class CorrelatedSampler:
     def transform_to_distributions(
         self,
         correlated_normals: NDArray[np.float64],
-        distributions: dict[UUID, tuple[str, dict]],
+        distributions: dict[UUID, tuple[str, dict[str, Any]]],
     ) -> NDArray[np.float64]:
         """Transform correlated normal samples to target distributions.
 
@@ -425,7 +426,7 @@ class CorrelatedSampler:
     def generate_samples(
         self,
         n_samples: int,
-        distributions: dict[UUID, tuple[str, dict]],
+        distributions: dict[UUID, tuple[str, dict[str, Any]]],
     ) -> NDArray[np.float64]:
         """Generate correlated samples directly in target distributions.
 

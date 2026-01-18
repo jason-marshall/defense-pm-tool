@@ -2,14 +2,13 @@
 
 from dataclasses import asdict
 from decimal import Decimal
-from typing import Annotated, Any
+from typing import Annotated, Any, cast
 from uuid import UUID
 
 from fastapi import APIRouter, Query
 from fastapi.responses import HTMLResponse, Response
 
-from src.api.v1.endpoints.dependencies import CurrentUser
-from src.core.deps import DbSession
+from src.core.deps import CurrentUser, DbSession
 from src.core.exceptions import AuthorizationError, NotFoundError
 from src.repositories.baseline import BaselineRepository
 from src.repositories.evms_period import EVMSPeriodRepository
@@ -54,14 +53,19 @@ async def generate_cpr_format1(
             raise NotFoundError(f"Period {period_id} not found", "PERIOD_NOT_FOUND")
     else:
         # Get latest period
-        period = await period_repo.get_latest_period(program_id)
-        if not period:
+        latest_period = await period_repo.get_latest_period(program_id)
+        if not latest_period:
             raise NotFoundError(
                 "No EVMS periods found for this program",
                 "NO_PERIODS_FOUND",
             )
         # Load period data
-        period = await period_repo.get_with_data(period.id)
+        period = await period_repo.get_with_data(latest_period.id)
+        if not period:
+            raise NotFoundError(
+                "Failed to load period data",
+                "PERIOD_NOT_FOUND",
+            )
 
     # Get WBS elements
     wbs_repo = WBSElementRepository(db)
@@ -104,13 +108,18 @@ async def generate_cpr_format1_html(
         if not period:
             raise NotFoundError(f"Period {period_id} not found", "PERIOD_NOT_FOUND")
     else:
-        period = await period_repo.get_latest_period(program_id)
-        if not period:
+        latest_period = await period_repo.get_latest_period(program_id)
+        if not latest_period:
             raise NotFoundError(
                 "No EVMS periods found for this program",
                 "NO_PERIODS_FOUND",
             )
-        period = await period_repo.get_with_data(period.id)
+        period = await period_repo.get_with_data(latest_period.id)
+        if not period:
+            raise NotFoundError(
+                "Failed to load period data",
+                "PERIOD_NOT_FOUND",
+            )
 
     # Get WBS elements
     wbs_repo = WBSElementRepository(db)
@@ -251,7 +260,7 @@ async def generate_cpr_format3(
     periods = await evms_repo.get_by_program(program_id)
 
     # Generate report
-    generator = CPRFormat3Generator(program, baseline, periods)
+    generator = CPRFormat3Generator(cast("Any", program), baseline, cast("Any", periods))
     return generator.to_dict()
 
 
@@ -351,7 +360,7 @@ async def generate_cpr_format5(
     return _format5_to_dict(report)
 
 
-def _format5_to_dict(report) -> dict[str, Any]:
+def _format5_to_dict(report: Any) -> dict[str, Any]:
     """Convert CPRFormat5Report dataclass to JSON-serializable dictionary.
 
     Args:
@@ -372,7 +381,7 @@ def _format5_to_dict(report) -> dict[str, Any]:
             return [convert_decimals(item) for item in obj]
         return obj
 
-    return convert_decimals(result)
+    return cast("dict[str, Any]", convert_decimals(result))
 
 
 # ============================================================================
@@ -408,13 +417,18 @@ async def generate_cpr_format1_pdf(
         if not period:
             raise NotFoundError(f"Period {period_id} not found", "PERIOD_NOT_FOUND")
     else:
-        period = await period_repo.get_latest_period(program_id)
-        if not period:
+        latest_period = await period_repo.get_latest_period(program_id)
+        if not latest_period:
             raise NotFoundError(
                 "No EVMS periods found for this program",
                 "NO_PERIODS_FOUND",
             )
-        period = await period_repo.get_with_data(period.id)
+        period = await period_repo.get_with_data(latest_period.id)
+        if not period:
+            raise NotFoundError(
+                "Failed to load period data",
+                "PERIOD_NOT_FOUND",
+            )
 
     # Get WBS elements
     wbs_repo = WBSElementRepository(db)
@@ -494,7 +508,7 @@ async def generate_cpr_format3_pdf(
     periods = await evms_repo.get_by_program(program_id)
 
     # Generate report data
-    generator = CPRFormat3Generator(program, baseline, periods)
+    generator = CPRFormat3Generator(cast("Any", program), baseline, cast("Any", periods))
     report = generator.generate()
 
     # Generate PDF

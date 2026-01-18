@@ -229,7 +229,7 @@ class EVMSPeriodDataRepository(BaseRepository[EVMSPeriodData]):
     async def bulk_create_for_period(
         self,
         period_id: UUID,
-        data_items: list[dict],
+        data_items: list[dict[str, object]],
     ) -> list[EVMSPeriodData]:
         """Create multiple period data records."""
         records = []

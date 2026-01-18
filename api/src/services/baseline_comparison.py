@@ -424,7 +424,10 @@ class BaselineComparisonService:
         result.total_bac_baseline = baseline.total_bac
 
         # Calculate current total BAC
-        result.total_bac_current = sum(w.budget_at_completion for w in current_wbs.values())
+        result.total_bac_current = sum(
+            ((w.budget_at_completion or Decimal("0")) for w in current_wbs.values()),
+            Decimal("0"),
+        )
 
         # Find added, removed, modified WBS
         baseline_codes = set(baseline_wbs.keys())

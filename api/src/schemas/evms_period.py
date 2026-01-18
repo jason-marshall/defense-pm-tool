@@ -11,7 +11,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
 
 from src.models.evms_period import PeriodStatus
 from src.schemas.common import PaginatedResponse
@@ -163,7 +163,7 @@ class EVMSPeriodCreate(EVMSPeriodBase):
 
     @field_validator("period_end")
     @classmethod
-    def end_after_start(cls, v: date, info) -> date:
+    def end_after_start(cls, v: date, info: ValidationInfo) -> date:
         """Validate period_end is after period_start."""
         if "period_start" in info.data and v < info.data["period_start"]:
             raise ValueError("period_end must be after period_start")

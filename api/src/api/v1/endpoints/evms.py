@@ -2,10 +2,11 @@
 
 from datetime import date
 from decimal import Decimal
-from typing import Annotated
+from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Query
+from fastapi.responses import Response
 
 from src.core.cache import CacheKeys, cache_manager
 from src.core.deps import CurrentUser, DbSession
@@ -95,6 +96,9 @@ async def get_period(
     program_repo = ProgramRepository(db)
     program = await program_repo.get_by_id(period.program_id)
 
+    if not program:
+        raise NotFoundError(f"Program {period.program_id} not found", "PROGRAM_NOT_FOUND")
+
     if program.owner_id != current_user.id and not current_user.is_admin:
         raise AuthorizationError(
             "Not authorized to view this EVMS period",
@@ -174,6 +178,9 @@ async def update_period(
     program_repo = ProgramRepository(db)
     program = await program_repo.get_by_id(period.program_id)
 
+    if not program:
+        raise NotFoundError(f"Program {period.program_id} not found", "PROGRAM_NOT_FOUND")
+
     if program.owner_id != current_user.id and not current_user.is_admin:
         raise AuthorizationError(
             "Not authorized to modify this EVMS period",
@@ -213,6 +220,9 @@ async def delete_period(
     # Verify access
     program_repo = ProgramRepository(db)
     program = await program_repo.get_by_id(period.program_id)
+
+    if not program:
+        raise NotFoundError(f"Program {period.program_id} not found", "PROGRAM_NOT_FOUND")
 
     if program.owner_id != current_user.id and not current_user.is_admin:
         raise AuthorizationError(
@@ -258,6 +268,9 @@ async def add_period_data(
 
     program_repo = ProgramRepository(db)
     program = await program_repo.get_by_id(period.program_id)
+
+    if not program:
+        raise NotFoundError(f"Program {period.program_id} not found", "PROGRAM_NOT_FOUND")
 
     if program.owner_id != current_user.id and not current_user.is_admin:
         raise AuthorizationError(
@@ -361,6 +374,9 @@ async def update_period_data(
 
     program_repo = ProgramRepository(db)
     program = await program_repo.get_by_id(period.program_id)
+
+    if not program:
+        raise NotFoundError(f"Program {period.program_id} not found", "PROGRAM_NOT_FOUND")
 
     if program.owner_id != current_user.id and not current_user.is_admin:
         raise AuthorizationError(
@@ -528,7 +544,7 @@ async def get_evms_summary(
 
 
 @router.get("/ev-methods")
-async def list_ev_methods() -> list[dict]:
+async def list_ev_methods() -> list[dict[str, Any]]:
     """
     List all available EV calculation methods.
 
@@ -547,8 +563,8 @@ async def set_activity_ev_method(
     db: DbSession,
     current_user: CurrentUser,
     ev_method: Annotated[str, Query(description="EV method to set")],
-    milestones: list[dict] | None = None,
-) -> dict:
+    milestones: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     """
     Set the EV calculation method for an activity.
 
@@ -563,6 +579,9 @@ async def set_activity_ev_method(
     # Verify access
     program_repo = ProgramRepository(db)
     program = await program_repo.get_by_id(activity.program_id)
+
+    if not program:
+        raise NotFoundError(f"Program {activity.program_id} not found", "PROGRAM_NOT_FOUND")
 
     if program.owner_id != current_user.id and not current_user.is_admin:
         raise AuthorizationError(
@@ -594,7 +613,7 @@ async def set_activity_ev_method(
             )
 
     # Update activity
-    update_dict = {"ev_method": method.value}
+    update_dict: dict[str, Any] = {"ev_method": method.value}
     if milestones:
         update_dict["milestones_json"] = milestones
 
@@ -620,7 +639,7 @@ async def calculate_all_eac_methods(
     db: DbSession,
     current_user: CurrentUser,
     period_id: Annotated[UUID | None, Query(description="Specific period ID")] = None,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """
     Calculate EAC using all available methods for comparison.
 
@@ -713,7 +732,7 @@ async def get_enhanced_scurve(
     db: DbSession,
     current_user: CurrentUser,
     skip_cache: Annotated[bool, Query(description="Skip cache and fetch fresh data")] = False,
-) -> dict:
+) -> dict[str, Any]:
     """
     Get S-curve with Monte Carlo confidence bands.
 
@@ -785,7 +804,7 @@ async def get_enhanced_scurve(
     result = service.generate()
 
     # Build response
-    response: dict = {
+    response: dict[str, Any] = {
         "program_id": str(result.program_id),
         "bac": str(result.bac),
         "current_period": result.current_period,
@@ -865,7 +884,7 @@ async def export_scurve(
     show_confidence_bands: Annotated[
         bool, Query(description="Show Monte Carlo confidence bands")
     ] = True,
-) -> bytes:
+) -> Response:
     """
     Export S-curve chart as PNG or SVG image.
 

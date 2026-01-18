@@ -144,7 +144,7 @@ class ScenarioSimulationService:
                 new_val = new_val["value"]
 
             if change.field_name == "duration":
-                activity.duration = int(new_val)
+                activity.duration = int(str(new_val))
             elif change.field_name == "budgeted_cost":
                 activity.budgeted_cost = Decimal(str(new_val))
             elif change.field_name == "name":
@@ -311,7 +311,7 @@ def compare_scenario_simulations(
 
 def build_scenario_distributions(
     activities: list[Any],
-    custom_distributions: dict[UUID, dict] | None = None,
+    custom_distributions: dict[UUID, dict[str, Any]] | None = None,
     uncertainty_factor: float = 0.2,
 ) -> dict[UUID, DistributionParams]:
     """

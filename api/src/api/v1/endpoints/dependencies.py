@@ -95,6 +95,9 @@ async def list_dependencies_for_activity(
     program_repo = ProgramRepository(db)
     program = await program_repo.get_by_id(activity.program_id)
 
+    if not program:
+        raise NotFoundError(f"Program {activity.program_id} not found", "PROGRAM_NOT_FOUND")
+
     if program.owner_id != current_user.id and not current_user.is_admin:
         raise AuthorizationError(
             "Not authorized to view dependencies for this activity",
@@ -163,8 +166,14 @@ async def get_dependency(
     activity_repo = ActivityRepository(db)
     predecessor = await activity_repo.get_by_id(dependency.predecessor_id)
 
+    if not predecessor:
+        raise NotFoundError("Predecessor activity not found", "PREDECESSOR_NOT_FOUND")
+
     program_repo = ProgramRepository(db)
     program = await program_repo.get_by_id(predecessor.program_id)
+
+    if not program:
+        raise NotFoundError(f"Program {predecessor.program_id} not found", "PROGRAM_NOT_FOUND")
 
     if program.owner_id != current_user.id and not current_user.is_admin:
         raise AuthorizationError(
@@ -211,6 +220,9 @@ async def create_dependency(
     # Verify user has access to the program
     program_repo = ProgramRepository(db)
     program = await program_repo.get_by_id(predecessor.program_id)
+
+    if not program:
+        raise NotFoundError(f"Program {predecessor.program_id} not found", "PROGRAM_NOT_FOUND")
 
     if program.owner_id != current_user.id and not current_user.is_admin:
         raise AuthorizationError(
@@ -267,8 +279,14 @@ async def update_dependency(
     activity_repo = ActivityRepository(db)
     predecessor = await activity_repo.get_by_id(dependency.predecessor_id)
 
+    if not predecessor:
+        raise NotFoundError("Predecessor activity not found", "PREDECESSOR_NOT_FOUND")
+
     program_repo = ProgramRepository(db)
     program = await program_repo.get_by_id(predecessor.program_id)
+
+    if not program:
+        raise NotFoundError(f"Program {predecessor.program_id} not found", "PROGRAM_NOT_FOUND")
 
     if program.owner_id != current_user.id and not current_user.is_admin:
         raise AuthorizationError(
@@ -306,8 +324,14 @@ async def delete_dependency(
     activity_repo = ActivityRepository(db)
     predecessor = await activity_repo.get_by_id(dependency.predecessor_id)
 
+    if not predecessor:
+        raise NotFoundError("Predecessor activity not found", "PREDECESSOR_NOT_FOUND")
+
     program_repo = ProgramRepository(db)
     program = await program_repo.get_by_id(predecessor.program_id)
+
+    if not program:
+        raise NotFoundError(f"Program {predecessor.program_id} not found", "PROGRAM_NOT_FOUND")
 
     if program.owner_id != current_user.id and not current_user.is_admin:
         raise AuthorizationError(

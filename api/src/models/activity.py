@@ -2,7 +2,7 @@
 
 from datetime import date
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 from sqlalchemy import (
@@ -246,7 +246,7 @@ class Activity(Base):
     )
 
     # Milestones for milestone-weight method (stored as JSON)
-    milestones_json: Mapped[dict | None] = mapped_column(
+    milestones_json: Mapped[dict[str, Any] | None] = mapped_column(
         JSON,
         nullable=True,
         comment="Milestone definitions for weighted EV method",

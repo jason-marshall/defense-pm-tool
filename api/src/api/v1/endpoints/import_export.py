@@ -2,7 +2,7 @@
 
 import tempfile
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, File, Query, UploadFile
@@ -170,7 +170,7 @@ async def export_csv(
     program_id: UUID,
     db: DbSession,
     current_user: CurrentUser,
-) -> dict:
+) -> dict[str, Any]:
     """
     Export program schedule as CSV.
 

@@ -3,6 +3,8 @@
 from typing import TYPE_CHECKING
 from uuid import UUID
 
+__all__ = ["Dependency", "DependencyType"]
+
 from sqlalchemy import ForeignKey, Index, Integer, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import ENUM as PgEnum
 from sqlalchemy.dialects.postgresql import UUID as PGUUID

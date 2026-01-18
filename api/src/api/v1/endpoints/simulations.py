@@ -1,10 +1,11 @@
 """API endpoints for Monte Carlo simulations."""
 
+from typing import Any, cast
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, status
 
-from src.api.v1.endpoints.dependencies import CurrentUser, DbSession
+from src.core.deps import CurrentUser, DbSession
 from src.core.exceptions import AuthorizationError, NotFoundError
 from src.models.simulation import SimulationStatus
 from src.repositories.activity import ActivityRepository
@@ -212,14 +213,14 @@ async def quick_simulation(
         cost_results = None
         if output.cost_p50 is not None:
             cost_results = DurationResultsSchema(
-                p10=output.cost_p10,
+                p10=output.cost_p10 or 0.0,
                 p50=output.cost_p50,
-                p80=output.cost_p80,
-                p90=output.cost_p90,
-                mean=output.cost_mean,
-                std=output.cost_std,
-                min=output.cost_min,
-                max=output.cost_max,
+                p80=output.cost_p80 or 0.0,
+                p90=output.cost_p90 or 0.0,
+                mean=output.cost_mean or 0.0,
+                std=output.cost_std or 0.0,
+                min=output.cost_min or 0.0,
+                max=output.cost_max or 0.0,
             )
 
         duration_histogram = None
@@ -454,7 +455,7 @@ async def run_simulation(
         output = engine.simulate(sim_input)
 
         # Convert output to storage format
-        duration_results = {
+        duration_results: dict[str, float] = {
             "p10": output.duration_p10,
             "p50": output.duration_p50,
             "p80": output.duration_p80,
@@ -465,17 +466,17 @@ async def run_simulation(
             "max": output.duration_max,
         }
 
-        cost_results = None
+        cost_results: dict[str, float] | None = None
         if output.cost_p50 is not None:
             cost_results = {
-                "p10": output.cost_p10,
+                "p10": output.cost_p10 or 0.0,
                 "p50": output.cost_p50,
-                "p80": output.cost_p80,
-                "p90": output.cost_p90,
-                "mean": output.cost_mean,
-                "std": output.cost_std,
-                "min": output.cost_min,
-                "max": output.cost_max,
+                "p80": output.cost_p80 or 0.0,
+                "p90": output.cost_p90 or 0.0,
+                "mean": output.cost_mean or 0.0,
+                "std": output.cost_std or 0.0,
+                "min": output.cost_min or 0.0,
+                "max": output.cost_max or 0.0,
             }
 
         duration_histogram = None
@@ -497,7 +498,7 @@ async def run_simulation(
             }
 
         # Mark completed
-        result = await result_repo.mark_completed(
+        updated_result = await result_repo.mark_completed(
             result_id=result.id,
             duration_results=duration_results,
             cost_results=cost_results,
@@ -508,14 +509,20 @@ async def run_simulation(
         )
         await db.commit()
 
+        if not updated_result:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to save simulation result",
+            )
+
         # Build response
         return SimulationResultResponse(
-            id=result.id,
-            config_id=result.config_id,
-            status=result.status,
-            started_at=result.started_at,
-            completed_at=result.completed_at,
-            iterations_completed=result.iterations_completed,
+            id=updated_result.id,
+            config_id=updated_result.config_id,
+            status=updated_result.status,
+            started_at=updated_result.started_at,
+            completed_at=updated_result.completed_at,
+            iterations_completed=updated_result.iterations_completed,
             duration_results=DurationResultsSchema(**duration_results),
             cost_results=DurationResultsSchema(**cost_results) if cost_results else None,
             duration_histogram=HistogramSchema(
@@ -531,7 +538,7 @@ async def run_simulation(
             if cost_histogram
             else None,
             activity_stats=output.activity_stats,
-            random_seed=result.random_seed,
+            random_seed=updated_result.random_seed,
             duration_seconds=output.elapsed_seconds,
             progress_percent=100.0,
         )
@@ -615,8 +622,8 @@ async def run_network_simulation(
         # Run optimized network simulation
         engine = OptimizedNetworkMonteCarloEngine(seed=seed)
         output = engine.simulate(
-            activities=activities,
-            dependencies=dependencies,
+            activities=cast("Any", activities),
+            dependencies=cast("Any", dependencies),
             distributions=distributions,
             iterations=config.iterations,
         )
@@ -643,7 +650,7 @@ async def run_network_simulation(
             }
 
         # Build activity stats from criticality and sensitivity
-        activity_stats = {}
+        activity_stats: dict[str, dict[str, Any]] = {}
         for act_id in output.activity_criticality:
             act_id_str = str(act_id)
             activity_stats[act_id_str] = {
@@ -847,7 +854,7 @@ async def get_simulation_result(
 # ============================================================================
 
 
-def _extract_sensitivity_data(result) -> dict[str, float]:
+def _extract_sensitivity_data(result: Any) -> dict[str, float]:
     """Extract sensitivity data from simulation result.
 
     Args:
@@ -858,7 +865,8 @@ def _extract_sensitivity_data(result) -> dict[str, float]:
     """
     # Sensitivity may be in duration_results or activity_results
     if result.duration_results and "sensitivity" in result.duration_results:
-        return result.duration_results.get("sensitivity", {})
+        sens = result.duration_results.get("sensitivity", {})
+        return cast("dict[str, float]", sens)
 
     if not result.activity_results:
         return {}
@@ -871,7 +879,9 @@ def _extract_sensitivity_data(result) -> dict[str, float]:
     return sensitivity_raw
 
 
-def _extract_activity_ranges(distributions: dict | None) -> dict[UUID, tuple[float, float]]:
+def _extract_activity_ranges(
+    distributions: dict[str, Any] | None,
+) -> dict[UUID, tuple[float, float]]:
     """Extract activity duration ranges from distributions config.
 
     Args:
@@ -900,7 +910,7 @@ async def get_tornado_chart(
     result_id: UUID,
     top_n: int = Query(10, ge=1, le=50, description="Number of top drivers to include"),
     use_cache: bool = Query(True, description="Use cached tornado chart if available"),
-) -> dict:
+) -> dict[str, Any]:
     """
     Get tornado chart data for sensitivity analysis.
 

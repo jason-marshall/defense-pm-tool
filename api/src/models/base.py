@@ -1,7 +1,7 @@
 """Base SQLAlchemy model with common fields and utilities."""
 
 from datetime import datetime
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 from uuid import UUID, uuid4
 
 from sqlalchemy import DateTime, event, func, inspect
@@ -164,6 +164,11 @@ class SoftDeleteMixin:
     Provides helper methods for filtering soft-deleted records.
     Use with Base class that already has deleted_at column.
     """
+
+    if TYPE_CHECKING:
+        from sqlalchemy.orm import Mapped  # noqa: PLC0415
+
+        deleted_at: Mapped[datetime | None]
 
     @classmethod
     def active_filter(cls) -> Any:

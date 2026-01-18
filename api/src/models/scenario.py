@@ -6,7 +6,7 @@ that can be applied or discarded.
 """
 
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 from sqlalchemy import (
@@ -142,14 +142,14 @@ class Scenario(Base):
     )
 
     # Changes stored as JSON array of deltas
-    changes_json: Mapped[dict | None] = mapped_column(
+    changes_json: Mapped[dict[str, Any] | None] = mapped_column(
         JSON,
         nullable=True,
         comment="JSON array of delta changes",
     )
 
     # Cached CPM results
-    results_cache: Mapped[dict | None] = mapped_column(
+    results_cache: Mapped[dict[str, Any] | None] = mapped_column(
         JSON,
         nullable=True,
         comment="Cached CPM calculation results",
@@ -329,13 +329,13 @@ class ScenarioChange(Base):
         comment="Field name being changed (for updates)",
     )
 
-    old_value: Mapped[dict | None] = mapped_column(
+    old_value: Mapped[dict[str, Any] | None] = mapped_column(
         JSON,
         nullable=True,
         comment="Previous value",
     )
 
-    new_value: Mapped[dict | None] = mapped_column(
+    new_value: Mapped[dict[str, Any] | None] = mapped_column(
         JSON,
         nullable=True,
         comment="New value",

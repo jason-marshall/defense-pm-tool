@@ -1,7 +1,8 @@
 """WBS (Work Breakdown Structure) model with ltree hierarchy support."""
 
+from collections.abc import Callable
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 from sqlalchemy import (
@@ -26,7 +27,7 @@ if TYPE_CHECKING:
 from src.models.base import Base
 
 
-class LtreeType(UserDefinedType):
+class LtreeType(UserDefinedType[str]):
     """
     Custom SQLAlchemy type for PostgreSQL ltree.
 
@@ -42,22 +43,22 @@ class LtreeType(UserDefinedType):
 
     cache_ok = True
 
-    def get_col_spec(self) -> str:
+    def get_col_spec(self, **kw: Any) -> str:
         """Return the column type specification."""
         return "LTREE"
 
-    def bind_processor(self, _dialect):
+    def bind_processor(self, _dialect: Any) -> Callable[[Any], Any] | None:
         """Process value before binding to database."""
 
-        def process(value):
+        def process(value: Any) -> Any:
             return value
 
         return process
 
-    def result_processor(self, _dialect, _coltype):
+    def result_processor(self, _dialect: Any, _coltype: Any) -> Callable[[Any], Any] | None:
         """Process value after retrieving from database."""
 
-        def process(value):
+        def process(value: Any) -> Any:
             return value
 
         return process
@@ -261,17 +262,17 @@ class WBSElement(Base):
         code_part = self.wbs_code.split(".")[-1]
         return f"{parent_path}.{code_part}"
 
-    def get_ancestors_filter(self):
+    def get_ancestors_filter(self) -> Any:
         """Return SQLAlchemy filter for ancestor elements."""
         # In ltree: '1.2.3' @> path means path is ancestor of '1.2.3'
         return text(f"path @> '{self.path}'::ltree AND path != '{self.path}'::ltree")
 
-    def get_descendants_filter(self):
+    def get_descendants_filter(self) -> Any:
         """Return SQLAlchemy filter for descendant elements."""
         # In ltree: path <@ '1.2.3' means path is descendant of '1.2.3'
         return text(f"path <@ '{self.path}'::ltree AND path != '{self.path}'::ltree")
 
-    def get_children_filter(self):
+    def get_children_filter(self) -> Any:
         """Return SQLAlchemy filter for direct children only."""
         # In ltree: path ~ '1.2.*{1}' matches direct children
         return text(f"path ~ '{self.path}.*{{1}}'::lquery")

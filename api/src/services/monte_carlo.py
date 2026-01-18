@@ -57,7 +57,7 @@ class DistributionParams:
     def validate(self) -> None:
         """Validate distribution parameters."""
         if self.distribution in (DistributionType.TRIANGULAR, DistributionType.PERT):
-            if any(v is None for v in [self.min_value, self.mode, self.max_value]):
+            if self.min_value is None or self.mode is None or self.max_value is None:
                 raise ValueError(f"{self.distribution} requires min_value, mode, and max_value")
             if not (self.min_value <= self.mode <= self.max_value):
                 raise ValueError(f"Invalid {self.distribution} params: min <= mode <= max required")
@@ -268,6 +268,7 @@ class MonteCarloEngine:
         iterations = input_data.iterations
 
         # Use provided seed or engine's default
+        used_seed: int | None
         if input_data.seed is not None:
             self.rng = np.random.default_rng(input_data.seed)
             used_seed = input_data.seed
@@ -337,9 +338,17 @@ class MonteCarloEngine:
         params: DistributionParams,
         n: int,
     ) -> NDArray[np.float64]:
-        """Generate n samples from the specified distribution."""
+        """Generate n samples from the specified distribution.
+
+        Note: params.validate() must be called before this method to ensure
+        required parameters are not None.
+        """
 
         if params.distribution == DistributionType.TRIANGULAR:
+            # validate() ensures these are not None for TRIANGULAR
+            assert params.min_value is not None
+            assert params.mode is not None
+            assert params.max_value is not None
             return self.rng.triangular(
                 left=params.min_value,
                 mode=params.mode,
@@ -348,6 +357,9 @@ class MonteCarloEngine:
             )
 
         elif params.distribution == DistributionType.NORMAL:
+            # validate() ensures these are not None for NORMAL
+            assert params.mean is not None
+            assert params.std is not None
             return self.rng.normal(
                 loc=params.mean,
                 scale=params.std,
@@ -355,6 +367,9 @@ class MonteCarloEngine:
             )
 
         elif params.distribution == DistributionType.UNIFORM:
+            # validate() ensures these are not None for UNIFORM
+            assert params.min_value is not None
+            assert params.max_value is not None
             return self.rng.uniform(
                 low=params.min_value,
                 high=params.max_value,
@@ -362,10 +377,14 @@ class MonteCarloEngine:
             )
 
         elif params.distribution == DistributionType.PERT:
+            # validate() ensures these are not None for PERT
+            assert params.min_value is not None
+            assert params.mode is not None
+            assert params.max_value is not None
             return self._sample_pert(
-                params.min_value,  # type: ignore
-                params.mode,  # type: ignore
-                params.max_value,  # type: ignore
+                params.min_value,
+                params.mode,
+                params.max_value,
                 n,
             )
 

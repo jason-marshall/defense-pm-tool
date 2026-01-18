@@ -6,7 +6,7 @@ for performance measurement per EIA-748 standards.
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 from sqlalchemy import (
@@ -96,21 +96,21 @@ class Baseline(Base):
     )
 
     # Schedule snapshot (activities, dependencies, CPM dates)
-    schedule_snapshot: Mapped[dict | None] = mapped_column(
+    schedule_snapshot: Mapped[dict[str, Any] | None] = mapped_column(
         JSON,
         nullable=True,
         comment="JSON snapshot of activities and dependencies",
     )
 
     # Cost snapshot (WBS budgets, time-phased BCWS)
-    cost_snapshot: Mapped[dict | None] = mapped_column(
+    cost_snapshot: Mapped[dict[str, Any] | None] = mapped_column(
         JSON,
         nullable=True,
         comment="JSON snapshot of cost data by WBS",
     )
 
     # WBS structure snapshot
-    wbs_snapshot: Mapped[dict | None] = mapped_column(
+    wbs_snapshot: Mapped[dict[str, Any] | None] = mapped_column(
         JSON,
         nullable=True,
         comment="JSON snapshot of WBS hierarchy",

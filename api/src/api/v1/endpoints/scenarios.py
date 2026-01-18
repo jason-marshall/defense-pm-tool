@@ -1,14 +1,12 @@
 """API endpoints for Scenario management (what-if analysis)."""
 
-from typing import Annotated
+from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Query, status
 
-from src.core.deps import get_current_user, get_db
+from src.core.deps import CurrentUser, DbSession
 from src.core.exceptions import AuthorizationError, NotFoundError, ValidationError
-from src.models.user import User
 from src.repositories.activity import ActivityRepository
 from src.repositories.baseline import BaselineRepository
 from src.repositories.dependency import DependencyRepository
@@ -28,9 +26,7 @@ from src.services.scenario_simulation import ScenarioSimulationService
 
 router = APIRouter(prefix="/scenarios", tags=["scenarios"])
 
-# Type aliases for cleaner signatures
-DbSession = Annotated[AsyncSession, Depends(get_db)]
-CurrentUser = Annotated[User, Depends(get_current_user)]
+# Note: DbSession and CurrentUser imported from src.core.deps
 
 
 @router.get("", response_model=ScenarioListResponse)
@@ -250,7 +246,7 @@ async def delete_scenario(
             "PROMOTED_SCENARIO_DELETE",
         )
 
-    await repo.soft_delete(scenario_id)
+    await repo.delete(scenario_id)
     await db.commit()
 
 
@@ -439,7 +435,7 @@ async def get_scenario_summary(
 
 
 def _build_scenario_response(
-    scenario,
+    scenario: Any,
     include_changes: bool = True,
 ) -> ScenarioResponse:
     """Build a ScenarioResponse from a Scenario model."""
@@ -480,7 +476,7 @@ async def simulate_scenario(
     scenario_id: UUID,
     iterations: int = Query(1000, ge=100, le=10000, description="Number of iterations"),
     seed: int | None = Query(None, description="Random seed for reproducibility"),
-) -> dict:
+) -> dict[str, Any]:
     """
     Run Monte Carlo simulation on a scenario.
 
@@ -564,7 +560,7 @@ async def simulate_scenario(
                 for k, v in output.activity_criticality.items()
                 if v > 0
             ],
-            key=lambda x: x["criticality_pct"],
+            key=lambda x: float(str(x["criticality_pct"])),
             reverse=True,
         )[:10],
         "top_sensitivity_drivers": sorted(
@@ -573,7 +569,7 @@ async def simulate_scenario(
                 for k, v in output.sensitivity.items()
                 if abs(v) > 0.1
             ],
-            key=lambda x: abs(x["correlation"]),
+            key=lambda x: abs(float(str(x["correlation"]))),
             reverse=True,
         )[:10],
         "changes_applied": len(changes),
@@ -587,7 +583,7 @@ async def compare_scenario_to_baseline(
     scenario_id: UUID,
     iterations: int = Query(1000, ge=100, le=10000, description="Number of iterations"),
     seed: int | None = Query(None, description="Random seed for reproducibility"),
-) -> dict:
+) -> dict[str, Any]:
     """
     Compare scenario simulation to baseline (no changes).
 
