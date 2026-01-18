@@ -14,6 +14,7 @@ from src.api.v1.endpoints import (
     scenarios,
     schedule,
     simulations,
+    variance_explanations,
     wbs,
 )
 
@@ -90,4 +91,10 @@ api_router.include_router(
     simulations.router,
     prefix="/simulations",
     tags=["Simulations"],
+)
+
+api_router.include_router(
+    variance_explanations.router,
+    prefix="/variance-explanations",
+    tags=["Variance Explanations"],
 )
