@@ -212,21 +212,48 @@ docker-compose up -d
 docker-compose -f docker-compose.prod.yml up -d
 ```
 
+## Month 2 Features ✅
+
+### Earned Value Management (EVMS)
+- **6 EV Methods**: 0/100, 50/50, LOE, milestone weights, % complete, apportioned
+- **6 EAC Methods**: CPI, typical, mathematical, comprehensive, independent, composite
+- **Baseline Management**: Snapshots, version control, comparison
+- **Time-phased Data**: Period tracking with cumulative calculations
+
+### Monte Carlo Simulation
+- **Schedule Risk Analysis**: 1000 iterations in <5 seconds
+- **CPM Integration**: Network-aware simulation respecting dependencies
+- **Sensitivity Analysis**: Correlation with project duration
+- **Tornado Charts**: Visual schedule drivers
+- **Confidence Bands**: P10/P50/P80/P90 forecasts
+
+### Scenario Planning
+- **What-if Analysis**: Branch scenarios from baseline
+- **Scenario Simulation**: Run Monte Carlo on scenarios
+- **Comparison**: Baseline vs scenario comparison
+
+### Reporting
+- **CPR Format 1**: WBS Summary report
+- **CPR Format 3**: Time-phased Baseline report
+- **S-curve Export**: PNG/SVG export with confidence bands
+- **Dashboard**: <100ms load time with caching
+
+### Test Coverage
+- 1540+ automated tests (unit, integration, E2E)
+- 81%+ code coverage
+- Month 2 E2E integration test suite
+
+---
+
 ## Roadmap
 
-### Month 2 (Planned)
+### Month 3 (In Progress)
 
-- Resource management and assignments
-- Gantt chart visualization
-- What-if analysis
-- Baseline management
-
-### Month 3 (Planned)
-
-- Calendar integration
-- Email notifications
-- Advanced reporting (CPR Formats 2-5)
-- Audit logging
+- CPR Format 5 (EVMS) report
+- Variance Analysis reports with explanations
+- Jira integration for work package sync
+- PDF report export
+- Security hardening and audit
 
 ## Contributing
 
@@ -238,4 +265,4 @@ Proprietary - All rights reserved
 
 ---
 
-*Defense PM Tool v0.1.0 - January 2026*
+*Defense PM Tool v0.2.0 - January 2026 - Month 2 Complete*
