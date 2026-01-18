@@ -245,15 +245,40 @@ docker-compose -f docker-compose.prod.yml up -d
 
 ---
 
+## Month 3 Features (In Progress)
+
+### Reporting
+- **CPR Format 1**: WBS Summary report with PDF export
+- **CPR Format 3**: Baseline report with time-phased PMB
+- **CPR Format 5**: Detailed EVMS report with variance analysis
+- **PDF Export**: Professional DFARS-compliant output (reportlab)
+- **Audit Trail**: Complete report generation history with checksums
+
+### Variance Management
+- **Variance Explanations**: Document significant variances per GL 21
+- **Corrective Actions**: Track remediation plans with expected resolution
+- **Management Reserve**: GL 28 compliant MR tracking with change history
+
+### Test Coverage
+- 1600+ automated tests (unit, integration, E2E)
+- 80%+ code coverage maintained
+- Week 9 E2E integration test suite
+
+---
+
 ## Roadmap
 
-### Month 3 (In Progress)
+### Month 3 Week 10 (In Progress)
 
-- CPR Format 5 (EVMS) report
-- Variance Analysis reports with explanations
-- Jira integration for work package sync
-- PDF report export
+- Jira REST API client
+- Work package to Epic sync
+- Activity to Issue sync
+- Bi-directional sync
+
+### Future (Week 11-12)
+- Scenario comparison UI
 - Security hardening and audit
+- Final documentation
 
 ## Contributing
 
@@ -265,4 +290,4 @@ Proprietary - All rights reserved
 
 ---
 
-*Defense PM Tool v0.2.0 - January 2026 - Month 2 Complete*
+*Defense PM Tool v0.3.0 - January 2026 - Month 3 Week 9 Complete*
