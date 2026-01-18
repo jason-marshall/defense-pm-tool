@@ -98,14 +98,32 @@ class EACAnalysis:
     """EAC analysis comparing different estimation methods.
 
     Per EVMS GL 27, multiple EAC methods should be compared
-    to validate the management estimate.
+    to validate the management estimate. Six methods are calculated:
+
+    1. CPI: BAC / CPI - assumes historical cost efficiency continues
+    2. SPI: BAC / SPI - schedule-based projection
+    3. Composite: ACWP + (BAC - BCWP) / (CPI * SPI) - factors both indices
+    4. Typical: ACWP + (BAC - BCWP) - assumes remaining work at budget
+    5. Atypical/Mathematical: ACWP + (BAC - BCWP) / CPI - remaining work adjusted
+    6. Management: Bottom-up estimate from program manager
     """
 
+    # Core EAC methods per GL 27
     eac_cpi: Decimal  # BAC / CPI
-    eac_spi_cpi: Decimal  # Comprehensive: ACWP + (BAC - BCWP) / (CPI x SPI)
-    eac_management: Decimal  # Management bottom-up estimate
+    eac_spi: Decimal | None  # BAC / SPI
+    eac_composite: Decimal  # ACWP + (BAC - BCWP) / (CPI * SPI)
+    eac_typical: Decimal  # ACWP + (BAC - BCWP)
+    eac_atypical: Decimal  # ACWP + (BAC - BCWP) / CPI (mathematical)
+    eac_management: Decimal | None  # Management bottom-up estimate
+
+    # Selected EAC and rationale
     eac_selected: Decimal  # Selected EAC for reporting
     selection_rationale: str | None = None
+
+    # Comparison metrics
+    eac_range_low: Decimal | None = None  # Lowest EAC across methods
+    eac_range_high: Decimal | None = None  # Highest EAC across methods
+    eac_average: Decimal | None = None  # Average of valid methods
 
 
 @dataclass

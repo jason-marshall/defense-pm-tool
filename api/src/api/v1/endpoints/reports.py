@@ -1,5 +1,7 @@
 """Report generation endpoints."""
 
+from dataclasses import asdict
+from decimal import Decimal
 from typing import Annotated, Any
 from uuid import UUID
 
@@ -11,9 +13,13 @@ from src.core.deps import DbSession
 from src.core.exceptions import AuthorizationError, NotFoundError
 from src.repositories.baseline import BaselineRepository
 from src.repositories.evms_period import EVMSPeriodRepository
+from src.repositories.management_reserve_log import ManagementReserveLogRepository
 from src.repositories.program import ProgramRepository
+from src.repositories.variance_explanation import VarianceExplanationRepository
 from src.repositories.wbs import WBSElementRepository
+from src.schemas.cpr_format5 import Format5ExportConfig
 from src.services.cpr_format3_generator import CPRFormat3Generator
+from src.services.cpr_format5_generator import CPRFormat5Generator
 from src.services.report_generator import ReportGenerator
 
 router = APIRouter()
@@ -169,6 +175,15 @@ async def get_program_report_summary(
                 "description": "Time-phased PMB with actual performance overlay",
                 "formats": ["json"],
             },
+            {
+                "report_type": "cpr_format5",
+                "name": "CPR Format 5 - EVMS",
+                "description": (
+                    "Detailed EVMS report with 6 EAC methods, "
+                    "variance explanations, and MR tracking"
+                ),
+                "formats": ["json"],
+            },
         ],
     }
 
@@ -237,3 +252,123 @@ async def generate_cpr_format3(
     # Generate report
     generator = CPRFormat3Generator(program, baseline, periods)
     return generator.to_dict()
+
+
+@router.get("/cpr-format5/{program_id}")
+async def generate_cpr_format5(
+    program_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+    periods_to_include: Annotated[
+        int, Query(description="Number of periods to include", ge=1, le=36)
+    ] = 12,
+    variance_threshold: Annotated[
+        Decimal, Query(description="Variance threshold percentage for explanations")
+    ] = Decimal("10"),
+    include_mr: Annotated[bool, Query(description="Include Management Reserve tracking")] = True,
+    include_explanations: Annotated[
+        bool, Query(description="Include variance explanations")
+    ] = True,
+    manager_etc: Annotated[
+        Decimal | None, Query(description="Manager's estimate to complete for independent EAC")
+    ] = None,
+) -> dict[str, Any]:
+    """
+    Generate CPR Format 5 (EVMS) report.
+
+    Provides detailed EVMS performance data per DFARS requirements:
+    - Monthly/quarterly BCWS, BCWP, ACWP data
+    - All 6 EAC calculation methods per GL 27
+    - Variance percentages and trends
+    - Management Reserve (MR) changes
+    - Narrative variance explanations
+
+    Args:
+        program_id: Program ID to generate report for
+        periods_to_include: Number of periods to include (default 12)
+        variance_threshold: Percentage threshold for variance explanations
+        include_mr: Whether to include MR tracking
+        include_explanations: Whether to include variance explanations
+        manager_etc: Optional manager's ETC for independent EAC method
+
+    Returns:
+        Complete CPR Format 5 report as JSON
+    """
+    # Get program
+    program_repo = ProgramRepository(db)
+    program = await program_repo.get_by_id(program_id)
+    if not program:
+        raise NotFoundError(f"Program {program_id} not found", "PROGRAM_NOT_FOUND")
+
+    # Check authorization
+    if program.owner_id != current_user.id and not current_user.is_admin:
+        raise AuthorizationError("Access denied to this program")
+
+    # Get EVMS periods
+    evms_repo = EVMSPeriodRepository(db)
+    periods = await evms_repo.get_by_program(program_id)
+
+    if not periods:
+        raise NotFoundError(
+            "No EVMS periods found for this program",
+            "NO_PERIODS_FOUND",
+        )
+
+    # Get variance explanations if requested
+    variance_explanations = []
+    if include_explanations:
+        ve_repo = VarianceExplanationRepository(db)
+        variance_explanations = await ve_repo.get_by_program(program_id)
+
+    # Get MR logs if requested
+    mr_logs = []
+    if include_mr:
+        mr_repo = ManagementReserveLogRepository(db)
+        mr_logs = await mr_repo.get_history(program_id, limit=periods_to_include)
+
+    # Create configuration
+    config = Format5ExportConfig(
+        include_mr=include_mr,
+        include_explanations=include_explanations,
+        variance_threshold_percent=variance_threshold,
+        periods_to_include=periods_to_include,
+        include_eac_analysis=True,
+    )
+
+    # Generate report
+    generator = CPRFormat5Generator(
+        program=program,
+        periods=periods,
+        config=config,
+        variance_explanations=variance_explanations,
+        mr_logs=mr_logs,
+        manager_etc=manager_etc,
+    )
+    report = generator.generate()
+
+    # Convert to dictionary for JSON response
+    return _format5_to_dict(report)
+
+
+def _format5_to_dict(report) -> dict[str, Any]:
+    """Convert CPRFormat5Report dataclass to JSON-serializable dictionary.
+
+    Args:
+        report: CPRFormat5Report dataclass instance
+
+    Returns:
+        Dictionary with all values converted to JSON-serializable types
+    """
+    result = asdict(report)
+
+    # Convert Decimal to string for JSON serialization
+    def convert_decimals(obj: Any) -> Any:
+        if isinstance(obj, Decimal):
+            return str(obj)
+        elif isinstance(obj, dict):
+            return {k: convert_decimals(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [convert_decimals(item) for item in obj]
+        return obj
+
+    return convert_decimals(result)

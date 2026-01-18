@@ -21,6 +21,7 @@ from sqlalchemy.types import UserDefinedType
 if TYPE_CHECKING:
     from src.models.activity import Activity
     from src.models.program import Program
+    from src.models.variance_explanation import VarianceExplanation
 
 from src.models.base import Base
 
@@ -183,6 +184,14 @@ class WBSElement(Base):
         back_populates="wbs_element",
         cascade="all, delete-orphan",
         order_by="Activity.name",
+    )
+
+    # Week 9: Variance explanations at WBS level
+    variance_explanations: Mapped[list["VarianceExplanation"]] = relationship(
+        "VarianceExplanation",
+        back_populates="wbs",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )
 
     # Table-level configuration
