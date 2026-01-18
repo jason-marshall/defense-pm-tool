@@ -28,6 +28,7 @@ from src.models.enums import ConstraintType, EVMethod
 
 if TYPE_CHECKING:
     from src.models.dependency import Dependency
+    from src.models.jira_mapping import JiraMapping
     from src.models.program import Program
     from src.models.wbs import WBSElement
 
@@ -276,6 +277,14 @@ class Activity(Base):
         "Dependency",
         foreign_keys="Dependency.predecessor_id",
         back_populates="predecessor",
+        cascade="all, delete-orphan",
+    )
+
+    # Week 10: Jira mapping (Activity -> Issue)
+    jira_mapping: Mapped["JiraMapping | None"] = relationship(
+        "JiraMapping",
+        back_populates="activity",
+        uselist=False,
         cascade="all, delete-orphan",
     )
 

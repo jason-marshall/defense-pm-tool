@@ -32,6 +32,11 @@ from src.models.enums import (
     UserRole,
 )
 from src.models.evms_period import EVMSPeriod, EVMSPeriodData, PeriodStatus
+
+# Week 10: Jira integration models
+from src.models.jira_integration import JiraIntegration, JiraIntegrationStatus
+from src.models.jira_mapping import EntityType, JiraMapping, SyncDirection
+from src.models.jira_sync_log import JiraSyncLog, SyncStatus, SyncType
 from src.models.management_reserve_log import ManagementReserveLog
 from src.models.program import Program
 from src.models.report_audit import ReportAudit
@@ -49,8 +54,14 @@ __all__ = [
     "ConstraintType",
     "Dependency",
     "DependencyType",
+    # Week 10: Jira integration
+    "EntityType",
     "EVMSPeriod",
     "EVMSPeriodData",
+    "JiraIntegration",
+    "JiraIntegrationStatus",
+    "JiraMapping",
+    "JiraSyncLog",
     "LtreeType",
     "ManagementReserveLog",
     "PeriodStatus",
@@ -58,6 +69,9 @@ __all__ = [
     "ProgramStatus",
     "ReportAudit",
     "SoftDeleteMixin",
+    "SyncDirection",
+    "SyncStatus",
+    "SyncType",
     # Models
     "User",
     # Enums

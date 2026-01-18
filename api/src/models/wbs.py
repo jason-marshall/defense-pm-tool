@@ -21,6 +21,7 @@ from sqlalchemy.types import UserDefinedType
 
 if TYPE_CHECKING:
     from src.models.activity import Activity
+    from src.models.jira_mapping import JiraMapping
     from src.models.program import Program
     from src.models.variance_explanation import VarianceExplanation
 
@@ -193,6 +194,14 @@ class WBSElement(Base):
         back_populates="wbs",
         cascade="all, delete-orphan",
         lazy="selectin",
+    )
+
+    # Week 10: Jira mapping (WBS -> Epic)
+    jira_mapping: Mapped["JiraMapping | None"] = relationship(
+        "JiraMapping",
+        back_populates="wbs",
+        uselist=False,
+        cascade="all, delete-orphan",
     )
 
     # Table-level configuration
