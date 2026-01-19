@@ -172,7 +172,9 @@ defense-pm-tool/
 | **Schedule** | Calculate CPM, Critical Path, Duration |
 | **EVMS** | Summary Dashboard, Periods, Period Data |
 | **Import** | MS Project XML (preview + import) |
-| **Reports** | CPR Format 1 (JSON, HTML) |
+| **Reports** | CPR Format 1, 3, 5 (JSON, HTML, PDF) |
+| **Variance** | Explanations CRUD, Management Reserve |
+| **Jira** | Integration Config, Sync, Mappings, Webhooks |
 
 See [API Reference](docs/api.md) for complete documentation.
 
@@ -266,25 +268,47 @@ docker-compose -f docker-compose.prod.yml up -d
 
 ---
 
-## Roadmap
+## Month 3 Features ✅
 
-### Month 3 Week 10 (In Progress) - Jira Integration
+### Week 10: Jira Integration
 
 **Work Package Sync**
-- Jira REST API client wrapper with token encryption
-- WBS Element to Epic mapping and sync
-- Activity to Issue mapping and sync
-- Variance alert to Issue creation
+- Jira REST API client wrapper with encrypted token storage
+- WBS Element to Epic mapping and bidirectional sync
+- Activity to Issue mapping with progress tracking
+- Variance alert to Jira Issue creation with priority mapping
 
 **Real-time Updates**
-- Webhook handler for Jira events
-- Bi-directional status sync
-- Conflict resolution handling
+- Webhook handler for Jira events (created, updated, deleted)
+- Bi-directional status sync (Jira status ↔ percent complete)
+- Audit trail for all sync operations
 
-### Future (Week 11-12)
-- Scenario comparison UI
-- Security hardening and audit
-- Final documentation
+**API Endpoints**
+| Endpoint | Description |
+|----------|-------------|
+| `POST /api/v1/jira/integrations` | Configure Jira connection |
+| `POST /api/v1/jira/integrations/{id}/sync` | Trigger sync operation |
+| `POST /api/v1/webhooks/jira` | Receive Jira webhooks |
+| `GET /api/v1/jira/integrations/{id}/logs` | View sync audit trail |
+
+### Test Coverage
+- 1700+ automated tests (unit, integration, E2E)
+- 80%+ code coverage maintained
+- Week 10 E2E integration test suite
+
+---
+
+## Roadmap
+
+### Week 11 (In Progress) - Security & Polish
+- Security hardening (input validation, rate limiting)
+- OpenAPI documentation completion
+- Performance optimization review
+
+### Week 12 (Planned) - Final Release
+- Final security audit
+- Production deployment preparation
+- End-user documentation
 
 ## Contributing
 
@@ -296,4 +320,4 @@ Proprietary - All rights reserved
 
 ---
 
-*Defense PM Tool v0.3.0 - January 2026 - Month 3 Week 9 Complete*
+*Defense PM Tool v0.4.0 - January 2026 - Month 3 Week 10 Complete (Jira Integration)*
