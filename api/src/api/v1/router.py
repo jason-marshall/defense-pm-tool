@@ -10,6 +10,7 @@ from src.api.v1.endpoints import (
     evms,
     import_export,
     jira_integration,
+    jira_webhook,
     management_reserve,
     programs,
     reports,
@@ -111,4 +112,10 @@ api_router.include_router(
     jira_integration.router,
     prefix="/jira",
     tags=["Jira Integration"],
+)
+
+api_router.include_router(
+    jira_webhook.router,
+    prefix="/webhooks",
+    tags=["Webhooks"],
 )
