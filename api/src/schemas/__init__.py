@@ -91,6 +91,32 @@ from src.schemas.wbs import (
     WBSWithChildrenResponse,
 )
 
+# Jira integration schemas
+from src.schemas.jira_integration import (
+    ActivityProgressSyncRequest,
+    ActivityProgressSyncResponse,
+    ActivityProgressSyncResult,
+    EntityType,
+    JiraConnectionTestResponse,
+    JiraIntegrationCreate,
+    JiraIntegrationResponse,
+    JiraIntegrationUpdate,
+    JiraMappingBrief,
+    JiraMappingCreate,
+    JiraMappingResponse,
+    JiraStatusMapping,
+    JiraStatusMappingConfig,
+    JiraSyncLogListResponse,
+    JiraSyncLogResponse,
+    JiraSyncRequest,
+    JiraSyncResponse,
+    JiraWebhookPayload,
+    SyncDirection,
+    SyncResultItem,
+    SyncStatus,
+    SyncType,
+)
+
 __all__ = [
     "ActivityBriefResponse",
     # Activity
@@ -149,4 +175,27 @@ __all__ = [
     "WBSTreeResponse",
     "WBSUpdate",
     "WBSWithChildrenResponse",
+    # Jira Integration
+    "ActivityProgressSyncRequest",
+    "ActivityProgressSyncResponse",
+    "ActivityProgressSyncResult",
+    "EntityType",
+    "JiraConnectionTestResponse",
+    "JiraIntegrationCreate",
+    "JiraIntegrationResponse",
+    "JiraIntegrationUpdate",
+    "JiraMappingBrief",
+    "JiraMappingCreate",
+    "JiraMappingResponse",
+    "JiraStatusMapping",
+    "JiraStatusMappingConfig",
+    "JiraSyncLogListResponse",
+    "JiraSyncLogResponse",
+    "JiraSyncRequest",
+    "JiraSyncResponse",
+    "JiraWebhookPayload",
+    "SyncDirection",
+    "SyncResultItem",
+    "SyncStatus",
+    "SyncType",
 ]
