@@ -5,13 +5,19 @@ This module provides CRUD operations for variance explanations.
 """
 
 from decimal import Decimal
+from typing import TYPE_CHECKING
 from uuid import UUID
 
+import structlog
 from fastapi import APIRouter, Query, status
 
 from src.core.deps import CurrentUser, DbSession
+from src.core.encryption import decrypt_token
 from src.core.exceptions import NotFoundError, ValidationError
 from src.repositories.evms_period import EVMSPeriodRepository
+from src.repositories.jira_integration import JiraIntegrationRepository
+from src.repositories.jira_mapping import JiraMappingRepository
+from src.repositories.jira_sync_log import JiraSyncLogRepository
 from src.repositories.program import ProgramRepository
 from src.repositories.variance_explanation import VarianceExplanationRepository
 from src.repositories.wbs import WBSElementRepository
@@ -20,7 +26,15 @@ from src.schemas.variance_explanation import (
     VarianceExplanationListResponse,
     VarianceExplanationResponse,
     VarianceExplanationUpdate,
+    VarianceExplanationWithJiraResponse,
 )
+from src.services.jira_client import JiraClient
+from src.services.jira_variance_alert import VarianceAlertService
+
+if TYPE_CHECKING:
+    from src.models.variance_explanation import VarianceExplanation
+
+logger = structlog.get_logger(__name__)
 
 router = APIRouter()
 
@@ -143,17 +157,25 @@ async def list_variance_explanations_by_wbs(
     return [VarianceExplanationResponse.model_validate(e) for e in explanations]
 
 
-@router.post("", response_model=VarianceExplanationResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=VarianceExplanationWithJiraResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_variance_explanation(
     db: DbSession,
     current_user: CurrentUser,
     explanation_data: VarianceExplanationCreate,
-) -> VarianceExplanationResponse:
+) -> VarianceExplanationWithJiraResponse:
     """
     Create a new variance explanation.
 
     Per DFARS requirements, variances exceeding threshold (typically 10%)
     require a written explanation and optionally a corrective action plan.
+
+    Optionally creates a Jira issue for tracking if:
+    - create_jira_issue is True
+    - Program has Jira integration configured
     """
     # Verify program exists
     program_repo = ProgramRepository(db)
@@ -165,6 +187,8 @@ async def create_variance_explanation(
         )
 
     # Verify WBS element if provided
+    wbs = None
+    wbs_name = None
     if explanation_data.wbs_id:
         wbs_repo = WBSElementRepository(db)
         wbs = await wbs_repo.get(explanation_data.wbs_id)
@@ -179,6 +203,7 @@ async def create_variance_explanation(
                 "WBS element does not belong to the specified program",
                 "WBS_PROGRAM_MISMATCH",
             )
+        wbs_name = wbs.name
 
     # Verify period if provided
     if explanation_data.period_id:
@@ -199,7 +224,7 @@ async def create_variance_explanation(
     repo = VarianceExplanationRepository(db)
 
     # Create the explanation
-    data = explanation_data.model_dump()
+    data = explanation_data.model_dump(exclude={"create_jira_issue"})
     data["variance_type"] = data["variance_type"].value  # Convert enum to string
     data["created_by"] = current_user.id
 
@@ -207,7 +232,106 @@ async def create_variance_explanation(
     await db.commit()
     await db.refresh(explanation)
 
-    return VarianceExplanationResponse.model_validate(explanation)
+    # Create Jira issue if requested
+    jira_issue_key = None
+    jira_issue_created = False
+
+    if explanation_data.create_jira_issue:
+        jira_issue_key, jira_issue_created = await _try_create_jira_issue(
+            db=db,
+            program_id=explanation_data.program_id,
+            variance=explanation,
+            wbs_name=wbs_name,
+        )
+
+    response = VarianceExplanationWithJiraResponse.model_validate(explanation)
+    response.jira_issue_key = jira_issue_key
+    response.jira_issue_created = jira_issue_created
+
+    return response
+
+
+async def _try_create_jira_issue(
+    db: DbSession,
+    program_id: UUID,
+    variance: "VarianceExplanation",
+    wbs_name: str | None,
+) -> tuple[str | None, bool]:
+    """Try to create a Jira issue for the variance.
+
+    Returns:
+        Tuple of (jira_issue_key, success_flag)
+    """
+
+    # Check if program has Jira integration
+    integration_repo = JiraIntegrationRepository(db)
+    integration = await integration_repo.get_by_program(program_id)
+
+    if not integration:
+        logger.debug(
+            "variance_jira_skip_no_integration",
+            program_id=str(program_id),
+        )
+        return None, False
+
+    if not integration.sync_enabled:
+        logger.debug(
+            "variance_jira_skip_sync_disabled",
+            program_id=str(program_id),
+        )
+        return None, False
+
+    try:
+        # Create Jira client
+        token = decrypt_token(integration.api_token_encrypted.decode())
+        client = JiraClient(
+            jira_url=integration.jira_url,
+            email=integration.email,
+            api_token=token,
+        )
+
+        # Create variance alert service
+        mapping_repo = JiraMappingRepository(db)
+        sync_log_repo = JiraSyncLogRepository(db)
+
+        service = VarianceAlertService(
+            jira_client=client,
+            integration_repo=integration_repo,
+            mapping_repo=mapping_repo,
+            sync_log_repo=sync_log_repo,
+        )
+
+        # Create the issue
+        result = await service.create_variance_issue(
+            integration_id=integration.id,
+            variance=variance,
+            wbs_name=wbs_name,
+        )
+
+        await db.commit()
+
+        if result.success:
+            logger.info(
+                "variance_jira_issue_created",
+                variance_id=str(variance.id),
+                jira_key=result.jira_issue_key,
+            )
+            return result.jira_issue_key, True
+        else:
+            logger.warning(
+                "variance_jira_issue_failed",
+                variance_id=str(variance.id),
+                error=result.error_message,
+            )
+            return None, False
+
+    except Exception as e:
+        logger.error(
+            "variance_jira_issue_error",
+            variance_id=str(variance.id),
+            error=str(e),
+        )
+        return None, False
 
 
 @router.get("/{explanation_id}", response_model=VarianceExplanationResponse)
