@@ -9,6 +9,7 @@ from src.api.v1.endpoints import (
     dependencies,
     evms,
     import_export,
+    jira_integration,
     management_reserve,
     programs,
     reports,
@@ -104,4 +105,10 @@ api_router.include_router(
     management_reserve.router,
     prefix="/mr",
     tags=["Management Reserve"],
+)
+
+api_router.include_router(
+    jira_integration.router,
+    prefix="/jira",
+    tags=["Jira Integration"],
 )
