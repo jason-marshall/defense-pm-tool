@@ -78,6 +78,10 @@ class VarianceExplanationCreate(VarianceExplanationBase):
         default=None,
         description="Optional period for period-specific variance",
     )
+    create_jira_issue: bool = Field(
+        default=False,
+        description="Create a Jira issue for this variance (requires Jira integration)",
+    )
 
 
 class VarianceExplanationUpdate(BaseModel):
@@ -175,4 +179,17 @@ class VarianceThresholdFilter(BaseModel):
     include_resolved: bool = Field(
         default=False,
         description="Include resolved variances",
+    )
+
+
+class VarianceExplanationWithJiraResponse(VarianceExplanationResponse):
+    """Response schema including Jira issue details when created."""
+
+    jira_issue_key: str | None = Field(
+        default=None,
+        description="Jira issue key if issue was created",
+    )
+    jira_issue_created: bool = Field(
+        default=False,
+        description="Whether a Jira issue was created",
     )
