@@ -897,9 +897,7 @@ class TestImportFunctions:
         return xml_file
 
     @pytest.mark.asyncio
-    async def test_import_msproject_to_program(
-        self, sample_import_xml: Path, mock_session
-    ) -> None:
+    async def test_import_msproject_to_program(self, sample_import_xml: Path, mock_session) -> None:
         """Should import MS Project file to program."""
         from unittest.mock import AsyncMock, patch
         from uuid import uuid4
@@ -909,9 +907,7 @@ class TestImportFunctions:
         importer = MSProjectImporter(sample_import_xml)
         program_id = uuid4()
 
-        with patch(
-            "src.services.msproject_import.WBSElementRepository"
-        ) as mock_repo_class:
+        with patch("src.services.msproject_import.WBSElementRepository") as mock_repo_class:
             mock_repo = mock_repo_class.return_value
             mock_repo.get_by_code = AsyncMock(return_value=None)
 
