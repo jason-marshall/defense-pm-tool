@@ -813,3 +813,752 @@ class TestMissingTaskData:
         assert task.duration_hours == 0
         assert task.is_milestone is False
         assert task.is_summary is False
+
+
+class TestImportFunctions:
+    """Tests for import helper functions (import_msproject_to_program and helpers)."""
+
+    @pytest.fixture
+    def mock_session(self):
+        """Create mock database session."""
+        from unittest.mock import AsyncMock, MagicMock
+
+        session = MagicMock()
+        session.add = MagicMock()
+        session.flush = AsyncMock()
+        session.commit = AsyncMock()
+        return session
+
+    @pytest.fixture
+    def sample_import_xml(self, tmp_path: Path) -> Path:
+        """Create sample MS Project XML for import testing."""
+        xml_content = """<?xml version="1.0" encoding="UTF-8"?>
+<Project>
+  <Name>Import Test Project</Name>
+  <StartDate>2026-01-01T08:00:00</StartDate>
+  <FinishDate>2026-06-30T17:00:00</FinishDate>
+  <Tasks>
+    <Task>
+      <UID>1</UID>
+      <ID>1</ID>
+      <Name>Phase 1</Name>
+      <WBS>1</WBS>
+      <OutlineLevel>1</OutlineLevel>
+      <Duration>PT0H0M0S</Duration>
+      <Summary>1</Summary>
+    </Task>
+    <Task>
+      <UID>2</UID>
+      <ID>2</ID>
+      <Name>Task A</Name>
+      <WBS>1.1</WBS>
+      <OutlineLevel>2</OutlineLevel>
+      <Duration>PT40H0M0S</Duration>
+      <Start>2026-01-02T08:00:00</Start>
+      <Finish>2026-01-06T17:00:00</Finish>
+      <Summary>0</Summary>
+      <PercentComplete>25</PercentComplete>
+    </Task>
+    <Task>
+      <UID>3</UID>
+      <ID>3</ID>
+      <Name>Task B</Name>
+      <WBS>1.2</WBS>
+      <OutlineLevel>2</OutlineLevel>
+      <Duration>PT80H0M0S</Duration>
+      <Summary>0</Summary>
+      <ConstraintType>2</ConstraintType>
+      <ConstraintDate>2026-01-07T08:00:00</ConstraintDate>
+      <PredecessorLink>
+        <PredecessorUID>2</PredecessorUID>
+        <Type>1</Type>
+        <LinkLag>0</LinkLag>
+      </PredecessorLink>
+    </Task>
+    <Task>
+      <UID>4</UID>
+      <ID>4</ID>
+      <Name>Milestone</Name>
+      <WBS>1.3</WBS>
+      <OutlineLevel>2</OutlineLevel>
+      <Duration>PT0H0M0S</Duration>
+      <Summary>0</Summary>
+      <Milestone>1</Milestone>
+      <PredecessorLink>
+        <PredecessorUID>3</PredecessorUID>
+        <Type>1</Type>
+        <LinkLag>0</LinkLag>
+      </PredecessorLink>
+    </Task>
+  </Tasks>
+</Project>"""
+        xml_file = tmp_path / "import_test.xml"
+        xml_file.write_text(xml_content)
+        return xml_file
+
+    @pytest.mark.asyncio
+    async def test_import_msproject_to_program(
+        self, sample_import_xml: Path, mock_session
+    ) -> None:
+        """Should import MS Project file to program."""
+        from unittest.mock import AsyncMock, patch
+        from uuid import uuid4
+
+        from src.services.msproject_import import import_msproject_to_program
+
+        importer = MSProjectImporter(sample_import_xml)
+        program_id = uuid4()
+
+        with patch(
+            "src.services.msproject_import.WBSElementRepository"
+        ) as mock_repo_class:
+            mock_repo = mock_repo_class.return_value
+            mock_repo.get_by_code = AsyncMock(return_value=None)
+
+            stats = await import_msproject_to_program(importer, program_id, mock_session)
+
+        assert stats["wbs_elements_created"] >= 1
+        assert stats["tasks_imported"] >= 1
+        assert stats["dependencies_imported"] >= 1
+        assert mock_session.commit.called
+        assert mock_session.flush.called
+
+    @pytest.mark.asyncio
+    async def test_import_task_summary(self, mock_session) -> None:
+        """Should create WBS element for summary task."""
+        from uuid import uuid4
+
+        from src.services.msproject_import import ImportedTask, _import_task
+
+        task = ImportedTask(
+            uid=1,
+            id=1,
+            name="Phase 1",
+            wbs="1",
+            outline_level=1,
+            duration_hours=0,
+            start=None,
+            finish=None,
+            is_milestone=False,
+            is_summary=True,
+        )
+
+        program_id = uuid4()
+        uid_to_id = {}
+        created_wbs_codes = {}
+        stats = {
+            "tasks_imported": 0,
+            "dependencies_imported": 0,
+            "wbs_elements_created": 0,
+            "warnings": [],
+            "errors": [],
+        }
+
+        await _import_task(
+            task, program_id, mock_session, None, uid_to_id, created_wbs_codes, stats
+        )
+
+        assert stats["wbs_elements_created"] == 1
+        assert "1" in created_wbs_codes
+
+    @pytest.mark.asyncio
+    async def test_import_task_activity(self, mock_session) -> None:
+        """Should create activity for non-summary task."""
+        from unittest.mock import AsyncMock, MagicMock
+        from uuid import uuid4
+
+        from src.services.msproject_import import ImportedTask, _import_task
+
+        task = ImportedTask(
+            uid=2,
+            id=2,
+            name="Task A",
+            wbs="1.1",
+            outline_level=2,
+            duration_hours=40,
+            start=datetime(2026, 1, 2, 8, 0),
+            finish=datetime(2026, 1, 6, 17, 0),
+            is_milestone=False,
+            is_summary=False,
+            percent_complete=Decimal("25"),
+        )
+
+        program_id = uuid4()
+        wbs_id = uuid4()
+        uid_to_id = {}
+        created_wbs_codes = {"1": wbs_id}
+        stats = {
+            "tasks_imported": 0,
+            "dependencies_imported": 0,
+            "wbs_elements_created": 0,
+            "warnings": [],
+            "errors": [],
+        }
+
+        mock_wbs_repo = MagicMock()
+        mock_wbs_repo.get_by_code = AsyncMock(return_value=None)
+
+        await _import_task(
+            task, program_id, mock_session, mock_wbs_repo, uid_to_id, created_wbs_codes, stats
+        )
+
+        assert stats["tasks_imported"] == 1
+        assert 2 in uid_to_id
+
+    @pytest.mark.asyncio
+    async def test_import_task_error_handling(self, mock_session) -> None:
+        """Should catch and log errors during task import."""
+        from unittest.mock import MagicMock
+        from uuid import uuid4
+
+        from src.services.msproject_import import ImportedTask, _import_task
+
+        task = ImportedTask(
+            uid=1,
+            id=1,
+            name="Error Task",
+            wbs="1",
+            outline_level=1,
+            duration_hours=8,
+            start=None,
+            finish=None,
+            is_milestone=False,
+            is_summary=False,
+        )
+
+        program_id = uuid4()
+        uid_to_id = {}
+        created_wbs_codes = {}
+        stats = {
+            "tasks_imported": 0,
+            "dependencies_imported": 0,
+            "wbs_elements_created": 0,
+            "warnings": [],
+            "errors": [],
+        }
+
+        # Make session.add raise an exception
+        mock_session.add.side_effect = Exception("Database error")
+
+        mock_wbs_repo = MagicMock()
+
+        await _import_task(
+            task, program_id, mock_session, mock_wbs_repo, uid_to_id, created_wbs_codes, stats
+        )
+
+        assert len(stats["errors"]) == 1
+        assert "Error importing task" in stats["errors"][0]
+
+    @pytest.mark.asyncio
+    async def test_create_wbs_element(self, mock_session) -> None:
+        """Should create WBS element for summary task."""
+        from uuid import uuid4
+
+        from src.services.msproject_import import ImportedTask, _create_wbs_element
+
+        task = ImportedTask(
+            uid=1,
+            id=1,
+            name="Phase 1",
+            wbs="1",
+            outline_level=1,
+            duration_hours=0,
+            start=None,
+            finish=None,
+            is_milestone=False,
+            is_summary=True,
+            notes="Phase description",
+        )
+
+        program_id = uuid4()
+        created_wbs_codes = {}
+        stats = {"wbs_elements_created": 0}
+
+        await _create_wbs_element(task, program_id, mock_session, created_wbs_codes, stats)
+
+        assert mock_session.add.called
+        assert "1" in created_wbs_codes
+        assert stats["wbs_elements_created"] == 1
+
+    @pytest.mark.asyncio
+    async def test_create_wbs_element_with_parent(self, mock_session) -> None:
+        """Should create WBS element with parent reference."""
+        from uuid import uuid4
+
+        from src.services.msproject_import import ImportedTask, _create_wbs_element
+
+        parent_id = uuid4()
+        created_wbs_codes = {"1": parent_id}
+
+        task = ImportedTask(
+            uid=2,
+            id=2,
+            name="Sub Phase",
+            wbs="1.1",
+            outline_level=2,
+            duration_hours=0,
+            start=None,
+            finish=None,
+            is_milestone=False,
+            is_summary=True,
+        )
+
+        program_id = uuid4()
+        stats = {"wbs_elements_created": 0}
+
+        await _create_wbs_element(task, program_id, mock_session, created_wbs_codes, stats)
+
+        # Verify parent_id was set
+        call_args = mock_session.add.call_args
+        wbs_element = call_args[0][0]
+        assert wbs_element.parent_id == parent_id
+
+    @pytest.mark.asyncio
+    async def test_create_wbs_element_already_exists(self, mock_session) -> None:
+        """Should skip creating WBS element if code already exists."""
+        from uuid import uuid4
+
+        from src.services.msproject_import import ImportedTask, _create_wbs_element
+
+        existing_id = uuid4()
+        created_wbs_codes = {"1": existing_id}
+
+        task = ImportedTask(
+            uid=1,
+            id=1,
+            name="Duplicate",
+            wbs="1",
+            outline_level=1,
+            duration_hours=0,
+            start=None,
+            finish=None,
+            is_milestone=False,
+            is_summary=True,
+        )
+
+        stats = {"wbs_elements_created": 0}
+
+        await _create_wbs_element(task, uuid4(), mock_session, created_wbs_codes, stats)
+
+        assert not mock_session.add.called
+        assert stats["wbs_elements_created"] == 0
+
+    @pytest.mark.asyncio
+    async def test_create_activity(self, mock_session) -> None:
+        """Should create activity for non-summary task."""
+        from unittest.mock import AsyncMock, MagicMock
+        from uuid import uuid4
+
+        from src.services.msproject_import import ImportedTask, _create_activity
+
+        task = ImportedTask(
+            uid=10,
+            id=10,
+            name="Design Review",
+            wbs="1.1.1",
+            outline_level=3,
+            duration_hours=40,
+            start=datetime(2026, 1, 15, 8, 0),
+            finish=datetime(2026, 1, 19, 17, 0),
+            is_milestone=False,
+            is_summary=False,
+            percent_complete=Decimal("50"),
+            notes="Review design",
+        )
+
+        program_id = uuid4()
+        wbs_id = uuid4()
+        uid_to_id = {}
+        created_wbs_codes = {"1.1": wbs_id}
+        stats = {"tasks_imported": 0, "wbs_elements_created": 0, "warnings": []}
+
+        mock_wbs_repo = MagicMock()
+        mock_wbs_repo.get_by_code = AsyncMock(return_value=None)
+
+        await _create_activity(
+            task, program_id, mock_session, mock_wbs_repo, uid_to_id, created_wbs_codes, stats
+        )
+
+        assert mock_session.add.called
+        assert 10 in uid_to_id
+        assert stats["tasks_imported"] == 1
+
+    @pytest.mark.asyncio
+    async def test_create_activity_milestone(self, mock_session) -> None:
+        """Should create milestone activity with zero duration."""
+        from unittest.mock import MagicMock
+        from uuid import uuid4
+
+        from src.services.msproject_import import ImportedTask, _create_activity
+
+        task = ImportedTask(
+            uid=20,
+            id=20,
+            name="Project Kickoff",
+            wbs="1",
+            outline_level=1,
+            duration_hours=0,
+            start=datetime(2026, 1, 1, 8, 0),
+            finish=datetime(2026, 1, 1, 8, 0),
+            is_milestone=True,
+            is_summary=False,
+        )
+
+        program_id = uuid4()
+        wbs_id = uuid4()
+        uid_to_id = {}
+        created_wbs_codes = {"1": wbs_id}
+        stats = {"tasks_imported": 0, "wbs_elements_created": 0, "warnings": []}
+
+        mock_wbs_repo = MagicMock()
+
+        await _create_activity(
+            task, program_id, mock_session, mock_wbs_repo, uid_to_id, created_wbs_codes, stats
+        )
+
+        call_args = mock_session.add.call_args
+        activity = call_args[0][0]
+        assert activity.is_milestone is True
+        assert activity.duration == 0
+
+    @pytest.mark.asyncio
+    async def test_create_activity_with_constraint(self, mock_session) -> None:
+        """Should set constraint on activity."""
+        from unittest.mock import MagicMock
+        from uuid import uuid4
+
+        from src.models.enums import ConstraintType
+        from src.services.msproject_import import ImportedTask, _create_activity
+
+        task = ImportedTask(
+            uid=30,
+            id=30,
+            name="Constrained Task",
+            wbs="1",
+            outline_level=1,
+            duration_hours=8,
+            start=datetime(2026, 2, 1, 8, 0),
+            finish=datetime(2026, 2, 1, 17, 0),
+            is_milestone=False,
+            is_summary=False,
+            constraint_type="snet",
+            constraint_date=datetime(2026, 2, 1, 8, 0),
+        )
+
+        program_id = uuid4()
+        wbs_id = uuid4()
+        uid_to_id = {}
+        created_wbs_codes = {"1": wbs_id}
+        stats = {"tasks_imported": 0, "wbs_elements_created": 0, "warnings": []}
+
+        mock_wbs_repo = MagicMock()
+
+        await _create_activity(
+            task, program_id, mock_session, mock_wbs_repo, uid_to_id, created_wbs_codes, stats
+        )
+
+        call_args = mock_session.add.call_args
+        activity = call_args[0][0]
+        assert activity.constraint_type == ConstraintType.SNET
+
+    @pytest.mark.asyncio
+    async def test_create_activity_invalid_constraint(self, mock_session) -> None:
+        """Should add warning for invalid constraint type."""
+        from unittest.mock import MagicMock
+        from uuid import uuid4
+
+        from src.services.msproject_import import ImportedTask, _create_activity
+
+        task = ImportedTask(
+            uid=31,
+            id=31,
+            name="Invalid Constraint Task",
+            wbs="1",
+            outline_level=1,
+            duration_hours=8,
+            start=None,
+            finish=None,
+            is_milestone=False,
+            is_summary=False,
+            constraint_type="invalid_type",
+            constraint_date=datetime(2026, 2, 1, 8, 0),
+        )
+
+        program_id = uuid4()
+        wbs_id = uuid4()
+        uid_to_id = {}
+        created_wbs_codes = {"1": wbs_id}
+        stats = {"tasks_imported": 0, "wbs_elements_created": 0, "warnings": []}
+
+        mock_wbs_repo = MagicMock()
+
+        await _create_activity(
+            task, program_id, mock_session, mock_wbs_repo, uid_to_id, created_wbs_codes, stats
+        )
+
+        assert len(stats["warnings"]) == 1
+        assert "Unknown constraint type" in stats["warnings"][0]
+
+    @pytest.mark.asyncio
+    async def test_get_or_create_wbs_existing_in_cache(self) -> None:
+        """Should return cached WBS ID."""
+        from unittest.mock import MagicMock
+        from uuid import uuid4
+
+        from src.services.msproject_import import _get_or_create_wbs
+
+        wbs_id = uuid4()
+        created_wbs_codes = {"1.1": wbs_id}
+
+        result = await _get_or_create_wbs(
+            "1.1", uuid4(), MagicMock(), MagicMock(), created_wbs_codes, {}
+        )
+
+        assert result == wbs_id
+
+    @pytest.mark.asyncio
+    async def test_get_or_create_wbs_existing_in_db(self) -> None:
+        """Should find existing WBS in database."""
+        from unittest.mock import AsyncMock, MagicMock
+        from uuid import uuid4
+
+        from src.services.msproject_import import _get_or_create_wbs
+
+        wbs_id = uuid4()
+        program_id = uuid4()
+
+        mock_wbs = MagicMock()
+        mock_wbs.id = wbs_id
+
+        mock_wbs_repo = MagicMock()
+        mock_wbs_repo.get_by_code = AsyncMock(return_value=mock_wbs)
+
+        mock_session = MagicMock()
+        created_wbs_codes = {}
+        stats = {"wbs_elements_created": 0}
+
+        result = await _get_or_create_wbs(
+            "2.1", program_id, mock_session, mock_wbs_repo, created_wbs_codes, stats
+        )
+
+        assert result == wbs_id
+        assert created_wbs_codes["2.1"] == wbs_id
+        assert stats["wbs_elements_created"] == 0
+
+    @pytest.mark.asyncio
+    async def test_get_or_create_wbs_create_new(self) -> None:
+        """Should create new WBS if not found."""
+        from unittest.mock import AsyncMock, MagicMock
+        from uuid import uuid4
+
+        from src.services.msproject_import import _get_or_create_wbs
+
+        program_id = uuid4()
+
+        mock_wbs_repo = MagicMock()
+        mock_wbs_repo.get_by_code = AsyncMock(return_value=None)
+
+        mock_session = MagicMock()
+        created_wbs_codes = {}
+        stats = {"wbs_elements_created": 0}
+
+        result = await _get_or_create_wbs(
+            "3.1", program_id, mock_session, mock_wbs_repo, created_wbs_codes, stats
+        )
+
+        assert result is not None
+        assert "3.1" in created_wbs_codes
+        assert stats["wbs_elements_created"] == 1
+        assert mock_session.add.called
+
+
+class TestCreateDependencies:
+    """Tests for dependency creation function."""
+
+    @pytest.fixture
+    def mock_session(self):
+        """Create mock database session."""
+        from unittest.mock import MagicMock
+
+        return MagicMock()
+
+    def test_create_dependencies_success(self, mock_session) -> None:
+        """Should create dependencies for task."""
+        from uuid import uuid4
+
+        from src.services.msproject_import import ImportedTask, _create_dependencies
+
+        task = ImportedTask(
+            uid=2,
+            id=2,
+            name="Task B",
+            wbs="1.1",
+            outline_level=2,
+            duration_hours=40,
+            start=None,
+            finish=None,
+            is_milestone=False,
+            is_summary=False,
+            predecessors=[{"predecessor_uid": 1, "type": "FS", "lag": 0}],
+        )
+
+        pred_id = uuid4()
+        succ_id = uuid4()
+        uid_to_id = {1: pred_id, 2: succ_id}
+
+        stats = {"dependencies_imported": 0, "warnings": [], "errors": []}
+
+        _create_dependencies(task, uid_to_id, mock_session, stats)
+
+        assert mock_session.add.called
+        assert stats["dependencies_imported"] == 1
+
+    def test_create_dependencies_skip_summary(self, mock_session) -> None:
+        """Should skip dependencies for summary tasks."""
+        from src.services.msproject_import import ImportedTask, _create_dependencies
+
+        task = ImportedTask(
+            uid=1,
+            id=1,
+            name="Summary",
+            wbs="1",
+            outline_level=1,
+            duration_hours=0,
+            start=None,
+            finish=None,
+            is_milestone=False,
+            is_summary=True,
+            predecessors=[{"predecessor_uid": 0, "type": "FS", "lag": 0}],
+        )
+
+        stats = {"dependencies_imported": 0, "warnings": [], "errors": []}
+
+        _create_dependencies(task, {}, mock_session, stats)
+
+        assert not mock_session.add.called
+
+    def test_create_dependencies_missing_successor(self, mock_session) -> None:
+        """Should handle missing successor ID."""
+        from uuid import uuid4
+
+        from src.services.msproject_import import ImportedTask, _create_dependencies
+
+        task = ImportedTask(
+            uid=99,
+            id=99,
+            name="Orphan",
+            wbs="1",
+            outline_level=1,
+            duration_hours=8,
+            start=None,
+            finish=None,
+            is_milestone=False,
+            is_summary=False,
+            predecessors=[{"predecessor_uid": 1, "type": "FS", "lag": 0}],
+        )
+
+        # UID 99 not in mapping
+        uid_to_id = {1: uuid4()}
+
+        stats = {"dependencies_imported": 0, "warnings": [], "errors": []}
+
+        _create_dependencies(task, uid_to_id, mock_session, stats)
+
+        assert not mock_session.add.called
+
+    def test_create_dependencies_missing_predecessor(self, mock_session) -> None:
+        """Should add warning for missing predecessor."""
+        from uuid import uuid4
+
+        from src.services.msproject_import import ImportedTask, _create_dependencies
+
+        succ_id = uuid4()
+
+        task = ImportedTask(
+            uid=2,
+            id=2,
+            name="Task B",
+            wbs="1.1",
+            outline_level=2,
+            duration_hours=40,
+            start=None,
+            finish=None,
+            is_milestone=False,
+            is_summary=False,
+            predecessors=[{"predecessor_uid": 999, "type": "FS", "lag": 0}],
+        )
+
+        uid_to_id = {2: succ_id}
+
+        stats = {"dependencies_imported": 0, "warnings": [], "errors": []}
+
+        _create_dependencies(task, uid_to_id, mock_session, stats)
+
+        assert not mock_session.add.called
+        assert len(stats["warnings"]) == 1
+        assert "999 not found" in stats["warnings"][0]
+
+    def test_create_dependencies_with_lag(self, mock_session) -> None:
+        """Should create dependency with lag days."""
+        from uuid import uuid4
+
+        from src.services.msproject_import import ImportedTask, _create_dependencies
+
+        task = ImportedTask(
+            uid=2,
+            id=2,
+            name="Task B",
+            wbs="1.1",
+            outline_level=2,
+            duration_hours=40,
+            start=None,
+            finish=None,
+            is_milestone=False,
+            is_summary=False,
+            predecessors=[{"predecessor_uid": 1, "type": "FS", "lag": 2}],
+        )
+
+        pred_id = uuid4()
+        succ_id = uuid4()
+        uid_to_id = {1: pred_id, 2: succ_id}
+
+        stats = {"dependencies_imported": 0, "warnings": [], "errors": []}
+
+        _create_dependencies(task, uid_to_id, mock_session, stats)
+
+        call_args = mock_session.add.call_args
+        dependency = call_args[0][0]
+        assert dependency.lag == 2
+
+    def test_create_dependencies_error_handling(self, mock_session) -> None:
+        """Should catch and log errors during dependency creation."""
+        from uuid import uuid4
+
+        from src.services.msproject_import import ImportedTask, _create_dependencies
+
+        task = ImportedTask(
+            uid=2,
+            id=2,
+            name="Task B",
+            wbs="1.1",
+            outline_level=2,
+            duration_hours=40,
+            start=None,
+            finish=None,
+            is_milestone=False,
+            is_summary=False,
+            predecessors=[{"predecessor_uid": 1, "type": "FS", "lag": 0}],
+        )
+
+        pred_id = uuid4()
+        succ_id = uuid4()
+        uid_to_id = {1: pred_id, 2: succ_id}
+
+        mock_session.add.side_effect = Exception("Database error")
+
+        stats = {"dependencies_imported": 0, "warnings": [], "errors": []}
+
+        _create_dependencies(task, uid_to_id, mock_session, stats)
+
+        assert len(stats["errors"]) == 1
+        assert "Error creating dependency" in stats["errors"][0]
