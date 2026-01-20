@@ -715,11 +715,13 @@ pytest -v -s
 - cryptography>=42.0.0 (token encryption)
 
 ### 🔶 In Progress (Month 3 - Week 11)
-- [ ] Security hardening (input validation, rate limiting)
-- [ ] API documentation completion (OpenAPI)
+- [ ] Scenario promotion workflow (promote to baseline)
+- [ ] Apply scenario changes to program data
+- [ ] Security hardening (input validation, sanitization)
+- [ ] Rate limiting for API endpoints (slowapi>=0.1.9)
+- [ ] OpenAPI documentation completion
 - [ ] Performance optimization review
-- [ ] Integration testing with external services
-- [ ] User documentation updates
+- [ ] Week 11 E2E integration tests
 
 ### 📋 Planned (Month 3 - Week 12)
 - [ ] Final security audit
@@ -793,11 +795,13 @@ pytest -v -s
 - [x] Week 10 E2E integration tests
 
 ### 🔶 In Progress (Week 11: Security & Polish - Days 71-77)
+- [ ] Scenario promotion workflow (promote to baseline)
+- [ ] Apply scenario changes to program data
 - [ ] Security hardening (input validation, sanitization)
-- [ ] Rate limiting for API endpoints
+- [ ] Rate limiting for API endpoints (slowapi>=0.1.9)
 - [ ] OpenAPI documentation completion
 - [ ] Performance optimization review
-- [ ] User documentation updates
+- [ ] Week 11 E2E integration tests
 
 ### 📋 Planned (Week 12: Final Release - Days 78-84)
 - [ ] Final security audit
@@ -886,5 +890,5 @@ Run dashboard benchmarks: `cd api && pytest tests/performance/test_dashboard_ben
 ---
 
 *Last Updated: January 2026*
-*Month 3, Week 10 Starting - 1600+ tests, 80%+ coverage*
-*Week 10 Focus: Jira Integration for Work Package Sync*
+*Month 3, Week 11 Starting - 2193 tests, 80%+ coverage*
+*Week 11 Focus: Scenario Promotion & Security Hardening*
