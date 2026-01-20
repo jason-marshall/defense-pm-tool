@@ -45,3 +45,6 @@ reportlab>=4.0.0
 # Jira Integration (Week 10)
 jira>=3.5.0
 cryptography>=42.0.0
+
+# Rate Limiting (Week 11)
+slowapi>=0.1.9
