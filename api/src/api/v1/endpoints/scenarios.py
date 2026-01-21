@@ -14,6 +14,7 @@ from src.repositories.program import ProgramRepository
 from src.repositories.scenario import ScenarioRepository
 from src.repositories.wbs import WBSElementRepository
 from src.schemas.scenario import (
+    ScenarioApplyChangesRequest,
     ScenarioChangeCreate,
     ScenarioChangeResponse,
     ScenarioCreate,
@@ -486,6 +487,106 @@ async def promote_scenario(
     except ScenarioNotEligibleError as e:
         raise ValidationError(e.message, e.code) from e
     except BaselineCreationError as e:
+        raise ValidationError(e.message, e.code) from e
+
+
+@router.post("/{scenario_id}/apply")
+async def apply_scenario_changes(
+    db: DbSession,
+    current_user: CurrentUser,
+    scenario_id: UUID,
+    apply_request: ScenarioApplyChangesRequest,
+) -> dict[str, Any]:
+    """
+    Apply scenario changes to actual program data.
+
+    WARNING: This operation modifies actual program data!
+
+    Unlike promotion (which creates a baseline snapshot), this endpoint
+    directly modifies activities, WBS elements, and dependencies.
+
+    Requires explicit confirmation (confirm=true in request body).
+
+    The scenario is archived after successful application.
+
+    Consider using /promote instead for non-destructive change tracking.
+    """
+    from src.services.scenario_apply import (
+        ApplyChangesError,
+        ScenarioApplyService,
+    )
+    from src.services.scenario_apply import (
+        ScenarioNotFoundError as ApplyNotFoundError,
+    )
+
+    # Verify confirm flag
+    if not apply_request.confirm:
+        raise ValidationError(
+            "Must set confirm=true to apply changes. This operation modifies actual program data.",
+            "CONFIRM_REQUIRED",
+        )
+
+    # Verify scenario access
+    scenario_repo = ScenarioRepository(db)
+    scenario = await scenario_repo.get(scenario_id)
+
+    if not scenario:
+        raise NotFoundError(f"Scenario {scenario_id} not found", "SCENARIO_NOT_FOUND")
+
+    # Verify user has access to program
+    program_repo = ProgramRepository(db)
+    program = await program_repo.get(scenario.program_id)
+
+    if not program:
+        raise NotFoundError(f"Program {scenario.program_id} not found", "PROGRAM_NOT_FOUND")
+
+    if program.owner_id != current_user.id and not current_user.is_admin:
+        raise AuthorizationError(
+            "Not authorized to modify this program",
+            "NOT_AUTHORIZED",
+        )
+
+    # Create apply service
+    activity_repo = ActivityRepository(db)
+    wbs_repo = WBSElementRepository(db)
+    dependency_repo = DependencyRepository(db)
+
+    service = ScenarioApplyService(
+        scenario_repo=scenario_repo,
+        activity_repo=activity_repo,
+        wbs_repo=wbs_repo,
+        dependency_repo=dependency_repo,
+    )
+
+    try:
+        result = await service.apply_changes(
+            scenario_id=scenario_id,
+            confirm=True,
+        )
+
+        if result.success:
+            await db.commit()
+        else:
+            await db.rollback()
+
+        return {
+            "success": result.success,
+            "scenario_id": str(result.scenario_id),
+            "changes_applied": result.changes_applied,
+            "changes_failed": result.changes_failed,
+            "summary": {
+                "activities_modified": result.activities_modified,
+                "wbs_modified": result.wbs_modified,
+                "dependencies_modified": result.dependencies_modified,
+            },
+            "errors": result.errors if result.errors else None,
+            "duration_ms": result.duration_ms,
+            "archived": result.success,  # Scenario archived if successful
+        }
+
+    except ApplyNotFoundError as e:
+        raise NotFoundError(e.message, e.code) from e
+    except ApplyChangesError as e:
         raise ValidationError(e.message, e.code) from e
 
 
