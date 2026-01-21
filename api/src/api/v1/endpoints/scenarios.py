@@ -12,12 +12,14 @@ from src.repositories.baseline import BaselineRepository
 from src.repositories.dependency import DependencyRepository
 from src.repositories.program import ProgramRepository
 from src.repositories.scenario import ScenarioRepository
+from src.repositories.wbs import WBSElementRepository
 from src.schemas.scenario import (
     ScenarioChangeCreate,
     ScenarioChangeResponse,
     ScenarioCreate,
     ScenarioDiffSummary,
     ScenarioListResponse,
+    ScenarioPromoteRequest,
     ScenarioResponse,
     ScenarioSummary,
     ScenarioUpdate,
@@ -397,6 +399,94 @@ async def activate_scenario(
     await db.refresh(scenario)
 
     return _build_scenario_response(scenario)
+
+
+@router.post("/{scenario_id}/promote")
+async def promote_scenario(
+    db: DbSession,
+    current_user: CurrentUser,
+    scenario_id: UUID,
+    promote_request: ScenarioPromoteRequest,
+) -> dict[str, Any]:
+    """
+    Promote a scenario to a new baseline.
+
+    Creates a new baseline with all scenario changes applied.
+    The scenario is marked as promoted and cannot be further modified.
+
+    Requirements:
+    - Scenario must exist and not already be promoted or archived
+    - User must have access to the program
+
+    Returns:
+        Promotion result including new baseline ID and version.
+    """
+    from src.services.scenario_promotion import (
+        BaselineCreationError,
+        ScenarioNotEligibleError,
+        ScenarioNotFoundError,
+        ScenarioPromotionService,
+    )
+
+    # Get scenario to verify access
+    scenario_repo = ScenarioRepository(db)
+    scenario = await scenario_repo.get(scenario_id)
+
+    if not scenario:
+        raise NotFoundError(f"Scenario {scenario_id} not found", "SCENARIO_NOT_FOUND")
+
+    # Verify user has access to the program
+    program_repo = ProgramRepository(db)
+    program = await program_repo.get(scenario.program_id)
+
+    if not program:
+        raise NotFoundError(f"Program {scenario.program_id} not found", "PROGRAM_NOT_FOUND")
+
+    if program.owner_id != current_user.id and not current_user.is_admin:
+        raise AuthorizationError(
+            "Not authorized to promote scenarios for this program",
+            "NOT_AUTHORIZED",
+        )
+
+    # Create promotion service with all required repositories
+    baseline_repo = BaselineRepository(db)
+    activity_repo = ActivityRepository(db)
+    wbs_repo = WBSElementRepository(db)
+
+    promotion_service = ScenarioPromotionService(
+        scenario_repo=scenario_repo,
+        baseline_repo=baseline_repo,
+        activity_repo=activity_repo,
+        wbs_repo=wbs_repo,
+    )
+
+    try:
+        result = await promotion_service.promote_scenario(
+            scenario_id=scenario_id,
+            baseline_name=promote_request.baseline_name,
+            baseline_description=promote_request.baseline_description,
+            created_by_id=current_user.id,
+        )
+
+        await db.commit()
+
+        return {
+            "success": result.success,
+            "scenario_id": str(result.scenario_id),
+            "baseline_id": str(result.baseline_id) if result.baseline_id else None,
+            "baseline_name": result.baseline_name,
+            "baseline_version": result.baseline_version,
+            "changes_count": result.changes_count,
+            "duration_ms": result.duration_ms,
+            "message": f"Scenario promoted to baseline '{result.baseline_name}' (v{result.baseline_version})",
+        }
+
+    except ScenarioNotFoundError as e:
+        raise NotFoundError(e.message, e.code) from e
+    except ScenarioNotEligibleError as e:
+        raise ValidationError(e.message, e.code) from e
+    except BaselineCreationError as e:
+        raise ValidationError(e.message, e.code) from e
 
 
 @router.get("/{scenario_id}/summary", response_model=ScenarioDiffSummary)
