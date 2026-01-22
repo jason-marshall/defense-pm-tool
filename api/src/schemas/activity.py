@@ -13,6 +13,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from src.core.validation import detect_sql_injection, sanitize_text
 from src.models.enums import ConstraintType, EVMethod
 from src.schemas.common import PaginatedResponse
 from src.schemas.wbs import WBSBriefResponse
@@ -133,6 +134,32 @@ class ActivityCreate(ActivityBase):
         examples=[[{"name": "Design", "weight": 0.25, "is_complete": False}]],
     )
 
+    @field_validator("name", "description", mode="after")
+    @classmethod
+    def sanitize_text_fields(cls, v: str | None) -> str | None:
+        """Sanitize text fields to prevent XSS and SQL injection."""
+        if v is None:
+            return None
+        v = sanitize_text(v)
+        if v and detect_sql_injection(v):
+            raise ValueError("Invalid characters detected in input")
+        return v
+
+    @field_validator("code", mode="after")
+    @classmethod
+    def validate_code_format(cls, v: str | None) -> str | None:
+        """Validate and sanitize code field."""
+        if v is None:
+            return None
+        v = sanitize_text(v) or ""
+        if not v:
+            return None
+        if not all(c.isalnum() or c in "_-." for c in v):
+            raise ValueError(
+                "Code must contain only letters, numbers, underscores, hyphens, and periods"
+            )
+        return v.upper()
+
     @model_validator(mode="after")
     def validate_milestone_duration(self) -> "ActivityCreate":
         """
@@ -252,6 +279,17 @@ class ActivityUpdate(BaseModel):
         default=None,
         description="Milestones for milestone-weight EV method",
     )
+
+    @field_validator("name", "description", mode="after")
+    @classmethod
+    def sanitize_text_fields(cls, v: str | None) -> str | None:
+        """Sanitize text fields to prevent XSS and SQL injection."""
+        if v is None:
+            return None
+        v = sanitize_text(v)
+        if v and detect_sql_injection(v):
+            raise ValueError("Invalid characters detected in input")
+        return v
 
     @model_validator(mode="after")
     def validate_milestone_duration(self) -> "ActivityUpdate":
