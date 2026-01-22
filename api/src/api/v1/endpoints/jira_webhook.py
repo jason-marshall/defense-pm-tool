@@ -18,6 +18,7 @@ from fastapi import APIRouter, Header, HTTPException, Request, status
 
 from src.config import settings
 from src.core.deps import DbSession
+from src.core.rate_limit import RATE_LIMIT_WEBHOOK, limiter
 from src.repositories.activity import ActivityRepository
 from src.repositories.jira_integration import JiraIntegrationRepository
 from src.repositories.jira_mapping import JiraMappingRepository
@@ -71,6 +72,7 @@ class WebhookResponse:
         500: {"description": "Internal processing error"},
     },
 )
+@limiter.limit(RATE_LIMIT_WEBHOOK)
 async def receive_jira_webhook(
     request: Request,
     db: DbSession,

@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from src.config import settings
@@ -13,6 +13,7 @@ from src.core.auth import (
 )
 from src.core.deps import DbSession, get_current_user
 from src.core.exceptions import AuthenticationError, ConflictError
+from src.core.rate_limit import RATE_LIMIT_AUTH, limiter
 from src.models.user import User
 from src.repositories.user import UserRepository
 from src.schemas.user import (
@@ -33,7 +34,9 @@ router = APIRouter()
     summary="Register a new user",
     description="Create a new user account with email, password, and full name.",
 )
+@limiter.limit(RATE_LIMIT_AUTH)
 async def register(
+    request: Request,
     user_in: UserCreate,
     db: DbSession,
 ) -> UserResponse:
@@ -68,7 +71,9 @@ async def register(
     summary="Login and get tokens",
     description="Authenticate with email and password to receive access and refresh tokens.",
 )
+@limiter.limit(RATE_LIMIT_AUTH)
 async def login(
+    request: Request,
     credentials: UserLogin,
     db: DbSession,
 ) -> TokenPairResponse:
@@ -110,7 +115,9 @@ async def login(
     description="OAuth2 compatible login endpoint for form-based authentication.",
     include_in_schema=False,  # Hide from OpenAPI docs (use /login instead)
 )
+@limiter.limit(RATE_LIMIT_AUTH)
 async def login_form(
+    request: Request,
     db: DbSession,
     form_data: OAuth2PasswordRequestForm = Depends(),
 ) -> TokenPairResponse:
@@ -149,8 +156,10 @@ async def login_form(
     summary="Refresh access token",
     description="Exchange a valid refresh token for a new access token.",
 )
+@limiter.limit(RATE_LIMIT_AUTH)
 async def refresh_token(
-    request: RefreshTokenRequest,
+    request: Request,
+    token_request: RefreshTokenRequest,
     db: DbSession,
 ) -> TokenPairResponse:
     """
@@ -162,7 +171,7 @@ async def refresh_token(
     """
     # Decode and validate refresh token
     try:
-        payload = decode_token(request.refresh_token)
+        payload = decode_token(token_request.refresh_token)
     except AuthenticationError as e:
         raise AuthenticationError(
             "Invalid or expired refresh token",

@@ -7,6 +7,7 @@ import structlog
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
 
 from src.api.v1.router import api_router
 from src.config import settings
@@ -22,6 +23,7 @@ from src.core.exceptions import (
     ScheduleCalculationError,
     ValidationError,
 )
+from src.core.rate_limit import limiter, rate_limit_exceeded_handler
 
 # Configure structured logging
 structlog.configure(
@@ -106,6 +108,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Rate limiting (can be disabled via RATE_LIMIT_ENABLED=false for testing)
+if settings.RATE_LIMIT_ENABLED:
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
 
 @app.exception_handler(DomainError)
