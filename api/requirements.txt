@@ -48,3 +48,6 @@ cryptography>=42.0.0
 
 # Rate Limiting (Week 11)
 slowapi>=0.1.9
+
+# Security - Input Sanitization (Week 11)
+bleach>=6.0.0

@@ -10,8 +10,9 @@ from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from src.core.validation import detect_sql_injection, sanitize_text
 from src.models.enums import ProgramStatus
 from src.schemas.common import PaginatedResponse
 from src.schemas.user import UserBriefResponse
@@ -91,6 +92,26 @@ class ProgramCreate(ProgramBase):
         examples=["15000000.00"],
     )
 
+    @field_validator("name", "description", "contract_number", mode="after")
+    @classmethod
+    def sanitize_text_fields(cls, v: str | None) -> str | None:
+        """Sanitize text fields to prevent XSS and SQL injection."""
+        if v is None:
+            return None
+        v = sanitize_text(v)
+        if v and detect_sql_injection(v):
+            raise ValueError("Invalid characters detected in input")
+        return v
+
+    @field_validator("code", mode="after")
+    @classmethod
+    def validate_code_format(cls, v: str) -> str:
+        """Validate and sanitize code field."""
+        v = sanitize_text(v) or ""
+        if not v or not all(c.isalnum() or c in "_-" for c in v):
+            raise ValueError("Code must contain only letters, numbers, underscores, and hyphens")
+        return v.upper()
+
     @model_validator(mode="after")
     def validate_dates(self) -> "ProgramCreate":
         """Validate that end_date is after start_date."""
@@ -152,6 +173,17 @@ class ProgramUpdate(BaseModel):
         ge=0,
         description="Total authorized budget (BAC)",
     )
+
+    @field_validator("name", "description", "contract_number", mode="after")
+    @classmethod
+    def sanitize_text_fields(cls, v: str | None) -> str | None:
+        """Sanitize text fields to prevent XSS and SQL injection."""
+        if v is None:
+            return None
+        v = sanitize_text(v)
+        if v and detect_sql_injection(v):
+            raise ValueError("Invalid characters detected in input")
+        return v
 
     @model_validator(mode="after")
     def validate_dates(self) -> "ProgramUpdate":
