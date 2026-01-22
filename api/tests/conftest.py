@@ -9,6 +9,9 @@ from decimal import Decimal
 from pathlib import Path
 from uuid import uuid4
 
+# Disable rate limiting for tests - must be set before importing app
+os.environ["RATE_LIMIT_ENABLED"] = "false"
+
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient

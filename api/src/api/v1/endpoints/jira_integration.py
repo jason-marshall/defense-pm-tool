@@ -11,11 +11,12 @@ Provides endpoints for:
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 
 from src.core.deps import DbSession
 from src.core.encryption import decrypt_token, encrypt_token
 from src.core.exceptions import NotFoundError
+from src.core.rate_limit import RATE_LIMIT_SYNC, limiter
 from src.repositories.activity import ActivityRepository
 from src.repositories.jira_integration import JiraIntegrationRepository
 from src.repositories.jira_mapping import JiraMappingRepository
@@ -251,7 +252,9 @@ async def test_connection(
     "/integrations/{integration_id}/sync/wbs",
     response_model=JiraSyncResponse,
 )
+@limiter.limit(RATE_LIMIT_SYNC)
 async def sync_wbs_to_jira(
+    request: Request,
     integration_id: UUID,
     sync_request: JiraSyncRequest,
     db: DbSession,
@@ -313,7 +316,9 @@ async def sync_wbs_to_jira(
     "/integrations/{integration_id}/sync/activities",
     response_model=JiraSyncResponse,
 )
+@limiter.limit(RATE_LIMIT_SYNC)
 async def sync_activities_to_jira(
+    request: Request,
     integration_id: UUID,
     sync_request: JiraSyncRequest,
     db: DbSession,
@@ -375,9 +380,11 @@ async def sync_activities_to_jira(
     "/integrations/{integration_id}/sync/progress",
     response_model=ActivityProgressSyncResponse,
 )
+@limiter.limit(RATE_LIMIT_SYNC)
 async def sync_activity_progress(
+    request: Request,
     integration_id: UUID,
-    request: ActivityProgressSyncRequest,
+    sync_request: ActivityProgressSyncRequest,
     db: DbSession,
 ) -> ActivityProgressSyncResponse:
     """Sync activity progress to Jira Issues."""
@@ -415,7 +422,7 @@ async def sync_activity_progress(
         # Run progress sync
         result = await service.sync_progress(
             integration_id=integration_id,
-            activity_ids=request.activity_ids,
+            activity_ids=sync_request.activity_ids,
         )
 
         await db.commit()

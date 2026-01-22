@@ -6,11 +6,12 @@ from decimal import Decimal
 from typing import Annotated, Any, cast
 from uuid import UUID
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 from fastapi.responses import HTMLResponse, Response
 
 from src.core.deps import CurrentUser, DbSession
 from src.core.exceptions import AuthorizationError, NotFoundError
+from src.core.rate_limit import RATE_LIMIT_REPORTS, limiter
 from src.repositories.baseline import BaselineRepository
 from src.repositories.evms_period import EVMSPeriodRepository
 from src.repositories.management_reserve_log import ManagementReserveLogRepository
@@ -402,7 +403,9 @@ def _format5_to_dict(report: Any) -> dict[str, Any]:
 
 
 @router.get("/cpr/{program_id}/pdf")
+@limiter.limit(RATE_LIMIT_REPORTS)
 async def generate_cpr_format1_pdf(
+    request: Request,
     program_id: UUID,
     db: DbSession,
     period_id: Annotated[UUID | None, Query(description="Specific period ID")] = None,
@@ -486,7 +489,9 @@ async def generate_cpr_format1_pdf(
 
 
 @router.get("/cpr-format3/{program_id}/pdf")
+@limiter.limit(RATE_LIMIT_REPORTS)
 async def generate_cpr_format3_pdf(
+    request: Request,
     program_id: UUID,
     db: DbSession,
     current_user: CurrentUser,
@@ -570,7 +575,9 @@ async def generate_cpr_format3_pdf(
 
 
 @router.get("/cpr-format5/{program_id}/pdf")
+@limiter.limit(RATE_LIMIT_REPORTS)
 async def generate_cpr_format5_pdf(
+    request: Request,
     program_id: UUID,
     db: DbSession,
     current_user: CurrentUser,
