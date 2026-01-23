@@ -59,7 +59,7 @@ from src.services.jira_wbs_sync import (
     WBSSyncService,
 )
 
-router = APIRouter()
+router = APIRouter(tags=["Jira Integration"])
 
 
 # Integration endpoints

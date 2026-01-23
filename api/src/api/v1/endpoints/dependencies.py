@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.deps import CurrentUser, DbSession
@@ -23,9 +23,17 @@ from src.schemas.dependency import (
     DependencyResponse,
     DependencyUpdate,
 )
+from src.schemas.errors import (
+    AuthenticationErrorResponse,
+    AuthorizationErrorResponse,
+    ConflictErrorResponse,
+    NotFoundErrorResponse,
+    RateLimitErrorResponse,
+    ValidationErrorResponse,
+)
 from src.services.cpm import CPMEngine
 
-router = APIRouter()
+router = APIRouter(tags=["Dependencies"])
 
 
 async def would_create_cycle(
@@ -78,7 +86,21 @@ async def would_create_cycle(
         return True, e.cycle_path
 
 
-@router.get("/activity/{activity_id}", response_model=DependencyListResponse)
+@router.get(
+    "/activity/{activity_id}",
+    response_model=DependencyListResponse,
+    summary="List Dependencies for Activity",
+    responses={
+        200: {"description": "Dependencies retrieved successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        403: {
+            "model": AuthorizationErrorResponse,
+            "description": "Not authorized to view dependencies",
+        },
+        404: {"model": NotFoundErrorResponse, "description": "Activity or program not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def list_dependencies_for_activity(
     activity_id: UUID,
     db: DbSession,
@@ -115,7 +137,21 @@ async def list_dependencies_for_activity(
     )
 
 
-@router.get("/program/{program_id}", response_model=DependencyListResponse)
+@router.get(
+    "/program/{program_id}",
+    response_model=DependencyListResponse,
+    summary="List Dependencies for Program",
+    responses={
+        200: {"description": "Dependencies retrieved successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        403: {
+            "model": AuthorizationErrorResponse,
+            "description": "Not authorized to view dependencies",
+        },
+        404: {"model": NotFoundErrorResponse, "description": "Program not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def list_dependencies_for_program(
     program_id: UUID,
     db: DbSession,
@@ -146,7 +182,21 @@ async def list_dependencies_for_program(
     )
 
 
-@router.get("/{dependency_id}", response_model=DependencyResponse)
+@router.get(
+    "/{dependency_id}",
+    response_model=DependencyResponse,
+    summary="Get Dependency",
+    responses={
+        200: {"description": "Dependency retrieved successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        403: {
+            "model": AuthorizationErrorResponse,
+            "description": "Not authorized to view dependency",
+        },
+        404: {"model": NotFoundErrorResponse, "description": "Dependency not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def get_dependency(
     dependency_id: UUID,
     db: DbSession,
@@ -184,7 +234,25 @@ async def get_dependency(
     return DependencyResponse.from_orm_safe(dependency)
 
 
-@router.post("", response_model=DependencyResponse, status_code=201)
+@router.post(
+    "",
+    response_model=DependencyResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create Dependency",
+    responses={
+        201: {"description": "Dependency created successfully"},
+        400: {"description": "Circular dependency detected"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        403: {
+            "model": AuthorizationErrorResponse,
+            "description": "Not authorized to create dependencies",
+        },
+        404: {"model": NotFoundErrorResponse, "description": "Activity not found"},
+        409: {"model": ConflictErrorResponse, "description": "Dependency already exists"},
+        422: {"model": ValidationErrorResponse, "description": "Validation error"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def create_dependency(
     dependency_in: DependencyCreate,
     db: DbSession,
@@ -258,7 +326,22 @@ async def create_dependency(
     return DependencyResponse.from_orm_safe(dependency)
 
 
-@router.patch("/{dependency_id}", response_model=DependencyResponse)
+@router.patch(
+    "/{dependency_id}",
+    response_model=DependencyResponse,
+    summary="Update Dependency",
+    responses={
+        200: {"description": "Dependency updated successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        403: {
+            "model": AuthorizationErrorResponse,
+            "description": "Not authorized to modify dependency",
+        },
+        404: {"model": NotFoundErrorResponse, "description": "Dependency not found"},
+        422: {"model": ValidationErrorResponse, "description": "Validation error"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def update_dependency(
     dependency_id: UUID,
     dependency_in: DependencyUpdate,
@@ -304,7 +387,21 @@ async def update_dependency(
     return DependencyResponse.from_orm_safe(updated)
 
 
-@router.delete("/{dependency_id}", status_code=204)
+@router.delete(
+    "/{dependency_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete Dependency",
+    responses={
+        204: {"description": "Dependency deleted successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        403: {
+            "model": AuthorizationErrorResponse,
+            "description": "Not authorized to delete dependency",
+        },
+        404: {"model": NotFoundErrorResponse, "description": "Dependency not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def delete_dependency(
     dependency_id: UUID,
     db: DbSession,
