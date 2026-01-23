@@ -30,7 +30,7 @@ from src.services.cpr_format5_generator import CPRFormat5Generator
 from src.services.report_generator import ReportGenerator
 from src.services.report_pdf_generator import PDFConfig, ReportPDFGenerator
 
-router = APIRouter()
+router = APIRouter(tags=["Reports"])
 
 
 def _compute_checksum(data: bytes) -> str:

@@ -3,12 +3,20 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
 
 from src.core.deps import DbSession, get_current_user
 from src.core.exceptions import AuthorizationError, ConflictError, NotFoundError
 from src.models.user import User
 from src.repositories.program import ProgramRepository
+from src.schemas.errors import (
+    AuthenticationErrorResponse,
+    AuthorizationErrorResponse,
+    ConflictErrorResponse,
+    NotFoundErrorResponse,
+    RateLimitErrorResponse,
+    ValidationErrorResponse,
+)
 from src.schemas.program import (
     ProgramCreate,
     ProgramListResponse,
@@ -16,21 +24,37 @@ from src.schemas.program import (
     ProgramUpdate,
 )
 
-router = APIRouter()
+router = APIRouter(tags=["Programs"])
 
 
-@router.get("", response_model=ProgramListResponse)
+@router.get(
+    "",
+    response_model=ProgramListResponse,
+    summary="List Programs",
+    responses={
+        200: {"description": "List of programs retrieved successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def list_programs(
     db: DbSession,
     current_user: Annotated[User, Depends(get_current_user)],
-    page: Annotated[int, Query(ge=1)] = 1,
-    page_size: Annotated[int, Query(ge=1, le=100)] = 20,
+    page: Annotated[int, Query(ge=1, description="Page number")] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100, description="Items per page")] = 20,
 ) -> ProgramListResponse:
     """
     List programs accessible to the current user.
 
+    **Authorization:**
     - Admins can see all programs
     - Regular users only see programs they own
+
+    **Pagination:**
+    - Use `page` and `page_size` query parameters
+    - Maximum 100 items per page
+
+    **Rate limit:** 100/minute
     """
     repo = ProgramRepository(db)
     skip = (page - 1) * page_size
@@ -50,7 +74,21 @@ async def list_programs(
     )
 
 
-@router.get("/{program_id}", response_model=ProgramResponse)
+@router.get(
+    "/{program_id}",
+    response_model=ProgramResponse,
+    summary="Get Program",
+    responses={
+        200: {"description": "Program details retrieved successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        403: {
+            "model": AuthorizationErrorResponse,
+            "description": "Not authorized to view this program",
+        },
+        404: {"model": NotFoundErrorResponse, "description": "Program not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def get_program(
     program_id: UUID,
     db: DbSession,
@@ -59,7 +97,11 @@ async def get_program(
     """
     Get a single program by ID.
 
-    Users can only view programs they own or if they are admins.
+    **Authorization:**
+    - Users can only view programs they own
+    - Admins can view any program
+
+    **Rate limit:** 100/minute
     """
     repo = ProgramRepository(db)
     program = await repo.get_by_id(program_id)
@@ -77,7 +119,19 @@ async def get_program(
     return ProgramResponse.model_validate(program)
 
 
-@router.post("", response_model=ProgramResponse, status_code=201)
+@router.post(
+    "",
+    response_model=ProgramResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create Program",
+    responses={
+        201: {"description": "Program created successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        409: {"model": ConflictErrorResponse, "description": "Program code already exists"},
+        422: {"model": ValidationErrorResponse, "description": "Validation error"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def create_program(
     program_in: ProgramCreate,
     db: DbSession,
@@ -86,7 +140,16 @@ async def create_program(
     """
     Create a new program.
 
-    The current user is automatically set as the program owner.
+    **Authorization:**
+    - Any authenticated user can create programs
+    - The current user is automatically set as the program owner
+
+    **Validation:**
+    - Program code must be unique across all programs
+    - Code is automatically uppercased
+    - end_date must be after start_date
+
+    **Rate limit:** 100/minute
     """
     repo = ProgramRepository(db)
 
@@ -108,7 +171,22 @@ async def create_program(
     return ProgramResponse.model_validate(program)
 
 
-@router.patch("/{program_id}", response_model=ProgramResponse)
+@router.patch(
+    "/{program_id}",
+    response_model=ProgramResponse,
+    summary="Update Program",
+    responses={
+        200: {"description": "Program updated successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        403: {
+            "model": AuthorizationErrorResponse,
+            "description": "Not authorized to modify this program",
+        },
+        404: {"model": NotFoundErrorResponse, "description": "Program not found"},
+        422: {"model": ValidationErrorResponse, "description": "Validation error"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def update_program(
     program_id: UUID,
     program_in: ProgramUpdate,
@@ -118,7 +196,15 @@ async def update_program(
     """
     Update an existing program.
 
-    Users can only update programs they own or if they are admins.
+    **Authorization:**
+    - Users can only update programs they own
+    - Admins can update any program
+
+    **Partial update:**
+    - Only fields included in the request body are updated
+    - Omitted fields retain their current values
+
+    **Rate limit:** 100/minute
     """
     repo = ProgramRepository(db)
     program = await repo.get_by_id(program_id)
@@ -142,7 +228,21 @@ async def update_program(
     return ProgramResponse.model_validate(updated)
 
 
-@router.delete("/{program_id}", status_code=204)
+@router.delete(
+    "/{program_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete Program",
+    responses={
+        204: {"description": "Program deleted successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        403: {
+            "model": AuthorizationErrorResponse,
+            "description": "Not authorized to delete this program",
+        },
+        404: {"model": NotFoundErrorResponse, "description": "Program not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def delete_program(
     program_id: UUID,
     db: DbSession,
@@ -151,7 +251,14 @@ async def delete_program(
     """
     Delete a program (soft delete).
 
-    Users can only delete programs they own or if they are admins.
+    **Authorization:**
+    - Users can only delete programs they own
+    - Admins can delete any program
+
+    **Note:** This performs a soft delete - the program is marked as deleted
+    but remains in the database for audit purposes.
+
+    **Rate limit:** 100/minute
     """
     repo = ProgramRepository(db)
     program = await repo.get_by_id(program_id)

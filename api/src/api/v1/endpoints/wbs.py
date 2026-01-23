@@ -3,12 +3,18 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, status
 
 from src.core.deps import DbSession
 from src.core.exceptions import NotFoundError
 from src.repositories.program import ProgramRepository
 from src.repositories.wbs import WBSElementRepository
+from src.schemas.errors import (
+    AuthenticationErrorResponse,
+    NotFoundErrorResponse,
+    RateLimitErrorResponse,
+    ValidationErrorResponse,
+)
 from src.schemas.wbs import (
     WBSElementCreate,
     WBSElementResponse,
@@ -17,10 +23,19 @@ from src.schemas.wbs import (
     WBSListResponse,
 )
 
-router = APIRouter()
+router = APIRouter(tags=["WBS"])
 
 
-@router.get("", response_model=WBSListResponse)
+@router.get(
+    "",
+    response_model=WBSListResponse,
+    summary="List WBS Elements",
+    responses={
+        200: {"description": "WBS elements retrieved successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def list_wbs_elements(
     db: DbSession,
     program_id: Annotated[UUID, Query(description="Filter by program ID")],
@@ -37,7 +52,16 @@ async def list_wbs_elements(
     )
 
 
-@router.get("/tree", response_model=list[WBSElementTreeResponse])
+@router.get(
+    "/tree",
+    response_model=list[WBSElementTreeResponse],
+    summary="Get WBS Tree",
+    responses={
+        200: {"description": "WBS tree retrieved successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def get_wbs_tree(
     db: DbSession,
     program_id: Annotated[UUID, Query(description="Program ID")],
@@ -49,7 +73,17 @@ async def get_wbs_tree(
     return [WBSElementTreeResponse.model_validate(e) for e in tree]
 
 
-@router.get("/{element_id}", response_model=WBSElementResponse)
+@router.get(
+    "/{element_id}",
+    response_model=WBSElementResponse,
+    summary="Get WBS Element",
+    responses={
+        200: {"description": "WBS element retrieved successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "WBS element not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def get_wbs_element(
     element_id: UUID,
     db: DbSession,
@@ -64,7 +98,19 @@ async def get_wbs_element(
     return WBSElementResponse.model_validate(element)
 
 
-@router.post("", response_model=WBSElementResponse, status_code=201)
+@router.post(
+    "",
+    response_model=WBSElementResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create WBS Element",
+    responses={
+        201: {"description": "WBS element created successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Program or parent WBS not found"},
+        422: {"model": ValidationErrorResponse, "description": "Validation error"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def create_wbs_element(
     element_in: WBSElementCreate,
     db: DbSession,
@@ -111,7 +157,18 @@ async def create_wbs_element(
     return WBSElementResponse.model_validate(element)
 
 
-@router.patch("/{element_id}", response_model=WBSElementResponse)
+@router.patch(
+    "/{element_id}",
+    response_model=WBSElementResponse,
+    summary="Update WBS Element",
+    responses={
+        200: {"description": "WBS element updated successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "WBS element not found"},
+        422: {"model": ValidationErrorResponse, "description": "Validation error"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def update_wbs_element(
     element_id: UUID,
     element_in: WBSElementUpdate,
@@ -133,7 +190,17 @@ async def update_wbs_element(
     return WBSElementResponse.model_validate(updated)
 
 
-@router.delete("/{element_id}", status_code=204)
+@router.delete(
+    "/{element_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete WBS Element",
+    responses={
+        204: {"description": "WBS element deleted successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "WBS element not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def delete_wbs_element(
     element_id: UUID,
     db: DbSession,

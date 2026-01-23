@@ -17,13 +17,29 @@ from src.schemas.baseline import (
     BaselineSummary,
     BaselineUpdate,
 )
+from src.schemas.errors import (
+    AuthenticationErrorResponse,
+    NotFoundErrorResponse,
+    RateLimitErrorResponse,
+    ValidationErrorResponse,
+)
 
-router = APIRouter(prefix="/baselines", tags=["baselines"])
+router = APIRouter(prefix="/baselines", tags=["Baselines"])
 
 # Note: DbSession and CurrentUser imported from src.core.deps
 
 
-@router.get("", response_model=BaselineListResponse)
+@router.get(
+    "",
+    response_model=BaselineListResponse,
+    summary="List Baselines",
+    responses={
+        200: {"description": "Baselines retrieved successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Program not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def list_baselines(
     db: DbSession,
     current_user: CurrentUser,
@@ -58,7 +74,19 @@ async def list_baselines(
     )
 
 
-@router.post("", response_model=BaselineResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=BaselineResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create Baseline",
+    responses={
+        201: {"description": "Baseline created successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Program not found"},
+        422: {"model": ValidationErrorResponse, "description": "Validation error"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def create_baseline(
     db: DbSession,
     current_user: CurrentUser,
@@ -98,7 +126,17 @@ async def create_baseline(
     return BaselineResponse.model_validate(baseline)
 
 
-@router.get("/{baseline_id}", response_model=BaselineResponse)
+@router.get(
+    "/{baseline_id}",
+    response_model=BaselineResponse,
+    summary="Get Baseline",
+    responses={
+        200: {"description": "Baseline retrieved successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Baseline not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def get_baseline(
     db: DbSession,
     current_user: CurrentUser,
@@ -128,7 +166,18 @@ async def get_baseline(
     return response
 
 
-@router.patch("/{baseline_id}", response_model=BaselineResponse)
+@router.patch(
+    "/{baseline_id}",
+    response_model=BaselineResponse,
+    summary="Update Baseline",
+    responses={
+        200: {"description": "Baseline updated successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Baseline not found"},
+        422: {"model": ValidationErrorResponse, "description": "Validation error"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def update_baseline(
     db: DbSession,
     current_user: CurrentUser,
@@ -159,7 +208,18 @@ async def update_baseline(
     return BaselineResponse.model_validate(baseline)
 
 
-@router.delete("/{baseline_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{baseline_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete Baseline",
+    responses={
+        204: {"description": "Baseline deleted successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Baseline not found"},
+        422: {"model": ValidationErrorResponse, "description": "Cannot delete approved baseline"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def delete_baseline(
     db: DbSession,
     current_user: CurrentUser,
@@ -186,7 +246,17 @@ async def delete_baseline(
     await db.commit()
 
 
-@router.post("/{baseline_id}/approve", response_model=BaselineResponse)
+@router.post(
+    "/{baseline_id}/approve",
+    response_model=BaselineResponse,
+    summary="Approve Baseline",
+    responses={
+        200: {"description": "Baseline approved successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Baseline not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def approve_baseline(
     db: DbSession,
     current_user: CurrentUser,
@@ -211,7 +281,18 @@ async def approve_baseline(
     return BaselineResponse.model_validate(baseline)
 
 
-@router.post("/{baseline_id}/unapprove", response_model=BaselineResponse)
+@router.post(
+    "/{baseline_id}/unapprove",
+    response_model=BaselineResponse,
+    summary="Unapprove Baseline",
+    responses={
+        200: {"description": "Baseline unapproved successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Baseline not found"},
+        422: {"model": ValidationErrorResponse, "description": "Baseline is not approved"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def unapprove_baseline(
     db: DbSession,
     current_user: CurrentUser,
@@ -244,7 +325,17 @@ async def unapprove_baseline(
     return BaselineResponse.model_validate(baseline)
 
 
-@router.get("/{baseline_id}/compare")
+@router.get(
+    "/{baseline_id}/compare",
+    summary="Compare Baseline",
+    responses={
+        200: {"description": "Baseline comparison returned successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Baseline not found"},
+        422: {"model": ValidationErrorResponse, "description": "Baseline has no snapshot data"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def compare_baseline(
     db: DbSession,
     current_user: CurrentUser,
@@ -285,7 +376,17 @@ async def compare_baseline(
     return comparison_result_to_dict(result)
 
 
-@router.get("/program/{program_id}/approved", response_model=BaselineResponse | None)
+@router.get(
+    "/program/{program_id}/approved",
+    response_model=BaselineResponse | None,
+    summary="Get Approved Baseline",
+    responses={
+        200: {"description": "Approved baseline returned (or null if none)"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Program not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def get_approved_baseline(
     db: DbSession,
     current_user: CurrentUser,

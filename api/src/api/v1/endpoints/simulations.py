@@ -12,6 +12,13 @@ from src.repositories.activity import ActivityRepository
 from src.repositories.dependency import DependencyRepository
 from src.repositories.program import ProgramRepository
 from src.repositories.simulation import SimulationConfigRepository, SimulationResultRepository
+from src.schemas.errors import (
+    AuthenticationErrorResponse,
+    AuthorizationErrorResponse,
+    NotFoundErrorResponse,
+    RateLimitErrorResponse,
+    ValidationErrorResponse,
+)
 from src.schemas.simulation import (
     DurationResultsSchema,
     HistogramSchema,
@@ -32,7 +39,7 @@ from src.services.monte_carlo_optimized import OptimizedNetworkMonteCarloEngine
 from src.services.simulation_cache import simulation_cache
 from src.services.tornado_chart import TornadoChartService
 
-router = APIRouter()
+router = APIRouter(tags=["Simulations"])
 
 
 # ============================================================================
@@ -40,7 +47,16 @@ router = APIRouter()
 # ============================================================================
 
 
-@router.get("", response_model=list[SimulationConfigResponse])
+@router.get(
+    "",
+    response_model=list[SimulationConfigResponse],
+    summary="List Simulation Configs",
+    responses={
+        200: {"description": "Simulation configurations retrieved successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def list_simulation_configs(
     db: DbSession,
     current_user: CurrentUser,
@@ -80,7 +96,20 @@ async def list_simulation_configs(
     ]
 
 
-@router.post("", response_model=SimulationConfigResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=SimulationConfigResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create Simulation Config",
+    responses={
+        201: {"description": "Simulation configuration created successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        403: {"model": AuthorizationErrorResponse, "description": "Not authorized"},
+        404: {"model": NotFoundErrorResponse, "description": "Program not found"},
+        422: {"model": ValidationErrorResponse, "description": "Validation error"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def create_simulation_config(
     db: DbSession,
     current_user: CurrentUser,
@@ -148,7 +177,19 @@ async def create_simulation_config(
 # ============================================================================
 
 
-@router.post("/quick", response_model=SimulationResultResponse)
+@router.post(
+    "/quick",
+    response_model=SimulationResultResponse,
+    summary="Quick Simulation",
+    responses={
+        200: {"description": "Quick simulation completed successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        403: {"model": AuthorizationErrorResponse, "description": "Not authorized"},
+        404: {"model": NotFoundErrorResponse, "description": "Program not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+        500: {"description": "Simulation failed"},
+    },
+)
 async def quick_simulation(
     db: DbSession,
     current_user: CurrentUser,
@@ -259,7 +300,17 @@ async def quick_simulation(
 # ============================================================================
 
 
-@router.get("/{config_id}", response_model=SimulationConfigResponse)
+@router.get(
+    "/{config_id}",
+    response_model=SimulationConfigResponse,
+    summary="Get Simulation Config",
+    responses={
+        200: {"description": "Simulation configuration retrieved successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Config not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def get_simulation_config(
     db: DbSession,
     current_user: CurrentUser,
@@ -289,7 +340,19 @@ async def get_simulation_config(
     )
 
 
-@router.patch("/{config_id}", response_model=SimulationConfigResponse)
+@router.patch(
+    "/{config_id}",
+    response_model=SimulationConfigResponse,
+    summary="Update Simulation Config",
+    responses={
+        200: {"description": "Simulation configuration updated successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        403: {"model": AuthorizationErrorResponse, "description": "Not authorized"},
+        404: {"model": NotFoundErrorResponse, "description": "Config not found"},
+        422: {"model": ValidationErrorResponse, "description": "Validation error"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def update_simulation_config(
     db: DbSession,
     current_user: CurrentUser,
@@ -361,7 +424,18 @@ async def update_simulation_config(
     )
 
 
-@router.delete("/{config_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{config_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete Simulation Config",
+    responses={
+        204: {"description": "Simulation configuration deleted successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        403: {"model": AuthorizationErrorResponse, "description": "Not authorized"},
+        404: {"model": NotFoundErrorResponse, "description": "Config not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def delete_simulation_config(
     db: DbSession,
     current_user: CurrentUser,
@@ -399,7 +473,18 @@ async def delete_simulation_config(
 # ============================================================================
 
 
-@router.post("/{config_id}/run", response_model=SimulationResultResponse)
+@router.post(
+    "/{config_id}/run",
+    response_model=SimulationResultResponse,
+    summary="Run Simulation",
+    responses={
+        200: {"description": "Simulation completed successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Config not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+        500: {"description": "Simulation failed"},
+    },
+)
 async def run_simulation(
     db: DbSession,
     current_user: CurrentUser,
@@ -553,7 +638,20 @@ async def run_simulation(
         ) from e
 
 
-@router.post("/{config_id}/run-network", response_model=SimulationResultResponse)
+@router.post(
+    "/{config_id}/run-network",
+    response_model=SimulationResultResponse,
+    summary="Run Network Simulation",
+    responses={
+        200: {"description": "Network simulation completed successfully"},
+        400: {"description": "No activities found for program"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        403: {"model": AuthorizationErrorResponse, "description": "Not authorized"},
+        404: {"model": NotFoundErrorResponse, "description": "Config or program not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+        500: {"description": "Simulation failed"},
+    },
+)
 async def run_network_simulation(
     db: DbSession,
     current_user: CurrentUser,
@@ -715,7 +813,17 @@ async def run_network_simulation(
         ) from e
 
 
-@router.get("/{config_id}/results", response_model=list[SimulationSummaryResponse])
+@router.get(
+    "/{config_id}/results",
+    response_model=list[SimulationSummaryResponse],
+    summary="List Simulation Results",
+    responses={
+        200: {"description": "Simulation results retrieved successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Config not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def list_simulation_results(
     db: DbSession,
     current_user: CurrentUser,
@@ -758,7 +866,17 @@ async def list_simulation_results(
     ]
 
 
-@router.get("/{config_id}/results/{result_id}", response_model=SimulationResultResponse)
+@router.get(
+    "/{config_id}/results/{result_id}",
+    response_model=SimulationResultResponse,
+    summary="Get Simulation Result",
+    responses={
+        200: {"description": "Simulation result retrieved successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Result not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def get_simulation_result(
     db: DbSession,
     current_user: CurrentUser,
@@ -902,7 +1020,20 @@ def _extract_activity_ranges(
     return activity_ranges
 
 
-@router.get("/{config_id}/results/{result_id}/tornado")
+@router.get(
+    "/{config_id}/results/{result_id}/tornado",
+    summary="Get Tornado Chart",
+    responses={
+        200: {"description": "Tornado chart data retrieved successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        403: {"model": AuthorizationErrorResponse, "description": "Not authorized"},
+        404: {
+            "model": NotFoundErrorResponse,
+            "description": "Result or sensitivity data not found",
+        },
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def get_tornado_chart(
     db: DbSession,
     current_user: CurrentUser,

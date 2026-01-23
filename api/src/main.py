@@ -90,14 +90,124 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.info("redis_connections_closed")
 
 
+API_DESCRIPTION = """
+## Defense Program Management Tool API
+
+Enterprise-grade project management API with EVMS (Earned Value Management System)
+compliance for defense contractors.
+
+### Features
+
+- **Schedule Management**: CPM scheduling with multiple dependency types (FS, FF, SS, SF)
+- **EVMS Integration**: 6 EV methods, 6 EAC methods, variance tracking
+- **Reporting**: CPR Formats 1, 3, 5 with PDF export
+- **Monte Carlo**: Schedule risk analysis with sensitivity analysis
+- **Jira Integration**: Bidirectional sync with Jira Cloud
+- **Scenario Planning**: What-if analysis with promotion workflow
+
+### Authentication
+
+All endpoints (except `/health` and `/docs`) require JWT authentication.
+Include token in Authorization header: `Bearer <token>`
+
+Obtain tokens via:
+- `POST /api/v1/auth/register` - Create new account
+- `POST /api/v1/auth/login` - Get access/refresh tokens
+- `POST /api/v1/auth/refresh` - Refresh access token
+
+### Rate Limits
+
+| Category | Limit | Endpoints |
+|----------|-------|-----------|
+| Default | 100/min | Most endpoints |
+| Auth | 10/min | `/auth/login`, `/auth/register` |
+| Reports | 5/min | `/reports/*` PDF generation |
+| Sync | 20/min | `/jira/*` sync operations |
+| Webhooks | 60/min | `/webhooks/jira` |
+
+### EVMS Compliance
+
+Implements ANSI/EIA-748 guidelines:
+- **GL 6**: WBS/OBS integration
+- **GL 7**: Milestone tracking
+- **GL 8**: Time-phased budgets
+- **GL 21**: Variance identification
+- **GL 27**: EAC development (6 methods)
+- **GL 28**: Management Reserve tracking
+- **GL 32**: Audit trail
+"""
+
+OPENAPI_TAGS = [
+    {
+        "name": "Authentication",
+        "description": "User authentication and JWT token management. Includes registration, login, and token refresh.",
+    },
+    {
+        "name": "Programs",
+        "description": "Program CRUD operations. Programs are top-level containers for WBS, activities, and baselines.",
+    },
+    {
+        "name": "Activities",
+        "description": "Activity management and CPM scheduling. Activities are work items with duration, cost, and dependencies.",
+    },
+    {
+        "name": "Dependencies",
+        "description": "Activity dependency relationships. Supports FS, FF, SS, SF types with lag/lead times.",
+    },
+    {
+        "name": "WBS",
+        "description": "Work Breakdown Structure management. Hierarchical organization of program scope using PostgreSQL ltree.",
+    },
+    {
+        "name": "EVMS Periods",
+        "description": "Earned Value period tracking. Monthly/quarterly BCWS, BCWP, ACWP data for variance analysis.",
+    },
+    {
+        "name": "Baselines",
+        "description": "Baseline snapshots and comparison. Capture program state for variance tracking.",
+    },
+    {
+        "name": "Scenarios",
+        "description": "What-if scenario planning and simulation. Create, evaluate, and promote scenarios to baselines.",
+    },
+    {
+        "name": "Simulations",
+        "description": "Monte Carlo schedule risk simulation. Configure distributions and run probabilistic analysis.",
+    },
+    {
+        "name": "Reports",
+        "description": "CPR report generation. Formats 1 (WBS), 3 (Baseline), 5 (EVMS) with PDF/JSON export.",
+    },
+    {
+        "name": "Jira Integration",
+        "description": "Jira Cloud integration. Connect programs, sync WBS/activities, receive webhooks.",
+    },
+    {
+        "name": "Variance",
+        "description": "Variance explanation management. Document and track cost/schedule variances.",
+    },
+    {
+        "name": "Health",
+        "description": "API health and status endpoints. No authentication required.",
+    },
+]
+
 app = FastAPI(
     title="Defense PM Tool API",
-    version="0.1.0",
-    description="Defense Program Management Tool with EVMS/DFARS Compliance",
+    version="0.4.1",
+    description=API_DESCRIPTION,
     openapi_url="/openapi.json",
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan,
+    contact={
+        "name": "API Support",
+        "email": "support@defense-pm-tool.com",
+    },
+    license_info={
+        "name": "Proprietary",
+    },
+    openapi_tags=OPENAPI_TAGS,
 )
 
 # CORS middleware - allow localhost origins for development

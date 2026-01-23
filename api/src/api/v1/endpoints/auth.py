@@ -16,6 +16,12 @@ from src.core.exceptions import AuthenticationError, ConflictError
 from src.core.rate_limit import RATE_LIMIT_AUTH, limiter
 from src.models.user import User
 from src.repositories.user import UserRepository
+from src.schemas.errors import (
+    AuthenticationErrorResponse,
+    ConflictErrorResponse,
+    RateLimitErrorResponse,
+    ValidationErrorResponse,
+)
 from src.schemas.user import (
     RefreshTokenRequest,
     TokenPairResponse,
@@ -24,15 +30,21 @@ from src.schemas.user import (
     UserResponse,
 )
 
-router = APIRouter()
+router = APIRouter(tags=["Authentication"])
 
 
 @router.post(
     "/register",
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Register a new user",
+    summary="Register User",
     description="Create a new user account with email, password, and full name.",
+    responses={
+        201: {"description": "User registered successfully"},
+        409: {"model": ConflictErrorResponse, "description": "Email already registered"},
+        422: {"model": ValidationErrorResponse, "description": "Validation error"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
 )
 @limiter.limit(RATE_LIMIT_AUTH)
 async def register(
@@ -68,8 +80,14 @@ async def register(
 @router.post(
     "/login",
     response_model=TokenPairResponse,
-    summary="Login and get tokens",
+    summary="Login",
     description="Authenticate with email and password to receive access and refresh tokens.",
+    responses={
+        200: {"description": "Login successful, tokens returned"},
+        401: {"model": AuthenticationErrorResponse, "description": "Invalid credentials"},
+        422: {"model": ValidationErrorResponse, "description": "Validation error"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
 )
 @limiter.limit(RATE_LIMIT_AUTH)
 async def login(
@@ -153,8 +171,17 @@ async def login_form(
 @router.post(
     "/refresh",
     response_model=TokenPairResponse,
-    summary="Refresh access token",
+    summary="Refresh Token",
     description="Exchange a valid refresh token for a new access token.",
+    responses={
+        200: {"description": "Tokens refreshed successfully"},
+        401: {
+            "model": AuthenticationErrorResponse,
+            "description": "Invalid or expired refresh token",
+        },
+        422: {"model": ValidationErrorResponse, "description": "Validation error"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
 )
 @limiter.limit(RATE_LIMIT_AUTH)
 async def refresh_token(
@@ -215,8 +242,12 @@ async def refresh_token(
 @router.get(
     "/me",
     response_model=UserResponse,
-    summary="Get current user",
+    summary="Get Current User",
     description="Get the currently authenticated user's profile.",
+    responses={
+        200: {"description": "User profile retrieved successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+    },
 )
 async def get_current_user_profile(
     current_user: User = Depends(get_current_user),

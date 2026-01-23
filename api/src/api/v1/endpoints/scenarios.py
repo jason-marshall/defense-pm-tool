@@ -13,6 +13,13 @@ from src.repositories.dependency import DependencyRepository
 from src.repositories.program import ProgramRepository
 from src.repositories.scenario import ScenarioRepository
 from src.repositories.wbs import WBSElementRepository
+from src.schemas.errors import (
+    AuthenticationErrorResponse,
+    AuthorizationErrorResponse,
+    NotFoundErrorResponse,
+    RateLimitErrorResponse,
+    ValidationErrorResponse,
+)
 from src.schemas.scenario import (
     ScenarioApplyChangesRequest,
     ScenarioChangeCreate,
@@ -27,12 +34,22 @@ from src.schemas.scenario import (
 )
 from src.services.scenario_simulation import ScenarioSimulationService
 
-router = APIRouter(prefix="/scenarios", tags=["scenarios"])
+router = APIRouter(prefix="/scenarios", tags=["Scenarios"])
 
 # Note: DbSession and CurrentUser imported from src.core.deps
 
 
-@router.get("", response_model=ScenarioListResponse)
+@router.get(
+    "",
+    response_model=ScenarioListResponse,
+    summary="List Scenarios",
+    responses={
+        200: {"description": "Scenarios retrieved successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Program not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def list_scenarios(
     db: DbSession,
     current_user: CurrentUser,
@@ -91,7 +108,19 @@ async def list_scenarios(
     )
 
 
-@router.post("", response_model=ScenarioResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=ScenarioResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create Scenario",
+    responses={
+        201: {"description": "Scenario created successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Program or baseline not found"},
+        422: {"model": ValidationErrorResponse, "description": "Validation error"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def create_scenario(
     db: DbSession,
     current_user: CurrentUser,
@@ -161,7 +190,17 @@ async def create_scenario(
     return _build_scenario_response(scenario)
 
 
-@router.get("/{scenario_id}", response_model=ScenarioResponse)
+@router.get(
+    "/{scenario_id}",
+    response_model=ScenarioResponse,
+    summary="Get Scenario",
+    responses={
+        200: {"description": "Scenario retrieved successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Scenario not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def get_scenario(
     db: DbSession,
     current_user: CurrentUser,
@@ -187,7 +226,18 @@ async def get_scenario(
     return _build_scenario_response(scenario, include_changes=include_changes)
 
 
-@router.patch("/{scenario_id}", response_model=ScenarioResponse)
+@router.patch(
+    "/{scenario_id}",
+    response_model=ScenarioResponse,
+    summary="Update Scenario",
+    responses={
+        200: {"description": "Scenario updated successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Scenario not found"},
+        422: {"model": ValidationErrorResponse, "description": "Cannot modify promoted scenario"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def update_scenario(
     db: DbSession,
     current_user: CurrentUser,
@@ -226,7 +276,18 @@ async def update_scenario(
     return _build_scenario_response(scenario)
 
 
-@router.delete("/{scenario_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{scenario_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete Scenario",
+    responses={
+        204: {"description": "Scenario deleted successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Scenario not found"},
+        422: {"model": ValidationErrorResponse, "description": "Cannot delete promoted scenario"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def delete_scenario(
     db: DbSession,
     current_user: CurrentUser,
@@ -253,7 +314,18 @@ async def delete_scenario(
     await db.commit()
 
 
-@router.post("/{scenario_id}/changes", response_model=ScenarioChangeResponse)
+@router.post(
+    "/{scenario_id}/changes",
+    response_model=ScenarioChangeResponse,
+    summary="Add Change to Scenario",
+    responses={
+        200: {"description": "Change added successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Scenario not found"},
+        422: {"model": ValidationErrorResponse, "description": "Cannot modify promoted scenario"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def add_change(
     db: DbSession,
     current_user: CurrentUser,
@@ -295,7 +367,17 @@ async def add_change(
     return ScenarioChangeResponse.model_validate(change)
 
 
-@router.get("/{scenario_id}/changes", response_model=list[ScenarioChangeResponse])
+@router.get(
+    "/{scenario_id}/changes",
+    response_model=list[ScenarioChangeResponse],
+    summary="List Scenario Changes",
+    responses={
+        200: {"description": "Changes retrieved successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Scenario not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def list_changes(
     db: DbSession,
     current_user: CurrentUser,
@@ -318,7 +400,18 @@ async def list_changes(
     return [ScenarioChangeResponse.model_validate(c) for c in changes]
 
 
-@router.delete("/{scenario_id}/changes/{change_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{scenario_id}/changes/{change_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Remove Scenario Change",
+    responses={
+        204: {"description": "Change removed successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Scenario or change not found"},
+        422: {"model": ValidationErrorResponse, "description": "Cannot modify promoted scenario"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def remove_change(
     db: DbSession,
     current_user: CurrentUser,
@@ -349,7 +442,17 @@ async def remove_change(
     await db.commit()
 
 
-@router.post("/{scenario_id}/archive", response_model=ScenarioResponse)
+@router.post(
+    "/{scenario_id}/archive",
+    response_model=ScenarioResponse,
+    summary="Archive Scenario",
+    responses={
+        200: {"description": "Scenario archived successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Scenario not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def archive_scenario(
     db: DbSession,
     current_user: CurrentUser,
@@ -372,7 +475,18 @@ async def archive_scenario(
     return _build_scenario_response(scenario)
 
 
-@router.post("/{scenario_id}/activate", response_model=ScenarioResponse)
+@router.post(
+    "/{scenario_id}/activate",
+    response_model=ScenarioResponse,
+    summary="Activate Scenario",
+    responses={
+        200: {"description": "Scenario activated successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Scenario not found"},
+        422: {"model": ValidationErrorResponse, "description": "Invalid status transition"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def activate_scenario(
     db: DbSession,
     current_user: CurrentUser,
@@ -402,7 +516,21 @@ async def activate_scenario(
     return _build_scenario_response(scenario)
 
 
-@router.post("/{scenario_id}/promote")
+@router.post(
+    "/{scenario_id}/promote",
+    summary="Promote Scenario",
+    responses={
+        200: {"description": "Scenario promoted to baseline"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        403: {"model": AuthorizationErrorResponse, "description": "Not authorized"},
+        404: {"model": NotFoundErrorResponse, "description": "Scenario or program not found"},
+        422: {
+            "model": ValidationErrorResponse,
+            "description": "Scenario not eligible for promotion",
+        },
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def promote_scenario(
     db: DbSession,
     current_user: CurrentUser,
@@ -490,7 +618,21 @@ async def promote_scenario(
         raise ValidationError(e.message, e.code) from e
 
 
-@router.post("/{scenario_id}/apply")
+@router.post(
+    "/{scenario_id}/apply",
+    summary="Apply Scenario Changes",
+    responses={
+        200: {"description": "Scenario changes applied successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        403: {"model": AuthorizationErrorResponse, "description": "Not authorized"},
+        404: {"model": NotFoundErrorResponse, "description": "Scenario or program not found"},
+        422: {
+            "model": ValidationErrorResponse,
+            "description": "Confirmation required or apply error",
+        },
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def apply_scenario_changes(
     db: DbSession,
     current_user: CurrentUser,
@@ -590,7 +732,17 @@ async def apply_scenario_changes(
         raise ValidationError(e.message, e.code) from e
 
 
-@router.get("/{scenario_id}/summary", response_model=ScenarioDiffSummary)
+@router.get(
+    "/{scenario_id}/summary",
+    response_model=ScenarioDiffSummary,
+    summary="Get Scenario Summary",
+    responses={
+        200: {"description": "Scenario summary retrieved successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        404: {"model": NotFoundErrorResponse, "description": "Scenario not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def get_scenario_summary(
     db: DbSession,
     current_user: CurrentUser,
@@ -660,7 +812,18 @@ def _build_scenario_response(
 # =============================================================================
 
 
-@router.post("/{scenario_id}/simulate")
+@router.post(
+    "/{scenario_id}/simulate",
+    summary="Simulate Scenario",
+    responses={
+        200: {"description": "Scenario simulation completed successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        403: {"model": AuthorizationErrorResponse, "description": "Not authorized"},
+        404: {"model": NotFoundErrorResponse, "description": "Scenario or program not found"},
+        422: {"model": ValidationErrorResponse, "description": "No activities found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def simulate_scenario(
     db: DbSession,
     current_user: CurrentUser,
@@ -767,7 +930,18 @@ async def simulate_scenario(
     }
 
 
-@router.post("/{scenario_id}/compare")
+@router.post(
+    "/{scenario_id}/compare",
+    summary="Compare Scenario to Baseline",
+    responses={
+        200: {"description": "Scenario comparison completed successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        403: {"model": AuthorizationErrorResponse, "description": "Not authorized"},
+        404: {"model": NotFoundErrorResponse, "description": "Scenario or program not found"},
+        422: {"model": ValidationErrorResponse, "description": "No activities found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def compare_scenario_to_baseline(
     db: DbSession,
     current_user: CurrentUser,

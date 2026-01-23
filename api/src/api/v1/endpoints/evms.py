@@ -37,7 +37,7 @@ from src.services.dashboard_cache import dashboard_cache
 from src.services.ev_methods import get_ev_method_info, validate_milestone_weights
 from src.services.evms import EVMSCalculator
 
-router = APIRouter()
+router = APIRouter(tags=["EVMS Periods"])
 
 
 @router.get("/periods", response_model=EVMSPeriodListResponse)

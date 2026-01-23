@@ -3,7 +3,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, status
 
 from src.core.deps import CurrentUser, DbSession
 from src.core.exceptions import AuthorizationError, NotFoundError
@@ -16,8 +16,15 @@ from src.schemas.activity import (
     ActivityResponse,
     ActivityUpdate,
 )
+from src.schemas.errors import (
+    AuthenticationErrorResponse,
+    AuthorizationErrorResponse,
+    NotFoundErrorResponse,
+    RateLimitErrorResponse,
+    ValidationErrorResponse,
+)
 
-router = APIRouter()
+router = APIRouter(tags=["Activities"])
 
 
 def generate_activity_code(existing_codes: list[str], prefix: str = "A") -> str:
@@ -47,15 +54,37 @@ def generate_activity_code(existing_codes: list[str], prefix: str = "A") -> str:
     return f"{prefix}-{next_num:03d}"
 
 
-@router.get("", response_model=ActivityListResponse)
+@router.get(
+    "",
+    response_model=ActivityListResponse,
+    summary="List Activities",
+    responses={
+        200: {"description": "Activities list retrieved successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        403: {
+            "model": AuthorizationErrorResponse,
+            "description": "Not authorized to view program activities",
+        },
+        404: {"model": NotFoundErrorResponse, "description": "Program not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def list_activities(
     db: DbSession,
     current_user: CurrentUser,
     program_id: Annotated[UUID, Query(description="Filter by program ID")],
-    page: Annotated[int, Query(ge=1)] = 1,
-    page_size: Annotated[int, Query(ge=1, le=100)] = 50,
+    page: Annotated[int, Query(ge=1, description="Page number")] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100, description="Items per page")] = 50,
 ) -> ActivityListResponse:
-    """List all activities for a program with pagination."""
+    """
+    List all activities for a program with pagination.
+
+    **Authorization:**
+    - Users can only view activities from programs they own
+    - Admins can view activities from any program
+
+    **Rate limit:** 100/minute
+    """
     # Verify user has access to program
     program_repo = ProgramRepository(db)
     program = await program_repo.get_by_id(program_id)
@@ -84,13 +113,35 @@ async def list_activities(
     )
 
 
-@router.get("/{activity_id}", response_model=ActivityResponse)
+@router.get(
+    "/{activity_id}",
+    response_model=ActivityResponse,
+    summary="Get Activity",
+    responses={
+        200: {"description": "Activity details retrieved successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        403: {
+            "model": AuthorizationErrorResponse,
+            "description": "Not authorized to view this activity",
+        },
+        404: {"model": NotFoundErrorResponse, "description": "Activity not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def get_activity(
     activity_id: UUID,
     db: DbSession,
     current_user: CurrentUser,
 ) -> ActivityResponse:
-    """Get a single activity by ID."""
+    """
+    Get a single activity by ID.
+
+    **Authorization:**
+    - Users can only view activities from programs they own
+    - Admins can view any activity
+
+    **Rate limit:** 100/minute
+    """
     repo = ActivityRepository(db)
     activity = await repo.get_by_id(activity_id)
 
@@ -113,7 +164,23 @@ async def get_activity(
     return ActivityResponse.model_validate(activity)
 
 
-@router.post("", response_model=ActivityResponse, status_code=201)
+@router.post(
+    "",
+    response_model=ActivityResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create Activity",
+    responses={
+        201: {"description": "Activity created successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        403: {
+            "model": AuthorizationErrorResponse,
+            "description": "Not authorized to create activities in this program",
+        },
+        404: {"model": NotFoundErrorResponse, "description": "Program or WBS element not found"},
+        422: {"model": ValidationErrorResponse, "description": "Validation error"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def create_activity(
     activity_in: ActivityCreate,
     db: DbSession,
@@ -165,14 +232,41 @@ async def create_activity(
     return ActivityResponse.model_validate(activity)
 
 
-@router.patch("/{activity_id}", response_model=ActivityResponse)
+@router.patch(
+    "/{activity_id}",
+    response_model=ActivityResponse,
+    summary="Update Activity",
+    responses={
+        200: {"description": "Activity updated successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        403: {
+            "model": AuthorizationErrorResponse,
+            "description": "Not authorized to modify this activity",
+        },
+        404: {"model": NotFoundErrorResponse, "description": "Activity not found"},
+        422: {"model": ValidationErrorResponse, "description": "Validation error"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def update_activity(
     activity_id: UUID,
     activity_in: ActivityUpdate,
     db: DbSession,
     current_user: CurrentUser,
 ) -> ActivityResponse:
-    """Update an existing activity."""
+    """
+    Update an existing activity.
+
+    **Authorization:**
+    - Users can only update activities from programs they own
+    - Admins can update any activity
+
+    **Partial update:**
+    - Only fields included in the request body are updated
+    - CPM schedule fields (early_start, late_finish, etc.) are recalculated automatically
+
+    **Rate limit:** 100/minute
+    """
     repo = ActivityRepository(db)
     activity = await repo.get_by_id(activity_id)
 
@@ -202,13 +296,37 @@ async def update_activity(
     return ActivityResponse.model_validate(updated)
 
 
-@router.delete("/{activity_id}", status_code=204)
+@router.delete(
+    "/{activity_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete Activity",
+    responses={
+        204: {"description": "Activity deleted successfully"},
+        401: {"model": AuthenticationErrorResponse, "description": "Not authenticated"},
+        403: {
+            "model": AuthorizationErrorResponse,
+            "description": "Not authorized to delete this activity",
+        },
+        404: {"model": NotFoundErrorResponse, "description": "Activity not found"},
+        429: {"model": RateLimitErrorResponse, "description": "Rate limit exceeded"},
+    },
+)
 async def delete_activity(
     activity_id: UUID,
     db: DbSession,
     current_user: CurrentUser,
 ) -> None:
-    """Delete an activity."""
+    """
+    Delete an activity (soft delete).
+
+    **Authorization:**
+    - Users can only delete activities from programs they own
+    - Admins can delete any activity
+
+    **Note:** Deleting an activity will also remove its dependencies.
+
+    **Rate limit:** 100/minute
+    """
     repo = ActivityRepository(db)
     activity = await repo.get_by_id(activity_id)
 

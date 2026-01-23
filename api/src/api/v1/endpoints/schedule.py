@@ -18,7 +18,7 @@ from src.schemas.activity import (
 )
 from src.services.cpm import CPMEngine
 
-router = APIRouter()
+router = APIRouter(tags=["Schedule"])
 
 
 @router.post("/calculate/{program_id}", response_model=list[ScheduleResult])
