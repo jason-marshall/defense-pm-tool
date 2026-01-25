@@ -4,16 +4,8 @@ from collections.abc import Callable
 from typing import Annotated
 from uuid import UUID
 
-__all__ = [
-    "get_db",
-    "get_current_user",
-    "get_current_user_optional",
-    "DbSession",
-    "CurrentUser",
-    "OptionalUser",
-]
-
-from fastapi import Depends, HTTPException, status
+import structlog
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,6 +15,19 @@ from src.core.exceptions import AuthenticationError
 from src.models.enums import UserRole
 from src.models.user import User
 from src.repositories.user import UserRepository
+
+__all__ = [
+    "get_db",
+    "get_current_user",
+    "get_current_user_optional",
+    "get_current_user_or_api_key",
+    "DbSession",
+    "CurrentUser",
+    "CurrentUserOrAPIKey",
+    "OptionalUser",
+]
+
+logger = structlog.get_logger(__name__)
 
 # OAuth2 scheme for extracting bearer tokens from Authorization header
 # tokenUrl points to the login endpoint for OpenAPI documentation
@@ -205,6 +210,78 @@ RequireScheduler = Depends(require_role(UserRole.SCHEDULER))
 RequireProgramManager = Depends(require_role(UserRole.PROGRAM_MANAGER))
 RequireAdmin = Depends(require_role(UserRole.ADMIN))
 
+
+async def get_current_user_or_api_key(
+    request: Request,
+    db: DbSession,
+    token: Annotated[str | None, Depends(oauth2_scheme_optional)] = None,
+) -> User:
+    """
+    Get current user from JWT token or API key.
+
+    Supports two authentication methods:
+    1. JWT Bearer token: Authorization: Bearer <jwt_token>
+    2. API Key: X-API-Key: <api_key>
+
+    API key takes precedence if both are provided.
+
+    Args:
+        request: FastAPI request object
+        db: Database session
+        token: Optional JWT token from Authorization header
+
+    Returns:
+        The authenticated User object
+
+    Raises:
+        HTTPException 401: If neither valid token nor valid API key provided
+    """
+    # Check for API key first (takes precedence)
+    api_key_header = request.headers.get("X-API-Key")
+    if api_key_header:
+        from src.services.api_key_service import APIKeyService
+
+        service = APIKeyService(db)
+        api_key = await service.verify_key(api_key_header)
+
+        if api_key:
+            # Get user from API key
+            repo = UserRepository(db)
+            user = await repo.get_by_id(UUID(api_key.user_id))
+
+            if user and user.is_active:
+                logger.debug(
+                    "api_key_auth_success",
+                    user_id=str(user.id),
+                    key_prefix=api_key.key_prefix,
+                )
+                return user
+
+            logger.warning(
+                "api_key_auth_user_inactive",
+                key_prefix=api_key.key_prefix,
+            )
+
+        # API key was provided but invalid
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired API key",
+            headers={"WWW-Authenticate": "X-API-Key"},
+        )
+
+    # Fall back to JWT token
+    if token:
+        return await get_current_user(token, db)
+
+    # Neither provided
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Authentication required. Provide Bearer token or X-API-Key header.",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
 # Type alias for current user dependency
 CurrentUser = Annotated[User, Depends(get_current_user)]
+CurrentUserOrAPIKey = Annotated[User, Depends(get_current_user_or_api_key)]
 OptionalUser = Annotated[User | None, Depends(get_current_user_optional)]

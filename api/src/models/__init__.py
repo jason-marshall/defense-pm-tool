@@ -20,6 +20,7 @@ Enums (from src.models.enums):
 """
 
 from src.models.activity import Activity
+from src.models.api_key import APIKey
 from src.models.base import Base, SoftDeleteMixin
 from src.models.dependency import Dependency
 
@@ -49,6 +50,7 @@ from src.models.wbs import LtreeType, WBSElement
 __all__ = [
     "Activity",
     "ActivityStatus",
+    "APIKey",
     # Base classes
     "Base",
     "ConstraintType",
