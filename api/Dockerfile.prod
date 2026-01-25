@@ -1,0 +1,89 @@
+# =============================================================================
+# Defense PM Tool API - Production Dockerfile
+# =============================================================================
+# Optimized multi-stage build for production deployment with gunicorn.
+#
+# Features:
+#   - Multi-stage build for smaller image size
+#   - Non-root user for security
+#   - Gunicorn with uvicorn workers for production performance
+#   - Health check included
+#
+# Build:
+#   docker build -f Dockerfile.prod -t defense-pm-tool-api:1.0.0 .
+#
+# Run:
+#   docker run -p 8000:8000 --env-file .env.production defense-pm-tool-api:1.0.0
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Build Stage - Install dependencies
+# -----------------------------------------------------------------------------
+FROM python:3.11-slim-bookworm AS builder
+
+WORKDIR /app
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install to user directory for smaller final image
+COPY requirements.txt .
+RUN pip install --no-cache-dir --user -r requirements.txt
+RUN pip install --no-cache-dir --user gunicorn
+
+# -----------------------------------------------------------------------------
+# Production Stage - Final image
+# -----------------------------------------------------------------------------
+FROM python:3.11-slim-bookworm AS production
+
+WORKDIR /app
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /var/cache/apt/*
+
+# Create non-root user
+RUN groupadd --gid 1000 appgroup \
+    && useradd --uid 1000 --gid appgroup --shell /bin/bash --create-home appuser
+
+# Copy Python packages from builder
+COPY --from=builder /root/.local /home/appuser/.local
+ENV PATH=/home/appuser/.local/bin:$PATH
+
+# Copy application code
+COPY --chown=appuser:appgroup src/ ./src/
+COPY --chown=appuser:appgroup alembic/ ./alembic/
+COPY --chown=appuser:appgroup alembic.ini ./
+
+# Switch to non-root user
+USER appuser
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Production environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    ENVIRONMENT=production
+
+# Run with gunicorn + uvicorn workers
+# Workers: 2-4 per CPU core (adjust WORKERS env var based on container resources)
+CMD ["gunicorn", "src.main:app", \
+     "-w", "4", \
+     "-k", "uvicorn.workers.UvicornWorker", \
+     "-b", "0.0.0.0:8000", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-", \
+     "--timeout", "120", \
+     "--graceful-timeout", "30", \
+     "--keep-alive", "5"]

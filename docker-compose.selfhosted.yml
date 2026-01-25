@@ -1,0 +1,126 @@
+# =============================================================================
+# Defense PM Tool - Self-Hosted Services
+# =============================================================================
+# Additional services for self-hosted deployments (PostgreSQL + Redis).
+# Use with docker-compose.prod.yml for complete self-hosted deployment.
+#
+# Usage:
+#   docker-compose -f docker-compose.prod.yml -f docker-compose.selfhosted.yml up -d
+#
+# Note: For production, consider using managed database/cache services instead.
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Override API to depend on local services
+  # ---------------------------------------------------------------------------
+  api:
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${DB_USER:-defense_pm}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-defense_pm_prod}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Database
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: defense-pm-tool-postgres-prod
+    restart: always
+
+    environment:
+      POSTGRES_USER: ${DB_USER:-defense_pm}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-defense_pm_prod}
+      # Performance tuning
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+
+    # Health check
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-defense_pm} -d ${DB_NAME:-defense_pm_prod}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+    # Logging configuration
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - defense-pm-prod-network
+
+  # ---------------------------------------------------------------------------
+  # Redis Cache
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: defense-pm-tool-redis-prod
+    restart: always
+
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD}
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+
+    volumes:
+      - redis_data:/data
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+        reservations:
+          memory: 64M
+          cpus: '0.1'
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    # Logging configuration
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - defense-pm-prod-network
+
+# =============================================================================
+# Volumes for persistent data
+# =============================================================================
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local

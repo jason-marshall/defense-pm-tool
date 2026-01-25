@@ -1,18 +1,23 @@
 # =============================================================================
 # Defense PM Tool - Production Docker Compose Configuration
 # =============================================================================
-# Production deployment configuration for Defense PM Tool.
+# Production deployment configuration for Defense PM Tool v1.0.0
+#
+# Deployment Options:
+#   1. Self-Hosted: Use included postgres/redis services (uncomment below)
+#   2. Managed Services: Use external managed database/cache (recommended)
 #
 # Prerequisites:
-#   - Set environment variables in .env.prod or export them
-#   - Use managed database (RDS, Azure SQL, Cloud SQL) instead of local postgres
-#   - Use managed Redis (ElastiCache, Azure Cache, Memorystore) instead of local redis
+#   - Copy .env.production.template to .env.production
+#   - Generate secure secrets (see DEPLOYMENT.md)
 #   - Configure SSL termination at load balancer level
 #
 # Usage:
-#   docker-compose -f docker-compose.prod.yml up -d
-#   docker-compose -f docker-compose.prod.yml logs -f
-#   docker-compose -f docker-compose.prod.yml down
+#   # Start with managed services (default)
+#   docker-compose -f docker-compose.prod.yml --env-file .env.production up -d
+#
+#   # Start with self-hosted database/cache
+#   docker-compose -f docker-compose.prod.yml -f docker-compose.selfhosted.yml up -d
 #
 # For scaling:
 #   docker-compose -f docker-compose.prod.yml up -d --scale api=3
@@ -25,10 +30,8 @@ services:
   api:
     build:
       context: ./api
-      dockerfile: Dockerfile
-      args:
-        PYTHON_VERSION: "3.11"
-
+      dockerfile: Dockerfile.prod
+    image: defense-pm-tool-api:${VERSION:-1.0.0}
     container_name: defense-pm-tool-api-prod
     restart: always
 
@@ -41,6 +44,7 @@ services:
       # Application settings
       ENVIRONMENT: production
       DEBUG: "false"
+      VERSION: ${VERSION:-1.0.0}
 
       # Database - use managed service URL from environment
       DATABASE_URL: ${DATABASE_URL}
@@ -52,11 +56,14 @@ services:
 
       # Security
       SECRET_KEY: ${SECRET_KEY}
-      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-15}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
       REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-7}
 
       # CORS - restrict to production domains
       CORS_ORIGINS: ${CORS_ORIGINS}
+
+      # Rate limiting
+      RATE_LIMIT_ENABLED: "true"
 
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
@@ -71,10 +78,11 @@ services:
 
     # Resource limits
     deploy:
+      replicas: 2
       resources:
         limits:
-          memory: 2G
-          cpus: '2'
+          memory: 1G
+          cpus: '1.0'
         reservations:
           memory: 512M
           cpus: '0.5'
@@ -89,7 +97,7 @@ services:
       driver: json-file
       options:
         max-size: "10m"
-        max-file: "3"
+        max-file: "5"
 
     networks:
       - defense-pm-prod-network
