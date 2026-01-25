@@ -1,18 +1,85 @@
 # Defense PM Tool - Deployment Guide
 
-This guide covers deployment options for the Defense Program Management Tool.
+This guide covers deployment options for the Defense Program Management Tool v1.0.0.
 
 ## Table of Contents
 
-1. [Prerequisites](#prerequisites)
-2. [Environment Configuration](#environment-configuration)
-3. [Development Setup](#development-setup)
-4. [Docker Deployment](#docker-deployment)
-5. [Production Deployment](#production-deployment)
-6. [Database Management](#database-management)
-7. [Monitoring & Health Checks](#monitoring--health-checks)
-8. [Security Considerations](#security-considerations)
-9. [Troubleshooting](#troubleshooting)
+1. [Quick Start (Production)](#quick-start-production)
+2. [Prerequisites](#prerequisites)
+3. [Environment Configuration](#environment-configuration)
+4. [Development Setup](#development-setup)
+5. [Docker Deployment](#docker-deployment)
+6. [Production Deployment](#production-deployment)
+7. [Database Management](#database-management)
+8. [Monitoring & Health Checks](#monitoring--health-checks)
+9. [Security Considerations](#security-considerations)
+10. [Production Checklist](#production-checklist)
+11. [Troubleshooting](#troubleshooting)
+
+---
+
+## Quick Start (Production)
+
+### 1. Clone and Configure
+
+```bash
+git clone https://github.com/org/defense-pm-tool.git
+cd defense-pm-tool
+cp .env.production.template .env.production
+```
+
+### 2. Generate Secrets
+
+```bash
+# Generate all required secrets
+python -c "import secrets; print('SECRET_KEY:', secrets.token_urlsafe(64))"
+python -c "import secrets; print('DB_PASSWORD:', secrets.token_urlsafe(32))"
+python -c "import secrets; print('REDIS_PASSWORD:', secrets.token_urlsafe(32))"
+```
+
+### 3. Edit Configuration
+
+Edit `.env.production` with your generated secrets and configuration.
+
+### 4. Deploy
+
+**Option A: Self-Hosted (includes PostgreSQL + Redis)**
+
+```bash
+# Build and start all services
+docker-compose -f docker-compose.prod.yml -f docker-compose.selfhosted.yml \
+    --env-file .env.production up -d
+
+# Run database migrations
+docker-compose -f docker-compose.prod.yml exec api alembic upgrade head
+
+# Verify health
+curl http://localhost:8000/health
+```
+
+**Option B: Managed Services (external PostgreSQL + Redis)**
+
+```bash
+# Build and start API only
+docker-compose -f docker-compose.prod.yml --env-file .env.production up -d
+
+# Run database migrations
+docker-compose -f docker-compose.prod.yml exec api alembic upgrade head
+
+# Verify health
+curl http://localhost:8000/health
+```
+
+### 5. Verify Deployment
+
+```bash
+# Check health
+curl http://localhost:8000/health
+# Expected: {"status":"healthy","database":"connected","cache":"connected"}
+
+# Check API documentation
+curl http://localhost:8000/docs
+```
 
 ---
 
@@ -485,6 +552,75 @@ Use a secrets manager in production:
 
 ---
 
+## Production Checklist
+
+### Pre-Deployment Security
+
+- [ ] SECRET_KEY generated (64+ characters, unique)
+- [ ] DB_PASSWORD strong (32+ characters)
+- [ ] REDIS_PASSWORD set
+- [ ] CORS_ORIGINS configured for production domains only
+- [ ] HTTPS configured (via reverse proxy/load balancer)
+- [ ] Rate limiting enabled (`RATE_LIMIT_ENABLED=true`)
+- [ ] Debug disabled (`DEBUG=false`)
+- [ ] Environment set to production (`ENVIRONMENT=production`)
+
+### Database Readiness
+
+- [ ] PostgreSQL 15+ deployed (managed or self-hosted)
+- [ ] Database connection verified
+- [ ] All migrations applied (`alembic upgrade head`)
+- [ ] Connection pool sized appropriately
+- [ ] Automated backups configured
+- [ ] Backup restore tested
+
+### Cache Readiness
+
+- [ ] Redis 7+ deployed (managed or self-hosted)
+- [ ] Redis password authentication enabled
+- [ ] Persistence configured (if needed)
+- [ ] Connection verified
+
+### Application Readiness
+
+- [ ] Production Docker image built (`docker-compose.prod.yml build`)
+- [ ] Health endpoint responding (`/health`)
+- [ ] API replicas configured (2+ for HA)
+- [ ] Resource limits set (memory, CPU)
+- [ ] Logging configured (JSON format, log aggregation)
+
+### Monitoring & Alerting
+
+- [ ] Health endpoint monitored (interval: 30s)
+- [ ] Log aggregation configured (ELK, CloudWatch, etc.)
+- [ ] Error alerting enabled
+- [ ] Performance metrics collected
+
+### Backup & Recovery
+
+- [ ] Database backup schedule configured
+- [ ] Backup retention policy defined
+- [ ] Restore procedure documented and tested
+- [ ] Disaster recovery plan documented
+
+### v1.0.0 Release Verification
+
+```bash
+# Verify build
+docker build -f api/Dockerfile.prod -t defense-pm-tool-api:1.0.0 ./api
+
+# Verify health endpoint
+curl http://localhost:8000/health
+
+# Verify API version
+curl http://localhost:8000/ | jq '.version'
+
+# Run smoke tests
+curl http://localhost:8000/api/v1/programs -H "Authorization: Bearer $TOKEN"
+```
+
+---
+
 ## Troubleshooting
 
 ### Common Issues
@@ -559,4 +695,51 @@ For issues:
 
 ---
 
-*Last updated: January 2026*
+## Backup and Restore (Production)
+
+### Database Backup
+
+```bash
+# Self-hosted PostgreSQL
+docker-compose -f docker-compose.prod.yml -f docker-compose.selfhosted.yml \
+    exec postgres pg_dump -U $DB_USER $DB_NAME > backup_$(date +%Y%m%d_%H%M%S).sql
+
+# Managed PostgreSQL (adjust connection string)
+pg_dump $DATABASE_URL > backup_$(date +%Y%m%d_%H%M%S).sql
+```
+
+### Database Restore
+
+```bash
+# Self-hosted PostgreSQL
+docker-compose -f docker-compose.prod.yml -f docker-compose.selfhosted.yml \
+    exec -T postgres psql -U $DB_USER $DB_NAME < backup_20260124_120000.sql
+
+# Managed PostgreSQL
+psql $DATABASE_URL < backup_20260124_120000.sql
+```
+
+### Automated Backup Script
+
+Create `scripts/backup.sh`:
+
+```bash
+#!/bin/bash
+set -e
+
+BACKUP_DIR="/backups"
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_FILE="$BACKUP_DIR/defense_pm_$DATE.sql.gz"
+
+# Create backup
+pg_dump $DATABASE_URL | gzip > $BACKUP_FILE
+
+# Keep only last 7 days
+find $BACKUP_DIR -name "defense_pm_*.sql.gz" -mtime +7 -delete
+
+echo "Backup created: $BACKUP_FILE"
+```
+
+---
+
+*Defense PM Tool v1.0.0 - Last updated: January 2026*
