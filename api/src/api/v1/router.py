@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from src.api.v1.endpoints import (
     activities,
+    api_keys,
     auth,
     baselines,
     dependencies,
@@ -118,4 +119,10 @@ api_router.include_router(
     jira_webhook.router,
     prefix="/webhooks",
     tags=["Webhooks"],
+)
+
+api_router.include_router(
+    api_keys.router,
+    prefix="/api-keys",
+    tags=["API Keys"],
 )

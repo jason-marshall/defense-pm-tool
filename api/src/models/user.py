@@ -10,6 +10,7 @@ from src.models.base import Base
 from src.models.enums import UserRole
 
 if TYPE_CHECKING:
+    from src.models.api_key import APIKey
     from src.models.program import Program
 
 
@@ -78,6 +79,14 @@ class User(Base):
         "Program",
         back_populates="owner",
         lazy="selectin",
+    )
+
+    # API keys for service account authentication
+    api_keys: Mapped[list["APIKey"]] = relationship(
+        "APIKey",
+        back_populates="user",
+        lazy="selectin",
+        cascade="all, delete-orphan",
     )
 
     # Table-level configuration
