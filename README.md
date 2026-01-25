@@ -1,6 +1,6 @@
 # Defense Program Management Tool
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)]()
+[![Version](https://img.shields.io/badge/version-1.0.0-green.svg)](docs/RELEASE_NOTES_v1.0.0.md)
 [![Coverage](https://img.shields.io/badge/coverage-80%25%2B-green.svg)]()
 [![Tests](https://img.shields.io/badge/tests-2400%2B-green.svg)]()
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)]()
@@ -333,12 +333,28 @@ docker-compose -f docker-compose.prod.yml up -d
 
 ---
 
+## v1.0.0 Release (January 2026)
+
+Defense PM Tool v1.0.0 is **production-ready** with:
+- Full EVMS compliance (ANSI/EIA-748)
+- CPM scheduling with all 4 dependency types
+- Monte Carlo simulation for schedule risk
+- CPR Formats 1, 3, 5 with PDF export
+- Jira Cloud integration
+- JWT and API Key authentication
+- OWASP Top 10 security compliance
+- All performance benchmarks GREEN
+
+See [Release Notes](docs/RELEASE_NOTES_v1.0.0.md) for complete details.
+
 ## Roadmap
 
-### Week 12 (In Progress) - Final Release
-- Final security audit
-- Production deployment preparation
-- End-user documentation
+### v1.1.0 (Planned) - Resource Management
+- Resource model and CRUD operations
+- Resource assignment to activities
+- Capacity calendars
+- Resource leveling algorithm
+- Over-allocation detection
 
 ## Contributing
 
@@ -350,4 +366,4 @@ Proprietary - All rights reserved
 
 ---
 
-*Defense PM Tool v0.5.0 - January 2026 - Month 3 Week 11 Complete (Security & Scenarios)*
+*Defense PM Tool v1.0.0 - January 2026 - Production Release*
