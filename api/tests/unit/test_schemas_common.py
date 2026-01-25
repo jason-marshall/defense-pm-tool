@@ -160,11 +160,11 @@ class TestHealthResponse:
         """Test health response."""
         response = HealthResponse(
             status="healthy",
-            version="0.1.0",
+            version="1.0.0",
             database="connected",
         )
         assert response.status == "healthy"
-        assert response.version == "0.1.0"
+        assert response.version == "1.0.0"
         assert response.database == "connected"
 
 
