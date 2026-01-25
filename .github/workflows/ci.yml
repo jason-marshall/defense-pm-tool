@@ -328,7 +328,7 @@ jobs:
           bandit -r src/ -f json -o bandit-report.json || true
 
       - name: Upload Bandit Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: bandit-security-report
           path: api/bandit-report.json
