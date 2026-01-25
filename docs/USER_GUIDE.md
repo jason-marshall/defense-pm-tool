@@ -1,6 +1,6 @@
 # Defense PM Tool - User Guide
 
-A comprehensive guide to using the Defense Program Management Tool for schedule management and EVMS compliance.
+A comprehensive guide to using the Defense Program Management Tool v1.0.0 for schedule management and EVMS compliance.
 
 ## Table of Contents
 
@@ -10,9 +10,16 @@ A comprehensive guide to using the Defense Program Management Tool for schedule 
 4. [Activities & Dependencies](#activities--dependencies)
 5. [Schedule Analysis (CPM)](#schedule-analysis-cpm)
 6. [EVMS Management](#evms-management)
-7. [Import & Export](#import--export)
-8. [Reports](#reports)
-9. [Best Practices](#best-practices)
+7. [Baselines](#baselines)
+8. [Monte Carlo Simulation](#monte-carlo-simulation)
+9. [Scenario Planning](#scenario-planning)
+10. [Import & Export](#import--export)
+11. [Reports](#reports)
+12. [Jira Integration](#jira-integration)
+13. [API Access](#api-access)
+14. [Best Practices](#best-practices)
+
+> **For API/Integration Documentation**: See [API_GUIDE.md](API_GUIDE.md) for detailed API documentation for system integrators.
 
 ---
 
@@ -327,6 +334,282 @@ Contract Performance Report showing EVMS metrics by WBS element.
 
 ---
 
+## Baselines
+
+Baselines capture approved schedule and cost data at a point in time for performance measurement.
+
+### Creating a Baseline
+
+1. Navigate to your program
+2. Click "Baselines" tab
+3. Click "Create Baseline"
+4. Enter:
+   - **Name**: Baseline identifier (e.g., "PMB v1.0")
+   - **Description**: Purpose of this baseline
+   - **Type**: PMB (official), Forecast, or What-If
+5. Click "Create"
+
+### Baseline Types
+
+| Type | Description | Use Case |
+|------|-------------|----------|
+| **PMB** | Performance Measurement Baseline | Official approved baseline |
+| **Forecast** | Planning baseline | Budget forecasts |
+| **What-If** | Scenario analysis | Temporary analysis |
+
+### Comparing Baselines
+
+1. Navigate to "Baselines" tab
+2. Select two baselines to compare
+3. Click "Compare"
+4. Review differences in:
+   - Schedule dates
+   - Budget allocations
+   - Activity changes
+
+---
+
+## Monte Carlo Simulation
+
+Monte Carlo simulation provides probabilistic schedule and cost risk analysis.
+
+### Setting Up Uncertainty
+
+For each activity, define three-point estimates:
+
+1. Navigate to activity details
+2. Click "Risk" tab
+3. Enter:
+   - **Optimistic Duration**: Best case
+   - **Most Likely Duration**: Expected duration
+   - **Pessimistic Duration**: Worst case
+4. Select distribution type:
+   - **Triangular**: Simple 3-point
+   - **PERT**: Weighted toward most likely (recommended)
+   - **Normal**: Gaussian distribution
+   - **Uniform**: Equal probability
+
+### Running Simulation
+
+1. Navigate to "Analysis" tab
+2. Click "Monte Carlo Simulation"
+3. Configure:
+   - **Iterations**: 1,000-10,000 recommended
+   - **Include Cost**: Yes/No
+   - **Correlation**: Enable for related activities
+4. Click "Run Simulation"
+
+### Interpreting Results
+
+| Metric | Description |
+|--------|-------------|
+| **P50** | 50% confidence level (median) |
+| **P70** | 70% confidence of achieving |
+| **P80** | 80% confidence (common target) |
+| **P90** | 90% confidence (conservative) |
+| **Sensitivity** | Activities most affecting outcome |
+
+### Using Results
+
+- **P80 Duration**: Use for realistic schedule commitments
+- **Sensitivity Analysis**: Focus risk mitigation on top drivers
+- **Critical Path Frequency**: Identify paths that become critical
+
+---
+
+## Scenario Planning
+
+Scenario planning enables what-if analysis without affecting production data.
+
+### Creating a Scenario
+
+1. Navigate to "Scenarios" tab
+2. Click "Create Scenario"
+3. Enter:
+   - **Name**: Scenario description
+   - **Base**: Current schedule or existing baseline
+4. Click "Create"
+
+### Making Changes in Scenario
+
+1. Open the scenario
+2. Make changes:
+   - Modify activity durations
+   - Add/remove activities
+   - Change dependencies
+   - Adjust budgets
+3. Changes are tracked automatically
+
+### Analyzing Scenario
+
+1. Click "Calculate" to run CPM
+2. Click "Simulate" to run Monte Carlo
+3. Compare to baseline:
+   - Schedule impact
+   - Cost impact
+   - Risk changes
+
+### Promoting Scenario
+
+When a scenario is approved:
+
+1. Click "Promote to Baseline"
+2. Enter baseline name
+3. Choose whether to apply to program
+4. Click "Promote"
+
+---
+
+## Import & Export
+
+### Importing from MS Project
+
+1. In MS Project, export to XML:
+   - File → Save As
+   - Choose "XML" format
+   - Save file
+
+2. In Defense PM Tool:
+   - Navigate to program
+   - Click "Import" → "MS Project XML"
+   - Drag and drop or select file
+   - Click "Preview" to review
+   - Click "Import" to save
+
+**What gets imported:**
+- Tasks (as activities)
+- Dependencies (all types)
+- WBS structure
+- Milestones
+- Constraints
+
+**What doesn't import:**
+- Resources and assignments
+- Calendars (uses default)
+- Custom fields
+- Cost data (needs manual entry)
+
+### Export Options
+
+- **CSV**: Export activities and schedule data
+- **PDF Reports**: Print CPR and other reports
+- **S-Curve**: Export as PNG or CSV
+
+---
+
+## Reports
+
+### Available Reports
+
+#### CPR Format 1 (WBS Summary)
+
+Contract Performance Report showing EVMS metrics by WBS element.
+
+**Includes:**
+- WBS hierarchy
+- BCWS, BCWP, ACWP by element
+- Variances (CV, SV)
+- Performance indices
+- Cumulative totals
+
+#### CPR Format 3 (Baseline Changes)
+
+Log of all baseline changes with justifications.
+
+#### CPR Format 5 (EVMS Summary)
+
+Comprehensive EVMS performance summary with:
+- Current period metrics
+- Cumulative metrics
+- Variance analysis
+- EAC projections
+
+#### S-Curve Report
+
+Performance curves showing:
+- BCWS (Planned Value)
+- BCWP (Earned Value)
+- ACWP (Actual Cost)
+- Forecast projections
+
+### Generating Reports
+
+1. Navigate to "Reports" tab
+2. Select report type
+3. Choose period (or use latest)
+4. Click "Generate"
+5. View online or download PDF
+
+---
+
+## Jira Integration
+
+Synchronize activities with Jira issues for agile teams.
+
+### Setting Up Integration
+
+1. Navigate to "Settings" → "Integrations"
+2. Click "Add Jira Integration"
+3. Enter:
+   - **Jira URL**: Your Atlassian instance
+   - **Project Key**: Jira project to sync
+   - **Email**: Service account email
+   - **API Token**: Jira API token
+4. Configure sync direction:
+   - **Jira → DPM**: Jira updates flow to DPM
+   - **DPM → Jira**: DPM updates flow to Jira
+   - **Bidirectional**: Both directions
+5. Click "Save"
+
+### Field Mapping
+
+Map DPM fields to Jira custom fields:
+- Duration → Custom field
+- Percent Complete → Custom field
+- Actual Cost → Custom field
+
+### Syncing Data
+
+- **Automatic**: Webhooks trigger on Jira changes
+- **Manual**: Click "Sync Now" to force sync
+
+### Variance Alerts
+
+Configure alerts for performance thresholds:
+- SPI below threshold
+- CPI below threshold
+- Notify via Slack or email
+
+---
+
+## API Access
+
+For automated integrations and CI/CD pipelines.
+
+### API Keys
+
+1. Navigate to "Settings" → "API Keys"
+2. Click "Create API Key"
+3. Enter:
+   - **Name**: Key purpose
+   - **Scopes**: Limit permissions (optional)
+   - **Expiration**: Days until expiry
+4. **Save the key immediately** - it cannot be retrieved later
+
+### Using API Keys
+
+```bash
+curl -H "X-API-Key: dpm_abc123_..." \
+  https://api.defense-pm-tool.com/api/v1/programs
+```
+
+### API Documentation
+
+- **Interactive Docs**: /docs (Swagger UI)
+- **API Guide**: See [API_GUIDE.md](API_GUIDE.md)
+
+---
+
 ## Best Practices
 
 ### Schedule Management
@@ -383,4 +666,4 @@ Contract Performance Report showing EVMS metrics by WBS element.
 
 ---
 
-*Last updated: January 2026*
+*Defense PM Tool v1.0.0 - Last updated: January 2026*
