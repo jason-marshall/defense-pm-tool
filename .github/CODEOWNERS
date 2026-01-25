@@ -1,0 +1,36 @@
+# CODEOWNERS - Automatic review assignment
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything
+* @jason-marshall
+
+# API/Backend
+/api/ @jason-marshall
+
+# Core services (CPM, EVMS) - critical paths
+/api/src/services/cpm.py @jason-marshall
+/api/src/services/evms.py @jason-marshall
+/api/src/services/monte_carlo*.py @jason-marshall
+
+# Security-sensitive files
+/api/src/core/auth.py @jason-marshall
+/api/src/core/security*.py @jason-marshall
+/api/src/api/v1/endpoints/auth.py @jason-marshall
+
+# Database models and migrations
+/api/src/models/ @jason-marshall
+/api/alembic/ @jason-marshall
+
+# Frontend
+/web/ @jason-marshall
+
+# Infrastructure and CI/CD
+/.github/ @jason-marshall
+/docker/ @jason-marshall
+docker-compose*.yml @jason-marshall
+Dockerfile* @jason-marshall
+
+# Documentation
+/docs/ @jason-marshall
+*.md @jason-marshall
+CLAUDE.md @jason-marshall
