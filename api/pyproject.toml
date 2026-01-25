@@ -1,6 +1,6 @@
 [project]
 name = "defense-pm-tool-api"
-version = "0.1.0"
+version = "1.0.0"
 description = "Defense Program Management Tool API with EVMS/DFARS Compliance"
 readme = "README.md"
 license = { text = "Proprietary" }

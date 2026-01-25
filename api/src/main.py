@@ -194,7 +194,7 @@ OPENAPI_TAGS = [
 
 app = FastAPI(
     title="Defense PM Tool API",
-    version="0.4.1",
+    version="1.0.0",
     description=API_DESCRIPTION,
     openapi_url="/openapi.json",
     docs_url="/docs",
