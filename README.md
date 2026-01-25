@@ -1,7 +1,8 @@
 # Defense Program Management Tool
 
+[![CI](https://github.com/jason-marshall/defense-pm-tool/actions/workflows/ci.yml/badge.svg)](https://github.com/jason-marshall/defense-pm-tool/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/badge/version-1.0.0-green.svg)](docs/RELEASE_NOTES_v1.0.0.md)
-[![Coverage](https://img.shields.io/badge/coverage-80%25%2B-green.svg)]()
+[![Coverage](https://img.shields.io/badge/coverage-80%25%2B-green.svg)](https://codecov.io/gh/jason-marshall/defense-pm-tool)
 [![Tests](https://img.shields.io/badge/tests-2400%2B-green.svg)]()
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)]()
 [![License](https://img.shields.io/badge/license-Proprietary-red.svg)]()
