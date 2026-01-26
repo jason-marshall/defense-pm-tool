@@ -1,5 +1,6 @@
 """Repository for Activity model."""
 
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
@@ -8,6 +9,8 @@ from sqlalchemy.orm import selectinload
 
 from src.models.activity import Activity
 from src.repositories.base import BaseRepository
+from src.services.cache_service import get_cache_service
+from src.services.dashboard_cache import dashboard_cache
 
 
 class ActivityRepository(BaseRepository[Activity]):
@@ -86,3 +89,66 @@ class ActivityRepository(BaseRepository[Activity]):
             .order_by(Activity.early_start)
         )
         return list(result.scalars().all())
+
+    async def create(self, data: dict[str, Any]) -> Activity:
+        """Create activity and invalidate related caches.
+
+        Invalidates CPM and dashboard caches for the program.
+        """
+        activity = await super().create(data)
+
+        # Invalidate caches
+        await self._invalidate_caches(activity.program_id)
+
+        return activity
+
+    async def update(
+        self,
+        db_obj: Activity,
+        data: dict[str, Any],
+    ) -> Activity:
+        """Update activity and invalidate related caches.
+
+        Invalidates CPM and dashboard caches for the program.
+        """
+        activity = await super().update(db_obj, data)
+
+        # Invalidate caches
+        await self._invalidate_caches(activity.program_id)
+
+        return activity
+
+    async def delete(
+        self,
+        id: UUID,
+        soft: bool = True,
+    ) -> bool:
+        """Delete activity and invalidate related caches.
+
+        Invalidates CPM and dashboard caches for the program.
+        """
+        # Get program_id before deletion
+        activity = await self.get_by_id(id, include_deleted=not soft)
+        program_id = activity.program_id if activity else None
+
+        result = await super().delete(id, soft)
+
+        # Invalidate caches if deletion was successful
+        if result and program_id:
+            await self._invalidate_caches(program_id)
+
+        return result
+
+    async def _invalidate_caches(self, program_id: UUID) -> None:
+        """Invalidate all caches related to activities for a program.
+
+        Args:
+            program_id: Program UUID
+        """
+        cache = get_cache_service()
+
+        # Invalidate CPM cache (schedule calculations depend on activities)
+        await cache.invalidate_cpm(program_id)
+
+        # Invalidate dashboard caches (activities, schedule, S-curve)
+        await dashboard_cache.invalidate_on_activity_update(program_id)

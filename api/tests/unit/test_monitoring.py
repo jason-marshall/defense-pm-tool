@@ -1,8 +1,8 @@
 """Unit tests for monitoring components (metrics and middleware)."""
 
+from unittest.mock import MagicMock
+
 import pytest
-from decimal import Decimal
-from unittest.mock import MagicMock, AsyncMock, patch
 
 from src.core.metrics import (
     get_activity_count_bucket,
@@ -12,13 +12,6 @@ from src.core.metrics import (
     record_report_generated,
     record_simulation_run,
     track_time,
-    http_requests_total,
-    http_request_duration_seconds,
-    cpm_calculation_duration_seconds,
-    cache_hits_total,
-    cache_misses_total,
-    reports_generated_total,
-    simulations_total,
 )
 
 
@@ -93,10 +86,9 @@ class TestTrackTimeContextManager:
     def test_track_time_records_duration(self):
         """Should record duration when context manager exits."""
         import time
-        from prometheus_client import REGISTRY
 
         # Use a unique histogram for testing
-        from prometheus_client import Histogram
+        from prometheus_client import REGISTRY, Histogram
 
         test_histogram = Histogram(
             "test_operation_duration_seconds",
@@ -115,16 +107,15 @@ class TestTrackTimeContextManager:
 
     def test_track_time_records_on_exception(self):
         """Should record duration even when exception occurs."""
-        from prometheus_client import Histogram, REGISTRY
+        from prometheus_client import REGISTRY, Histogram
 
         test_histogram = Histogram(
             "test_exception_duration_seconds",
             "Test exception duration",
         )
 
-        with pytest.raises(ValueError):
-            with track_time(test_histogram):
-                raise ValueError("Test error")
+        with pytest.raises(ValueError), track_time(test_histogram):
+            raise ValueError("Test error")
 
         # Clean up
         try:
@@ -139,7 +130,6 @@ class TestMiddlewareNormalization:
     def test_normalize_uuid_in_path(self):
         """Should replace UUIDs with {id} placeholder."""
         from src.core.middleware import RequestTracingMiddleware
-        from unittest.mock import MagicMock
 
         middleware = RequestTracingMiddleware(MagicMock())
 
@@ -153,7 +143,6 @@ class TestMiddlewareNormalization:
     def test_normalize_numeric_id_in_path(self):
         """Should replace numeric IDs with {id} placeholder."""
         from src.core.middleware import RequestTracingMiddleware
-        from unittest.mock import MagicMock
 
         middleware = RequestTracingMiddleware(MagicMock())
 
@@ -166,7 +155,6 @@ class TestMiddlewareNormalization:
     def test_normalize_multiple_ids(self):
         """Should replace multiple IDs in path."""
         from src.core.middleware import RequestTracingMiddleware
-        from unittest.mock import MagicMock
 
         middleware = RequestTracingMiddleware(MagicMock())
 
@@ -185,7 +173,6 @@ class TestClientIPExtraction:
     def test_get_client_ip_from_x_forwarded_for(self):
         """Should extract IP from X-Forwarded-For header."""
         from src.core.middleware import RequestTracingMiddleware
-        from unittest.mock import MagicMock
 
         middleware = RequestTracingMiddleware(MagicMock())
 
@@ -201,7 +188,6 @@ class TestClientIPExtraction:
     def test_get_client_ip_from_x_real_ip(self):
         """Should extract IP from X-Real-IP header."""
         from src.core.middleware import RequestTracingMiddleware
-        from unittest.mock import MagicMock
 
         middleware = RequestTracingMiddleware(MagicMock())
 
@@ -215,7 +201,6 @@ class TestClientIPExtraction:
     def test_get_client_ip_from_client(self):
         """Should extract IP from request client."""
         from src.core.middleware import RequestTracingMiddleware
-        from unittest.mock import MagicMock
 
         middleware = RequestTracingMiddleware(MagicMock())
 
@@ -229,7 +214,6 @@ class TestClientIPExtraction:
     def test_get_client_ip_unknown(self):
         """Should return 'unknown' when no IP available."""
         from src.core.middleware import RequestTracingMiddleware
-        from unittest.mock import MagicMock
 
         middleware = RequestTracingMiddleware(MagicMock())
 
@@ -247,9 +231,9 @@ class TestSecurityHeadersMiddleware:
     @pytest.mark.asyncio
     async def test_adds_security_headers(self):
         """Should add security headers to response."""
-        from src.core.middleware import SecurityHeadersMiddleware
-        from unittest.mock import MagicMock, AsyncMock
         from starlette.responses import Response
+
+        from src.core.middleware import SecurityHeadersMiddleware
 
         # Create mock app and response
         mock_app = MagicMock()
