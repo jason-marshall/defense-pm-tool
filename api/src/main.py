@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 
+from src.api.v1.endpoints.health import router as health_router
 from src.api.v1.router import api_router
 from src.config import settings
 from src.core.cache import cache_manager, close_redis, init_redis
@@ -23,6 +24,7 @@ from src.core.exceptions import (
     ScheduleCalculationError,
     ValidationError,
 )
+from src.core.middleware import RequestTracingMiddleware, SecurityHeadersMiddleware
 from src.core.rate_limit import limiter, rate_limit_exceeded_handler
 
 # Configure structured logging
@@ -219,6 +221,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Request tracing middleware - adds correlation IDs and metrics
+app.add_middleware(RequestTracingMiddleware)
+
+# Security headers middleware - adds security headers to all responses
+app.add_middleware(SecurityHeadersMiddleware)
+
 # Rate limiting (can be disabled via RATE_LIMIT_ENABLED=false for testing)
 if settings.RATE_LIMIT_ENABLED:
     app.state.limiter = limiter
@@ -275,20 +283,8 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 # Include API routes
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)
 
-
-@app.get("/health", tags=["Health"])
-async def health_check() -> dict[str, str]:
-    """
-    Health check endpoint.
-
-    Returns the current health status and version of the API.
-    Used by load balancers and monitoring systems.
-    """
-    return {
-        "status": "healthy",
-        "version": "0.1.0",
-        "environment": settings.ENVIRONMENT,
-    }
+# Health check endpoints (no auth required, at root level)
+app.include_router(health_router)
 
 
 @app.get("/", tags=["Root"])

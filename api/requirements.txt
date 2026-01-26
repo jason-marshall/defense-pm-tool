@@ -51,3 +51,6 @@ slowapi>=0.1.9
 
 # Security - Input Sanitization (Week 11)
 bleach>=6.0.0
+
+# Monitoring (Week 13)
+prometheus-client>=0.19.0
