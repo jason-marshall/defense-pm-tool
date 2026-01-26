@@ -83,13 +83,25 @@ async def db_session(async_engine) -> AsyncGenerator[AsyncSession, None]:
 
 
 @pytest_asyncio.fixture(scope="function")
-async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+async def client(db_session: AsyncSession, async_engine) -> AsyncGenerator[AsyncClient, None]:
     """Create async HTTP client for testing API endpoints."""
+    import src.core.database as db_module
 
     async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
+
+    # Also set up the global session maker for health endpoints
+    test_session_maker = async_sessionmaker(
+        async_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autocommit=False,
+        autoflush=False,
+    )
+    original_session_maker = db_module._async_session_maker
+    db_module._async_session_maker = test_session_maker
 
     async with AsyncClient(
         transport=ASGITransport(app=app),
@@ -97,6 +109,8 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     ) as ac:
         yield ac
 
+    # Clean up
+    db_module._async_session_maker = original_session_maker
     app.dependency_overrides.clear()
 
 
