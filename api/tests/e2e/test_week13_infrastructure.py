@@ -438,4 +438,8 @@ class TestWeek13Integration:
 
         # Verify response structure
         summary_data = summary.json()
-        assert "bcws" in summary_data or "budget_at_completion" in summary_data or "status" in summary_data
+        assert (
+            "bcws" in summary_data
+            or "budget_at_completion" in summary_data
+            or "status" in summary_data
+        )
