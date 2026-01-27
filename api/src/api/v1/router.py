@@ -15,6 +15,7 @@ from src.api.v1.endpoints import (
     management_reserve,
     programs,
     reports,
+    resources,
     scenarios,
     schedule,
     simulations,
@@ -126,3 +127,7 @@ api_router.include_router(
     prefix="/api-keys",
     tags=["API Keys"],
 )
+
+# Week 14: Resource management
+api_router.include_router(resources.router)
+api_router.include_router(resources.assignments_router)
