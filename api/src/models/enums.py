@@ -594,3 +594,46 @@ class ActivityStatus(str, Enum):
             return cls.IN_PROGRESS
         else:
             return cls.NOT_STARTED
+
+
+class ResourceType(str, Enum):
+    """
+    Resource type classification.
+
+    Resources are categorized by their nature for proper handling
+    of allocation, leveling, and cost calculations.
+
+    Types:
+        LABOR: Human resources (engineers, managers, technicians)
+        EQUIPMENT: Machinery and tools with limited availability
+        MATERIAL: Consumable supplies and components
+
+    Cost Implications:
+        - LABOR: Time-based cost (hours * rate)
+        - EQUIPMENT: Time-based or usage-based cost
+        - MATERIAL: Unit-based cost (quantity * unit price)
+
+    Leveling Behavior:
+        - LABOR: Can be overallocated (overtime) within limits
+        - EQUIPMENT: Strict capacity constraints
+        - MATERIAL: No leveling (consumed, not time-bound)
+    """
+
+    LABOR = "labor"
+    EQUIPMENT = "equipment"
+    MATERIAL = "material"
+
+    @property
+    def display_name(self) -> str:
+        """Get human-readable display name."""
+        return self.value.title()
+
+    @property
+    def is_time_based(self) -> bool:
+        """Check if resource is allocated by time."""
+        return self in (ResourceType.LABOR, ResourceType.EQUIPMENT)
+
+    @property
+    def supports_leveling(self) -> bool:
+        """Check if resource type supports leveling."""
+        return self in (ResourceType.LABOR, ResourceType.EQUIPMENT)

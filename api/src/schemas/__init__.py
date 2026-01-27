@@ -82,6 +82,24 @@ from src.schemas.jira_integration import (
     SyncType,
 )
 
+# Resource schemas
+from src.schemas.resource import (
+    ResourceAssignmentCreate,
+    ResourceAssignmentListResponse,
+    ResourceAssignmentResponse,
+    ResourceAssignmentUpdate,
+    ResourceCalendarBase,
+    ResourceCalendarBulkCreate,
+    ResourceCalendarCreate,
+    ResourceCalendarRangeResponse,
+    ResourceCalendarResponse,
+    ResourceCreate,
+    ResourceListResponse,
+    ResourceResponse,
+    ResourceSummary,
+    ResourceUpdate,
+)
+
 # Program schemas
 from src.schemas.program import (
     ProgramBriefResponse,
@@ -198,4 +216,19 @@ __all__ = [
     "SyncResultItem",
     "SyncStatus",
     "SyncType",
+    # Resource
+    "ResourceAssignmentCreate",
+    "ResourceAssignmentListResponse",
+    "ResourceAssignmentResponse",
+    "ResourceAssignmentUpdate",
+    "ResourceCalendarBase",
+    "ResourceCalendarBulkCreate",
+    "ResourceCalendarCreate",
+    "ResourceCalendarRangeResponse",
+    "ResourceCalendarResponse",
+    "ResourceCreate",
+    "ResourceListResponse",
+    "ResourceResponse",
+    "ResourceSummary",
+    "ResourceUpdate",
 ]
