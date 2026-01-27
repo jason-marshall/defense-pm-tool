@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from src.models.jira_integration import JiraIntegration
     from src.models.management_reserve_log import ManagementReserveLog
     from src.models.report_audit import ReportAudit
+    from src.models.resource import Resource
     from src.models.user import User
     from src.models.variance_explanation import VarianceExplanation
     from src.models.wbs import WBSElement
@@ -170,6 +171,15 @@ class Program(Base):
         back_populates="program",
         uselist=False,
         cascade="all, delete-orphan",
+    )
+
+    # Week 14: Resources
+    resources: Mapped[list["Resource"]] = relationship(
+        "Resource",
+        back_populates="program",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+        order_by="Resource.code",
     )
 
     # Table-level configuration
