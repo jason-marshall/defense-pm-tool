@@ -3,7 +3,7 @@
 > **Project**: Defense PM Tool with EVMS/CPM capabilities
 > **Repository**: https://github.com/jason-marshall/defense-pm-tool
 > **Developer**: Single developer, 3-month timeline
-> **Current Phase**: Month 3, Week 13 - Stabilization Complete
+> **Current Phase**: v1.1.0, Week 14 - Resource Foundation
 
 ---
 
@@ -853,13 +853,25 @@ Defense PM Tool v1.0.0 is production-ready with:
 - [x] Week 13 E2E tests
 - [x] 2500+ tests, 80%+ coverage maintained
 
-### 🔶 In Progress (v1.1.0: Resource Management - Weeks 14-16)
-- [ ] Resource model and CRUD
-- [ ] Resource assignment to activities
-- [ ] Capacity calendars
-- [ ] Resource leveling algorithm
+### 🔶 In Progress (Week 14: Resource Foundation)
+- [ ] Resource model (api/src/models/resource.py)
+- [ ] Migration 010_resources.py
+- [ ] Resource schemas (api/src/schemas/resource.py)
+- [ ] Resource repository (api/src/repositories/resource.py)
+- [ ] Resource CRUD endpoints (api/src/api/v1/endpoints/resources.py)
+- [ ] ResourceAssignment model and repository
+- [ ] ResourceCalendar model and repository
+- [ ] Assignment/calendar endpoints
+- [ ] Week 14 unit tests
+- [ ] Week 14 E2E tests
+
+### ⏳ Upcoming (Weeks 15-16: Resource Leveling & Release)
+- [ ] Resource loading calculation service
 - [ ] Over-allocation detection
-- [ ] Resource histogram visualization
+- [ ] Serial resource leveling algorithm
+- [ ] Resource histogram endpoint
+- [ ] Frontend resource management UI
+- [ ] v1.1.0 release documentation
 
 ---
 
@@ -964,5 +976,5 @@ See `api/docs/PERFORMANCE.md` for detailed analysis and optimization recommendat
 ---
 
 *Last Updated: January 2026*
-*v1.0.0 Released - 2441 tests, 80.64% coverage*
-*Week 13 Focus: Post-Release Stabilization & v1.1.0 Planning*
+*v1.0.0 Released - 2549 tests, 80.90% coverage*
+*Week 14 Focus: Resource Foundation for v1.1.0*
