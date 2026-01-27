@@ -7,6 +7,11 @@ from src.repositories.jira_integration import JiraIntegrationRepository
 from src.repositories.jira_mapping import JiraMappingRepository
 from src.repositories.jira_sync_log import JiraSyncLogRepository
 from src.repositories.program import ProgramRepository
+from src.repositories.resource import (
+    ResourceAssignmentRepository,
+    ResourceCalendarRepository,
+    ResourceRepository,
+)
 from src.repositories.wbs import WBSElementRepository
 
 __all__ = [
@@ -18,5 +23,8 @@ __all__ = [
     "JiraMappingRepository",
     "JiraSyncLogRepository",
     "ProgramRepository",
+    "ResourceAssignmentRepository",
+    "ResourceCalendarRepository",
+    "ResourceRepository",
     "WBSElementRepository",
 ]

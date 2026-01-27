@@ -42,6 +42,9 @@ from src.models.management_reserve_log import ManagementReserveLog
 from src.models.program import Program
 from src.models.report_audit import ReportAudit
 
+# Week 14: Resource models
+from src.models.resource import Resource, ResourceAssignment, ResourceCalendar
+
 # Import models
 from src.models.user import User
 from src.models.variance_explanation import VarianceExplanation
@@ -70,6 +73,10 @@ __all__ = [
     "Program",
     "ProgramStatus",
     "ReportAudit",
+    # Week 14: Resource models
+    "Resource",
+    "ResourceAssignment",
+    "ResourceCalendar",
     "SoftDeleteMixin",
     "SyncDirection",
     "SyncStatus",
