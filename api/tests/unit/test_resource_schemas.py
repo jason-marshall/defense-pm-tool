@@ -202,9 +202,7 @@ class TestResourceAssignmentBase:
                 start_date=date(2024, 1, 31),
                 finish_date=date(2024, 1, 1),
             )
-        assert "finish_date must be greater than or equal to start_date" in str(
-            exc_info.value
-        )
+        assert "finish_date must be greater than or equal to start_date" in str(exc_info.value)
 
     def test_dates_optional(self) -> None:
         """Test that dates can be omitted."""
@@ -272,9 +270,7 @@ class TestResourceCalendarBase:
         entry = ResourceCalendarBase(calendar_date=date(2024, 1, 1), available_hours=Decimal("0"))
         assert entry.available_hours == Decimal("0")
 
-        entry = ResourceCalendarBase(
-            calendar_date=date(2024, 1, 1), available_hours=Decimal("24")
-        )
+        entry = ResourceCalendarBase(calendar_date=date(2024, 1, 1), available_hours=Decimal("24"))
         assert entry.available_hours == Decimal("24")
 
     def test_hours_below_minimum(self) -> None:
@@ -322,7 +318,9 @@ class TestResourceCalendarBulkCreate:
             ResourceCalendarBulkCreate(
                 resource_id=uuid4(),
                 entries=[
-                    ResourceCalendarEntry(calendar_date=date(2024, 1, 1) + __import__('datetime').timedelta(days=i))
+                    ResourceCalendarEntry(
+                        calendar_date=date(2024, 1, 1) + __import__("datetime").timedelta(days=i)
+                    )
                     for i in range(367)
                 ],
             )

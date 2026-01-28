@@ -82,6 +82,16 @@ from src.schemas.jira_integration import (
     SyncType,
 )
 
+# Program schemas
+from src.schemas.program import (
+    ProgramBriefResponse,
+    ProgramCreate,
+    ProgramResponse,
+    ProgramStatusUpdate,
+    ProgramSummaryResponse,
+    ProgramUpdate,
+)
+
 # Resource schemas
 from src.schemas.resource import (
     ResourceAssignmentCreate,
@@ -98,16 +108,6 @@ from src.schemas.resource import (
     ResourceResponse,
     ResourceSummary,
     ResourceUpdate,
-)
-
-# Program schemas
-from src.schemas.program import (
-    ProgramBriefResponse,
-    ProgramCreate,
-    ProgramResponse,
-    ProgramStatusUpdate,
-    ProgramSummaryResponse,
-    ProgramUpdate,
 )
 
 # User schemas

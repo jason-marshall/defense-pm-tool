@@ -89,9 +89,7 @@ class ResourceUpdate(BaseModel):
     name: Annotated[str | None, Field(min_length=1, max_length=100)] = None
     code: Annotated[str | None, Field(min_length=1, max_length=50)] = None
     resource_type: ResourceType | None = None
-    capacity_per_day: Annotated[
-        Decimal | None, Field(ge=Decimal("0"), le=Decimal("24"))
-    ] = None
+    capacity_per_day: Annotated[Decimal | None, Field(ge=Decimal("0"), le=Decimal("24"))] = None
     cost_rate: Annotated[Decimal | None, Field(ge=Decimal("0"))] = None
     effective_date: date | None = None
     is_active: bool | None = None
@@ -273,9 +271,7 @@ class ResourceCalendarBulkCreate(BaseModel):
 
     @field_validator("entries")
     @classmethod
-    def validate_unique_dates(
-        cls, v: list[ResourceCalendarEntry]
-    ) -> list[ResourceCalendarEntry]:
+    def validate_unique_dates(cls, v: list[ResourceCalendarEntry]) -> list[ResourceCalendarEntry]:
         """Ensure no duplicate dates in entries."""
         dates = [entry.calendar_date for entry in v]
         if len(dates) != len(set(dates)):
