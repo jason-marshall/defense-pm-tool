@@ -11,13 +11,14 @@ A comprehensive API guide for system integrators and developers using the Defens
 5. [Dependencies API](#dependencies-api)
 6. [Schedule Calculation (CPM)](#schedule-calculation-cpm)
 7. [EVMS API](#evms-api)
-8. [Baselines API](#baselines-api)
-9. [Monte Carlo Simulation](#monte-carlo-simulation)
-10. [Scenario Planning](#scenario-planning)
-11. [Reports API](#reports-api)
-12. [Jira Integration](#jira-integration)
-13. [Error Handling](#error-handling)
-14. [Rate Limiting](#rate-limiting)
+8. [Resource Management](#resource-management)
+9. [Baselines API](#baselines-api)
+10. [Monte Carlo Simulation](#monte-carlo-simulation)
+11. [Scenario Planning](#scenario-planning)
+12. [Reports API](#reports-api)
+13. [Jira Integration](#jira-integration)
+14. [Error Handling](#error-handling)
+15. [Rate Limiting](#rate-limiting)
 
 ---
 
@@ -433,6 +434,174 @@ curl https://api.defense-pm-tool.com/api/v1/programs/$PROGRAM_ID/evms/eac-method
 | ETC | EAC - ACWP | Estimate to Complete |
 | VAC | BAC - EAC | Variance at Completion |
 | TCPI | (BAC - BCWP) / (BAC - ACWP) | To-Complete Performance Index |
+
+---
+
+## Resource Management
+
+### Resource Types
+
+| Type | Code | Description |
+|------|------|-------------|
+| Labor | `LABOR` | Human resources (engineers, technicians, managers) |
+| Equipment | `EQUIPMENT` | Machinery and tools (CNC machines, test equipment) |
+| Material | `MATERIAL` | Consumable materials and supplies |
+
+### Create Resource
+
+```bash
+curl -X POST https://api.defense-pm-tool.com/api/v1/resources \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "program_id": "uuid-of-program",
+    "name": "Senior Systems Engineer",
+    "code": "ENG-001",
+    "resource_type": "LABOR",
+    "capacity_per_day": "8.0",
+    "cost_rate": "175.00",
+    "is_active": true
+  }'
+```
+
+### Response
+
+```json
+{
+  "id": "uuid",
+  "program_id": "uuid",
+  "name": "Senior Systems Engineer",
+  "code": "ENG-001",
+  "resource_type": "LABOR",
+  "capacity_per_day": "8.0",
+  "cost_rate": "175.00",
+  "is_active": true,
+  "created_at": "2026-01-24T12:00:00Z",
+  "updated_at": "2026-01-24T12:00:00Z"
+}
+```
+
+### List Resources
+
+```bash
+# All resources for a program
+curl "https://api.defense-pm-tool.com/api/v1/resources?program_id=$PROGRAM_ID" \
+  -H "Authorization: Bearer $TOKEN"
+
+# Filter by resource type
+curl "https://api.defense-pm-tool.com/api/v1/resources?program_id=$PROGRAM_ID&resource_type=LABOR" \
+  -H "Authorization: Bearer $TOKEN"
+
+# Filter by active status
+curl "https://api.defense-pm-tool.com/api/v1/resources?program_id=$PROGRAM_ID&is_active=true" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Get Resource
+
+```bash
+curl https://api.defense-pm-tool.com/api/v1/resources/$RESOURCE_ID \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Update Resource
+
+```bash
+curl -X PUT https://api.defense-pm-tool.com/api/v1/resources/$RESOURCE_ID \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Lead Systems Engineer",
+    "cost_rate": "200.00"
+  }'
+```
+
+### Delete Resource
+
+```bash
+curl -X DELETE https://api.defense-pm-tool.com/api/v1/resources/$RESOURCE_ID \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Assign Resource to Activity
+
+```bash
+curl -X POST https://api.defense-pm-tool.com/api/v1/resources/$RESOURCE_ID/assignments \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "resource_id": "uuid-of-resource",
+    "activity_id": "uuid-of-activity",
+    "units": "1.0",
+    "start_date": "2026-02-01",
+    "finish_date": "2026-02-15"
+  }'
+```
+
+### Assignment Response
+
+```json
+{
+  "id": "uuid",
+  "resource_id": "uuid",
+  "activity_id": "uuid",
+  "units": "1.0",
+  "start_date": "2026-02-01",
+  "finish_date": "2026-02-15",
+  "created_at": "2026-01-24T12:00:00Z"
+}
+```
+
+### List Resource Assignments
+
+```bash
+curl "https://api.defense-pm-tool.com/api/v1/resources/$RESOURCE_ID/assignments" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Manage Resource Calendar
+
+```bash
+# Bulk create calendar entries
+curl -X POST https://api.defense-pm-tool.com/api/v1/resources/$RESOURCE_ID/calendar \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "resource_id": "uuid-of-resource",
+    "entries": [
+      {"calendar_date": "2026-02-01", "available_hours": "8.0", "is_working_day": true},
+      {"calendar_date": "2026-02-02", "available_hours": "8.0", "is_working_day": true},
+      {"calendar_date": "2026-02-03", "available_hours": "0.0", "is_working_day": false}
+    ]
+  }'
+
+# Get calendar range
+curl "https://api.defense-pm-tool.com/api/v1/resources/$RESOURCE_ID/calendar?start_date=2026-02-01&end_date=2026-02-28" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Calendar Range Response
+
+```json
+{
+  "resource_id": "uuid",
+  "start_date": "2026-02-01",
+  "end_date": "2026-02-28",
+  "working_days": 20,
+  "total_hours": "160.0",
+  "entries": [
+    {"calendar_date": "2026-02-01", "available_hours": "8.0", "is_working_day": true},
+    {"calendar_date": "2026-02-02", "available_hours": "8.0", "is_working_day": true}
+  ]
+}
+```
+
+### Delete Calendar Range
+
+```bash
+curl -X DELETE "https://api.defense-pm-tool.com/api/v1/resources/$RESOURCE_ID/calendar?start_date=2026-02-01&end_date=2026-02-28" \
+  -H "Authorization: Bearer $TOKEN"
+```
 
 ---
 

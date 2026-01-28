@@ -736,6 +736,20 @@ pytest -v -s
 - [x] Week 12 E2E tests (comprehensive release validation)
 - [x] 2400+ tests, 80%+ coverage maintained
 
+### ✅ Completed (Month 4 - Week 14): Resource Foundation
+- [x] Resource model with LABOR/EQUIPMENT/MATERIAL types
+- [x] Migration 010_resources with proper indexes
+- [x] Resource schemas (ResourceCreate, ResourceResponse, etc.)
+- [x] Resource repository with program scoping
+- [x] Resource CRUD endpoints (/resources)
+- [x] Resource assignment endpoints (/resources/{id}/assignments)
+- [x] Resource calendar endpoints with bulk support
+- [x] ResourceService with loading calculations
+- [x] Overallocation detection
+- [x] Program resource summary with caching
+- [x] Week 14 E2E tests (14 tests)
+- [x] 2550+ tests, 80%+ coverage maintained
+
 ## v1.0.0 RELEASE COMPLETE
 
 Defense PM Tool v1.0.0 is production-ready with:
@@ -976,5 +990,5 @@ See `api/docs/PERFORMANCE.md` for detailed analysis and optimization recommendat
 ---
 
 *Last Updated: January 2026*
-*v1.0.0 Released - 2549 tests, 80.90% coverage*
-*Week 14 Focus: Resource Foundation for v1.1.0*
+*Week 14 Complete - 2550+ tests, 80%+ coverage*
+*Next: Week 15 - Resource Leveling Algorithm*
