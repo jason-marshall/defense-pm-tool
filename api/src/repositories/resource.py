@@ -233,9 +233,13 @@ class ResourceAssignmentRepository(BaseRepository[ResourceAssignment]):
             end_date: Optional end date filter
 
         Returns:
-            List of assignments
+            List of assignments with resource eagerly loaded
         """
-        query = select(ResourceAssignment).where(ResourceAssignment.resource_id == resource_id)
+        query = (
+            select(ResourceAssignment)
+            .where(ResourceAssignment.resource_id == resource_id)
+            .options(joinedload(ResourceAssignment.resource))
+        )
         query = self._apply_soft_delete_filter(query)
 
         # Filter by date range if provided
@@ -251,7 +255,7 @@ class ResourceAssignmentRepository(BaseRepository[ResourceAssignment]):
             )
 
         result = await self.session.execute(query)
-        return list(result.scalars().all())
+        return list(result.unique().scalars().all())
 
     async def assignment_exists(
         self,

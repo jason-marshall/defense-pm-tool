@@ -9,7 +9,7 @@ Provides validation and serialization for resource management:
 from __future__ import annotations
 
 import re
-from datetime import date  # noqa: TC003 - Required at runtime for Pydantic
+from datetime import date, datetime  # noqa: TC003 - Required at runtime for Pydantic
 from decimal import Decimal
 from typing import Annotated
 from uuid import UUID  # noqa: TC003 - Required at runtime for Pydantic
@@ -119,8 +119,8 @@ class ResourceResponse(ResourceBase):
 
     id: UUID
     program_id: UUID
-    created_at: date
-    updated_at: date | None = None
+    created_at: datetime
+    updated_at: datetime | None = None
 
 
 class ResourceListResponse(BaseModel):
