@@ -38,7 +38,7 @@ export function App() {
 
 function Navigation() {
   return (
-    <nav className="bg-white shadow-sm border-b">
+    <nav className="bg-white shadow-xs border-b">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-8">
@@ -103,7 +103,7 @@ function Home() {
 
 function FeatureCard({ title, description }: { title: string; description: string }) {
   return (
-    <div className="p-6 bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
+    <div className="p-6 bg-white rounded-lg shadow-xs border hover:shadow-md transition-shadow">
       <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
       <p className="text-gray-600">{description}</p>
     </div>
@@ -119,7 +119,7 @@ function ProgramsPlaceholder() {
           New Program
         </button>
       </div>
-      <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
+      <div className="bg-white rounded-lg shadow-xs border p-8 text-center">
         <p className="text-gray-600">Program list will be implemented here.</p>
       </div>
     </div>
@@ -130,7 +130,7 @@ function ProgramDetailPlaceholder() {
   return (
     <div className="max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Program Details</h1>
-      <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
+      <div className="bg-white rounded-lg shadow-xs border p-8 text-center">
         <p className="text-gray-600">
           Program details, activities, and Gantt chart will be implemented here.
         </p>
