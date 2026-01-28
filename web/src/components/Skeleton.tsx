@@ -78,7 +78,7 @@ export const DashboardSkeleton = () => (
 );
 
 export const MetricCardSkeleton = () => (
-  <div className="p-4 border rounded-lg bg-white shadow-sm">
+  <div className="p-4 border rounded-lg bg-white shadow-xs">
     <Skeleton width="40%" height={14} className="mb-2" />
     <Skeleton width="60%" height={28} className="mb-1" />
     <Skeleton width="30%" height={12} />
