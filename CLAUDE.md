@@ -3,7 +3,7 @@
 > **Project**: Defense PM Tool with EVMS/CPM capabilities
 > **Repository**: https://github.com/jason-marshall/defense-pm-tool
 > **Developer**: Single developer, 3-month timeline
-> **Current Phase**: v1.1.0, Week 14 - Resource Foundation
+> **Current Phase**: v1.1.0, Week 15 - Resource Leveling
 
 ---
 
@@ -747,8 +747,17 @@ pytest -v -s
 - [x] ResourceService with loading calculations
 - [x] Overallocation detection
 - [x] Program resource summary with caching
-- [x] Week 14 E2E tests (14 tests)
+- [x] Week 14 E2E tests (16 tests)
 - [x] 2550+ tests, 80%+ coverage maintained
+
+### 🔶 In Progress (Month 4 - Week 15): Resource Leveling
+- [ ] Enhanced resource loading with activity dates
+- [ ] Over-allocation detection service
+- [ ] Serial resource leveling algorithm
+- [ ] Leveling API endpoint
+- [ ] Resource histogram service
+- [ ] Histogram API endpoints
+- [ ] Week 15 E2E tests
 
 ## v1.0.0 RELEASE COMPLETE
 
@@ -990,5 +999,5 @@ See `api/docs/PERFORMANCE.md` for detailed analysis and optimization recommendat
 ---
 
 *Last Updated: January 2026*
-*Week 14 Complete - 2550+ tests, 80%+ coverage*
-*Next: Week 15 - Resource Leveling Algorithm*
+*Week 15 In Progress - 2550+ tests, 80.18% coverage*
+*Focus: Resource Leveling Algorithm*
