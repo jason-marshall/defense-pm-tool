@@ -9,6 +9,7 @@ from src.api.v1.endpoints import (
     baselines,
     dependencies,
     evms,
+    histogram,
     import_export,
     jira_integration,
     jira_webhook,
@@ -139,3 +140,6 @@ api_router.include_router(overallocations.router)
 
 # Week 15: Resource leveling
 api_router.include_router(leveling.router)
+
+# Week 15: Resource histograms
+api_router.include_router(histogram.router)
