@@ -25,7 +25,7 @@ def upgrade() -> None:
         "approved",
         "rejected",
         name="period_status",
-        create_type=True,
+        create_type=False,  # We create it explicitly below
     )
     period_status_enum.create(op.get_bind(), checkfirst=True)
 
