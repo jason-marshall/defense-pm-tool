@@ -27,6 +27,8 @@ htmlcov/
 # Environment
 .env
 .env.local
+.env.production
+.env.staging
 *.local
 
 # Node/React
