@@ -13,6 +13,7 @@ from src.api.v1.endpoints import (
     jira_integration,
     jira_webhook,
     management_reserve,
+    overallocations,
     programs,
     reports,
     resources,
@@ -131,3 +132,6 @@ api_router.include_router(
 # Week 14: Resource management
 api_router.include_router(resources.router)
 api_router.include_router(resources.assignments_router)
+
+# Week 15: Over-allocation detection
+api_router.include_router(overallocations.router)
