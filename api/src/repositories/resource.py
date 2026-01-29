@@ -290,6 +290,36 @@ class ResourceAssignmentRepository(BaseRepository[ResourceAssignment]):
         count: int = result.scalar_one()
         return count > 0
 
+    async def get_assignments_with_activities(
+        self,
+        resource_id: UUID,
+    ) -> list[ResourceAssignment]:
+        """
+        Get all assignments for a resource with activities eagerly loaded.
+
+        Used by ResourceLoadingService to access activity dates for
+        calculating effective assignment date ranges.
+
+        Args:
+            resource_id: Resource UUID
+
+        Returns:
+            List of assignments with activities eagerly loaded
+        """
+
+        query = (
+            select(ResourceAssignment)
+            .where(ResourceAssignment.resource_id == resource_id)
+            .options(
+                joinedload(ResourceAssignment.resource),
+                joinedload(ResourceAssignment.activity),
+            )
+        )
+        query = self._apply_soft_delete_filter(query)
+
+        result = await self.session.execute(query)
+        return list(result.unique().scalars().all())
+
     async def get_total_units_for_resource(
         self,
         resource_id: UUID,
