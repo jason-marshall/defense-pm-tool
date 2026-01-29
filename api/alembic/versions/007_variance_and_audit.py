@@ -15,8 +15,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 
 # revision identifiers, used by Alembic.
-revision = "007"
-down_revision = "006"
+revision = "007_variance_and_audit"
+down_revision = "006_simulations"
 branch_labels = None
 depends_on = None
 
@@ -29,7 +29,7 @@ def upgrade() -> None:
         sa.Column(
             "program_id", UUID(as_uuid=True), sa.ForeignKey("programs.id"), nullable=False
         ),
-        sa.Column("wbs_id", UUID(as_uuid=True), sa.ForeignKey("wbs.id"), nullable=True),
+        sa.Column("wbs_id", UUID(as_uuid=True), sa.ForeignKey("wbs_elements.id"), nullable=True),
         sa.Column(
             "period_id", UUID(as_uuid=True), sa.ForeignKey("evms_periods.id"), nullable=True
         ),
