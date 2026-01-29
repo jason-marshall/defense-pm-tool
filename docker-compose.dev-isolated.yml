@@ -1,0 +1,147 @@
+# =============================================================================
+# Defense PM Tool - Isolated Development Environment
+# =============================================================================
+# Separate development environment that runs alongside the main dev containers
+# without conflicts. Uses different ports, container names, and volumes.
+#
+# Usage:
+#   docker compose -f docker-compose.dev-isolated.yml -p dpmt-isolated up -d
+#   docker compose -f docker-compose.dev-isolated.yml -p dpmt-isolated ps
+#   docker compose -f docker-compose.dev-isolated.yml -p dpmt-isolated logs -f api
+#   docker compose -f docker-compose.dev-isolated.yml -p dpmt-isolated down
+#   docker compose -f docker-compose.dev-isolated.yml -p dpmt-isolated down -v
+#
+# Port Allocations (isolated):
+#   PostgreSQL: 5433 (main uses 5432)
+#   Redis:      6380 (main uses 6379)
+#   API:        8001 (main uses 8000)
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Database (Isolated)
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: dpmt-isolated-postgres
+
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: defense_pm_isolated
+      POSTGRES_USER: dev_user
+      POSTGRES_PASSWORD: dev_password
+      TZ: UTC
+
+    # Port 5433 to avoid conflict with main dev environment (5432)
+    ports:
+      - "5433:5432"
+
+    volumes:
+      - isolated_postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev_user -d defense_pm_isolated"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+    networks:
+      - dpmt-isolated-network
+
+  # ---------------------------------------------------------------------------
+  # Redis Cache (Isolated)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: dpmt-isolated-redis
+
+    restart: unless-stopped
+
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 128mb
+      --maxmemory-policy allkeys-lru
+
+    # Port 6380 to avoid conflict with main dev environment (6379)
+    ports:
+      - "6380:6379"
+
+    volumes:
+      - isolated_redis_data:/data
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+    networks:
+      - dpmt-isolated-network
+
+  # ---------------------------------------------------------------------------
+  # FastAPI Application (Isolated)
+  # ---------------------------------------------------------------------------
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+      args:
+        PYTHON_VERSION: "3.11"
+
+    container_name: dpmt-isolated-api
+
+    restart: unless-stopped
+
+    # Port 8001 to avoid conflict with main dev environment (8000)
+    ports:
+      - "8001:8000"
+
+    environment:
+      DATABASE_URL: postgresql://dev_user:dev_password@postgres:5432/defense_pm_isolated
+      REDIS_URL: redis://redis:6379
+      ENVIRONMENT: development
+
+    volumes:
+      - ./api/src:/app/src:ro
+      - ./api/alembic:/app/alembic:ro
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    networks:
+      - dpmt-isolated-network
+
+# =============================================================================
+# Named Volumes (Isolated)
+# =============================================================================
+# Separate volumes from main dev environment to preserve data independently.
+# =============================================================================
+volumes:
+  isolated_postgres_data:
+    driver: local
+  isolated_redis_data:
+    driver: local
+
+# =============================================================================
+# Networks (Isolated)
+# =============================================================================
+# Separate network from main dev environment.
+# =============================================================================
+networks:
+  dpmt-isolated-network:
+    driver: bridge
