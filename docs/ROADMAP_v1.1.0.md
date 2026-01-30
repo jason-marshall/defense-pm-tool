@@ -92,41 +92,34 @@ CREATE TABLE resource_calendars (
 
 ---
 
-## Week 15: Resource Leveling
+## Week 15: Resource Leveling (Complete)
 
 ### Goals
-- Resource loading calculation
-- Over-allocation detection
-- Basic leveling algorithm (serial method)
-- Resource histogram visualization
+- Resource loading calculation ✅
+- Over-allocation detection ✅
+- Basic leveling algorithm (serial method) ✅
+- Resource histogram visualization ✅
 
 ### Deliverables
 
-| Task | Priority | Estimate |
-|------|----------|----------|
-| Resource loading service | 🔴 Critical | 4h |
-| Over-allocation detection | 🔴 Critical | 2h |
-| Serial leveling algorithm | 🔴 Critical | 6h |
-| Resource histogram endpoint | 🟡 High | 3h |
-| Leveling API endpoint | 🟡 High | 2h |
-| Frontend histogram | 🟡 High | 4h |
-| Performance optimization | 🟡 High | 2h |
-| Tests (unit + integration) | 🟡 High | 4h |
+| Task | Status | Notes |
+|------|--------|-------|
+| Resource loading service | ✅ | ResourceLoadingService with activity dates |
+| Over-allocation detection | ✅ | OverallocationService with period detection |
+| Serial leveling algorithm | ✅ | ResourceLevelingService with priority-based leveling |
+| Resource histogram endpoint | ✅ | Daily/weekly granularity support |
+| Leveling API endpoint | ✅ | POST /level, GET /level/preview, POST /level/apply |
+| Week 15 E2E tests | ✅ | Full workflow tests |
 
-### Algorithm: Serial Resource Leveling
+### Algorithm: Serial Resource Leveling (Implemented)
 ```python
-def level_resources_serial(activities, resources, assignments):
-    """
-    Serial resource leveling algorithm.
-
-    1. Sort activities by early start, then by float (ascending)
-    2. For each activity:
-       a. Check resource availability
-       b. If overallocated, delay activity
-       c. Recalculate CPM dates
-    3. Repeat until no overallocations
-    """
-    pass
+# ResourceLevelingService implements:
+# 1. Sort activities by (early_start, total_float, id)
+# 2. For each activity, check resource availability
+# 3. If overallocated, find next available slot
+# 4. Delay activity if allowed (respects critical path, float)
+# 5. Propagate changes to successors
+# 6. Repeat until no changes or max iterations
 ```
 
 ---
