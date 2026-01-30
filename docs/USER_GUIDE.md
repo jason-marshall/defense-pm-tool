@@ -1,6 +1,6 @@
 # Defense PM Tool - User Guide
 
-A comprehensive guide to using the Defense Program Management Tool v1.0.0 for schedule management and EVMS compliance.
+A comprehensive guide to using the Defense Program Management Tool v1.1.0 for schedule management, resource management, and EVMS compliance.
 
 ## Table of Contents
 
@@ -9,15 +9,16 @@ A comprehensive guide to using the Defense Program Management Tool v1.0.0 for sc
 3. [Work Breakdown Structure (WBS)](#work-breakdown-structure-wbs)
 4. [Activities & Dependencies](#activities--dependencies)
 5. [Schedule Analysis (CPM)](#schedule-analysis-cpm)
-6. [EVMS Management](#evms-management)
-7. [Baselines](#baselines)
-8. [Monte Carlo Simulation](#monte-carlo-simulation)
-9. [Scenario Planning](#scenario-planning)
-10. [Import & Export](#import--export)
-11. [Reports](#reports)
-12. [Jira Integration](#jira-integration)
-13. [API Access](#api-access)
-14. [Best Practices](#best-practices)
+6. [Resource Management](#resource-management) *(New in v1.1.0)*
+7. [EVMS Management](#evms-management)
+8. [Baselines](#baselines)
+9. [Monte Carlo Simulation](#monte-carlo-simulation)
+10. [Scenario Planning](#scenario-planning)
+11. [Import & Export](#import--export)
+12. [Reports](#reports)
+13. [Jira Integration](#jira-integration)
+14. [API Access](#api-access)
+15. [Best Practices](#best-practices)
 
 > **For API/Integration Documentation**: See [API_GUIDE.md](API_GUIDE.md) for detailed API documentation for system integrators.
 
@@ -199,6 +200,116 @@ The critical path is the longest path through the network:
 - Review activities with negative float (schedule compression needed)
 - Monitor near-critical paths (1-5 days float)
 - Re-calculate after any changes
+
+---
+
+## Resource Management
+
+*New in v1.1.0*
+
+Resource management allows you to track labor, equipment, and materials, assign them to activities, and optimize schedules through resource leveling.
+
+### Creating Resources
+
+1. Navigate to your program
+2. Click "Resources" tab
+3. Click "Add Resource"
+4. Fill in resource details:
+   - **Code**: Unique identifier (e.g., "ENG-001")
+   - **Name**: Descriptive name (e.g., "Senior Systems Engineer")
+   - **Type**: Labor, Equipment, or Material
+   - **Capacity per Day**: Hours available (default 8 for labor)
+   - **Cost Rate**: Optional hourly cost for budgeting
+5. Click "Create"
+
+### Resource Types
+
+| Type | Description | Capacity Unit |
+|------|-------------|---------------|
+| **Labor** | Human resources (engineers, technicians) | Hours/day |
+| **Equipment** | Machinery, tools, test equipment | Hours/day |
+| **Material** | Consumable supplies | Units/day |
+
+### Assigning Resources to Activities
+
+1. Open an activity's detail page
+2. Click "Assign Resources" or the resource icon
+3. In the Assignment Modal:
+   - Select a resource from the dropdown
+   - Enter allocation percentage (1.0 = 100%)
+   - Optionally set specific start/end dates
+4. Click "Assign"
+
+**Allocation Examples:**
+- **1.0 (100%)**: Full-time on this activity
+- **0.5 (50%)**: Half-time, split with other work
+- **2.0 (200%)**: Overtime, working double shifts
+
+### Viewing Resource Loading
+
+The Resource Histogram shows available vs. assigned hours over time.
+
+1. Navigate to "Resources" tab
+2. Select a resource
+3. Click "View Histogram"
+4. Set the date range to analyze
+5. Choose granularity (Daily or Weekly)
+
+**Reading the Histogram:**
+- **Gray bars**: Available hours
+- **Blue bars**: Assigned hours (within capacity)
+- **Red bars**: Overallocated (assigned > available)
+
+**Summary Statistics:**
+- **Peak Utilization**: Maximum % used
+- **Average Utilization**: Mean % over period
+- **Overallocated Days**: Days exceeding capacity
+
+### Detecting Overallocations
+
+Overallocation occurs when a resource is assigned more work than their capacity allows.
+
+**Signs of Overallocation:**
+- Red bars in the histogram
+- Overallocation warnings in the dashboard
+- Resource utilization > 100%
+
+**Common Causes:**
+- Multiple activities scheduled concurrently
+- Unrealistic time estimates
+- Resource assigned to too many programs
+
+### Running Resource Leveling
+
+Resource leveling automatically resolves overallocations by delaying non-critical activities.
+
+1. Navigate to "Leveling" or "Resources" → "Leveling Panel"
+2. Configure leveling options:
+   - **Preserve Critical Path**: Never delay critical activities (recommended)
+   - **Level Within Float**: Only delay within total float
+   - **Max Iterations**: Limit algorithm cycles (default 100)
+3. Click "Run Leveling"
+4. Review proposed changes:
+   - Activity shifts with original vs. new dates
+   - Total schedule extension
+   - Remaining overallocations
+5. Select which shifts to apply (or select all)
+6. Click "Apply Changes"
+
+**Leveling Tips:**
+- Always review changes before applying
+- Check if schedule extension is acceptable
+- Re-run CPM after leveling to update float
+- Consider adding resources if leveling extends schedule too much
+
+### Resource Management Best Practices
+
+1. **Define all resources first**: Create resources before assignments
+2. **Use realistic capacities**: Account for meetings, admin time
+3. **Regular updates**: Update actual hours weekly
+4. **Monitor utilization**: Keep resources at 70-85% target
+5. **Level early**: Run leveling during planning phase
+6. **Document assumptions**: Note resource allocation rationale
 
 ---
 
@@ -666,4 +777,4 @@ curl -H "X-API-Key: dpm_abc123_..." \
 
 ---
 
-*Defense PM Tool v1.0.0 - Last updated: January 2026*
+*Defense PM Tool v1.1.0 - Last updated: February 2026*

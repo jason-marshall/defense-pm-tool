@@ -1,6 +1,6 @@
 # Defense PM Tool - API Guide
 
-A comprehensive API guide for system integrators and developers using the Defense Program Management Tool v1.0.0.
+A comprehensive API guide for system integrators and developers using the Defense Program Management Tool v1.1.0.
 
 ## Table of Contents
 
@@ -1161,5 +1161,5 @@ Full interactive API documentation:
 
 ---
 
-*Defense PM Tool v1.0.0 - API Guide*
-*Last Updated: January 2026*
+*Defense PM Tool v1.1.0 - API Guide*
+*Last Updated: February 2026*
