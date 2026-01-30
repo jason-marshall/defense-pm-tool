@@ -294,19 +294,17 @@
   border-radius: 4px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 6px;
   font-size: 11px;
   color: #fff;
-  cursor: pointer;
+  cursor: grab;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   transition: box-shadow 0.15s, transform 0.15s;
   overflow: hidden;
+  user-select: none;
 }
 
 .assignment-bar:hover {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .assignment-bar:focus {
@@ -314,12 +312,26 @@
   outline-offset: 1px;
 }
 
+.assignment-bar.dragging {
+  cursor: grabbing;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transform: scale(1.02);
+  opacity: 0.9;
+  z-index: 100;
+}
+
 .assignment-bar.critical {
   border: 2px solid #991b1b;
 }
 
 .assignment-bar.overallocated {
-  animation: pulse 2s infinite;
+  background: repeating-linear-gradient(
+    45deg,
+    #f97316,
+    #f97316 10px,
+    #ea580c 10px,
+    #ea580c 20px
+  ) !important;
 }
 
 @keyframes pulse {
@@ -332,8 +344,25 @@
   }
 }
 
+/* Assignment bar content - main drag area */
+.assignment-bar-content {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 8px;
+  overflow: hidden;
+  cursor: grab;
+}
+
+.assignment-bar.dragging .assignment-bar-content {
+  cursor: grabbing;
+}
+
 .assignment-bar-label {
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 500;
+  color: white;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -341,8 +370,40 @@
 
 .assignment-bar-units {
   font-size: 10px;
-  opacity: 0.9;
+  color: rgba(255, 255, 255, 0.8);
+  margin-left: 4px;
   flex-shrink: 0;
+}
+
+/* Resize handles */
+.resize-handle {
+  position: absolute;
+  top: 0;
+  width: 8px;
+  height: 100%;
+  cursor: ew-resize;
+  opacity: 0;
+  transition: opacity 0.15s, background-color 0.15s;
+  z-index: 1;
+}
+
+.assignment-bar:hover .resize-handle {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.resize-handle:hover {
+  background: rgba(255, 255, 255, 0.5) !important;
+}
+
+.resize-start {
+  left: 0;
+  border-radius: 4px 0 0 4px;
+}
+
+.resize-end {
+  right: 0;
+  border-radius: 0 4px 4px 0;
 }
 
 /* Updating indicator */
