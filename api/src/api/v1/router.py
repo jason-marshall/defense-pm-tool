@@ -18,6 +18,7 @@ from src.api.v1.endpoints import (
     overallocations,
     programs,
     reports,
+    resource_cost,
     resources,
     scenarios,
     schedule,
@@ -143,3 +144,7 @@ api_router.include_router(leveling.router)
 
 # Week 15: Resource histograms
 api_router.include_router(histogram.router)
+
+# Week 17: Resource cost and material tracking
+api_router.include_router(resource_cost.router)
+api_router.include_router(resource_cost.material_router)
