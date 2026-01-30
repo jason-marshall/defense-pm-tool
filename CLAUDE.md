@@ -3,7 +3,7 @@
 > **Project**: Defense PM Tool with EVMS/CPM capabilities
 > **Repository**: https://github.com/jason-marshall/defense-pm-tool
 > **Developer**: Single developer, 3-month timeline
-> **Current Phase**: Week 17 - v1.2.0 Kickoff
+> **Current Phase**: v1.2.0 Development (Weeks 17-20 Parallel)
 
 ---
 
@@ -799,9 +799,21 @@ Defense PM Tool v1.1.0 Resource Management Release:
 - [ ] Week 17 E2E tests
 - [ ] 2750+ tests, 81%+ coverage target
 
+### 🔶 In Progress (Week 19: Parallel Leveling - PARALLEL)
+**Branch: feature/v1.2.0-week19-parallel-leveling**
+- [ ] ParallelLevelingService implementation
+- [ ] Multi-resource conflict resolution
+- [ ] Leveling comparison (serial vs parallel)
+- [ ] Performance optimization
+- [ ] Parallel leveling API endpoint (POST /programs/{id}/level-parallel)
+- [ ] Week 19 E2E tests
+
+**PARALLEL NOTE**: This branch runs alongside Weeks 17, 18, 20.
+Do not merge until all parallel branches complete.
+No new migrations (algorithm changes only, uses existing tables).
+
 ### ⏳ Upcoming (v1.2.0)
 - [ ] MS Project resource calendar import
-- [ ] Parallel resource leveling algorithm
 - [ ] Cross-program resource sharing
 - [ ] Gantt chart with resource view
 
@@ -1046,6 +1058,6 @@ See `api/docs/PERFORMANCE.md` for detailed analysis and optimization recommendat
 
 *Last Updated: February 2026*
 *v1.1.0 RELEASED - February 2026*
-*Week 17: v1.2.0 Foundation*
+*v1.2.0 Parallel Development: Weeks 17-20*
 *2715+ tests, 81%+ coverage, 57+ API endpoints*
-*Focus: Resource Cost Tracking & Material Quantities*
+*Week 19 Focus: Parallel Resource Leveling Algorithm*
