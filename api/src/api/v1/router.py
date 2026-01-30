@@ -21,6 +21,7 @@ from src.api.v1.endpoints import (
     programs,
     reports,
     resource_cost,
+    resource_pools,
     resources,
     scenarios,
     schedule,
@@ -156,3 +157,6 @@ api_router.include_router(calendar_import.router)
 
 # Week 19: Parallel resource leveling
 api_router.include_router(parallel_leveling.router)
+
+# Week 20: Resource pools for cross-program sharing
+api_router.include_router(resource_pools.router)
