@@ -22,6 +22,7 @@ Enums (from src.models.enums):
 from src.models.activity import Activity
 from src.models.api_key import APIKey
 from src.models.base import Base, SoftDeleteMixin
+from src.models.calendar_template import CalendarTemplate, CalendarTemplateHoliday
 from src.models.dependency import Dependency
 
 # Import enums from centralized location
@@ -59,6 +60,9 @@ __all__ = [
     "APIKey",
     # Base classes
     "Base",
+    # Week 18: Calendar templates
+    "CalendarTemplate",
+    "CalendarTemplateHoliday",
     "ConstraintType",
     "Dependency",
     "DependencyType",

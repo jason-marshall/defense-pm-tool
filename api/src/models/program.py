@@ -15,6 +15,7 @@ from src.models.enums import ProgramStatus
 
 if TYPE_CHECKING:
     from src.models.activity import Activity
+    from src.models.calendar_template import CalendarTemplate
     from src.models.jira_integration import JiraIntegration
     from src.models.management_reserve_log import ManagementReserveLog
     from src.models.report_audit import ReportAudit
@@ -180,6 +181,15 @@ class Program(Base):
         cascade="all, delete-orphan",
         lazy="selectin",
         order_by="Resource.code",
+    )
+
+    # Week 18: Calendar templates
+    calendar_templates: Mapped[list["CalendarTemplate"]] = relationship(
+        "CalendarTemplate",
+        back_populates="program",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+        order_by="CalendarTemplate.name",
     )
 
     # Table-level configuration
