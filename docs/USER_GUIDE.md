@@ -1,6 +1,6 @@
 # Defense PM Tool - User Guide
 
-A comprehensive guide to using the Defense Program Management Tool v1.1.0 for schedule management, resource management, and EVMS compliance.
+A comprehensive guide to using the Defense Program Management Tool v1.2.0 for schedule management, resource management, and EVMS compliance.
 
 ## Table of Contents
 
@@ -264,6 +264,47 @@ The Resource Histogram shows available vs. assigned hours over time.
 - **Peak Utilization**: Maximum % used
 - **Average Utilization**: Mean % over period
 - **Overallocated Days**: Days exceeding capacity
+
+### Gantt Resource View *(New in v1.2.0)*
+
+The Gantt Resource View provides a visual, timeline-based view of resource assignments.
+
+**Accessing the View:**
+1. Navigate to your program
+2. Click "Resources" tab
+3. Click "Gantt View" (timeline icon)
+
+**View Features:**
+- **Resource Lanes**: Each resource shown as a horizontal row
+- **Assignment Bars**: Activities displayed as colored bars on the timeline
+- **Scale Options**: Switch between Day, Week, or Month view
+- **Utilization Overlay**: Background color shows capacity usage
+
+**Visual Indicators:**
+- **Blue bars**: Normal assignments
+- **Red bars**: Critical path activities
+- **Orange striped bars**: Overallocated periods
+- **Background intensity**: Utilization level (green=low, yellow=medium, red=high)
+
+**Editing Assignments:**
+- **Move**: Drag the bar center to change dates
+- **Resize Start**: Drag the left edge to change start date
+- **Resize End**: Drag the right edge to change end date
+- **Delete**: Select bar and press Delete key
+
+**Filtering Resources:**
+1. Click the "Filters" button to expand the filter panel
+2. Use the search box to find resources by name or code
+3. Toggle resource types (Labor/Equipment/Material)
+4. Check "Overallocated only" to focus on problem areas
+5. Check "With assignments" to hide unassigned resources
+6. Click "Clear All Filters" to reset
+
+**Tips:**
+- Hover over bars to see activity details and allocation percentage
+- Use Week view for typical planning, Day view for detailed scheduling
+- The filter panel shows counts for each filter option
+- Changes are saved automatically after drag-drop
 
 ### Detecting Overallocations
 
