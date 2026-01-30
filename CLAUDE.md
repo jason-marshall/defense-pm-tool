@@ -799,8 +799,19 @@ Defense PM Tool v1.1.0 Resource Management Release:
 - [x] Week 17 E2E tests
 - [x] 2750+ tests, 81%+ coverage
 
+### ✅ Completed (Week 18: Calendar Import - PARALLEL)
+**Branch: feature/v1.2.0-week18-calendar-import**
+- [x] Calendar template model (migration 012_calendar_templates)
+- [x] MS Project calendar XML parser
+- [x] CalendarImportService
+- [x] Calendar import API endpoints (/calendars/import/)
+- [x] Calendar import preview UI
+- [x] Week 18 E2E tests
+
+**PARALLEL NOTE**: This branch runs alongside Week 17 (cost integration).
+Ready to merge after Week 17 completes. Migration ID 012 for Week 18 (Week 17 uses 011).
+
 ### ⏳ Upcoming (v1.2.0)
-- [ ] MS Project resource calendar import
 - [ ] Parallel resource leveling algorithm
 - [ ] Cross-program resource sharing
 - [ ] Gantt chart with resource view

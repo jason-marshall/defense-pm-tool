@@ -25,6 +25,7 @@ from src.models.enums import ResourceType
 
 if TYPE_CHECKING:
     from src.models.activity import Activity
+    from src.models.calendar_template import CalendarTemplate
     from src.models.program import Program
     from src.models.resource_cost import ResourceCostEntry
 
@@ -132,6 +133,15 @@ class Resource(Base):
         comment="Whether resource is currently active",
     )
 
+    # Week 18: Calendar template reference
+    calendar_template_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("resource_calendar_templates.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+        comment="FK to calendar template for this resource",
+    )
+
     # Relationships
     program: Mapped["Program"] = relationship(
         "Program",
@@ -148,6 +158,13 @@ class Resource(Base):
         "ResourceCalendar",
         back_populates="resource",
         cascade="all, delete-orphan",
+    )
+
+    # Week 18: Calendar template relationship
+    calendar_template: Mapped["CalendarTemplate | None"] = relationship(
+        "CalendarTemplate",
+        back_populates="resources",
+        foreign_keys=[calendar_template_id],
     )
 
     # Table-level configuration
@@ -385,6 +402,20 @@ class ResourceCalendar(Base):
         default=True,
         nullable=False,
         comment="Whether this is a working day",
+    )
+
+    # Week 18: Source tracking for calendar entries
+    source: Mapped[str | None] = mapped_column(
+        String(20),
+        nullable=True,
+        default="manual",
+        comment="Source of calendar entry: manual, template, import",
+    )
+
+    import_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        nullable=True,
+        comment="UUID linking to import batch if imported",
     )
 
     # Relationships
