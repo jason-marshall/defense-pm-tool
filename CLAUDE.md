@@ -799,11 +799,22 @@ Defense PM Tool v1.1.0 Resource Management Release:
 - [x] Week 17 E2E tests
 - [x] 2750+ tests, 81%+ coverage
 
+### 🔶 In Progress (Week 20: Resource Pools - PARALLEL)
+**Branch: feature/v1.2.0-week20-resource-pools**
+- [ ] ResourcePool model (migration 013)
+- [ ] Pool membership management
+- [ ] Cross-program availability service
+- [ ] Conflict detection across programs
+- [ ] Resource pool API endpoints
+- [ ] Week 20 E2E tests
+
+**PARALLEL NOTE**: This branch runs alongside Weeks 17, 18, 19.
+Do not merge until all parallel branches complete.
+
 ### ⏳ Upcoming (v1.2.0)
-- [ ] MS Project resource calendar import
-- [ ] Parallel resource leveling algorithm
-- [ ] Cross-program resource sharing
-- [ ] Gantt chart with resource view
+- [ ] MS Project resource calendar import (Week 18)
+- [ ] Parallel resource leveling algorithm (Week 19)
+- [ ] Gantt chart with resource view (Week 21-22)
 
 ## v1.0.0 RELEASE COMPLETE
 
