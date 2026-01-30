@@ -100,3 +100,53 @@ class LevelingApplyResponse(BaseModel):
     applied_count: int
     skipped_count: int
     new_project_finish: date
+
+
+class ParallelLevelingResultResponse(LevelingResultResponse):
+    """Response schema for parallel leveling result.
+
+    Extends LevelingResultResponse with parallel-specific metrics.
+
+    Attributes:
+        conflicts_resolved: Total conflicts resolved during leveling
+        resources_processed: Number of unique resources processed
+    """
+
+    conflicts_resolved: int = 0
+    resources_processed: int = 0
+
+
+class AlgorithmMetrics(BaseModel):
+    """Metrics for a single leveling algorithm run.
+
+    Attributes:
+        success: Whether all conflicts were resolved
+        iterations: Number of iterations used
+        activities_shifted: Number of activities delayed
+        schedule_extension_days: Days added to project duration
+        remaining_conflicts: Unresolved overallocations
+    """
+
+    success: bool
+    iterations: int
+    activities_shifted: int
+    schedule_extension_days: int
+    remaining_conflicts: int
+
+
+class LevelingComparisonResponse(BaseModel):
+    """Response schema for algorithm comparison.
+
+    Compares serial vs parallel leveling results.
+
+    Attributes:
+        serial: Metrics from serial leveling run
+        parallel: Metrics from parallel leveling run
+        recommendation: Which algorithm produced better results
+        improvement: Metrics showing parallel's improvement over serial
+    """
+
+    serial: AlgorithmMetrics
+    parallel: AlgorithmMetrics
+    recommendation: str
+    improvement: dict[str, int] = Field(default_factory=dict)

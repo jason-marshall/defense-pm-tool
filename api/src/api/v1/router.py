@@ -17,6 +17,7 @@ from src.api.v1.endpoints import (
     leveling,
     management_reserve,
     overallocations,
+    parallel_leveling,
     programs,
     reports,
     resource_cost,
@@ -152,3 +153,6 @@ api_router.include_router(resource_cost.material_router)
 
 # Week 18: Calendar import
 api_router.include_router(calendar_import.router)
+
+# Week 19: Parallel resource leveling
+api_router.include_router(parallel_leveling.router)
