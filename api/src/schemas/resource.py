@@ -59,6 +59,23 @@ class ResourceBase(BaseModel):
     )
     is_active: bool = Field(default=True, description="Whether resource is active")
 
+    # Material quantity fields (for MATERIAL type)
+    quantity_unit: str | None = Field(
+        default=None,
+        max_length=50,
+        description="Unit of measurement for materials (e.g., 'units', 'kg', 'meters')",
+    )
+    unit_cost: Annotated[
+        Decimal | None,
+        Field(default=None, ge=Decimal("0"), description="Cost per unit for MATERIAL type"),
+    ] = None
+    quantity_available: Annotated[
+        Decimal | None,
+        Field(
+            default=None, ge=Decimal("0"), description="Total available quantity for MATERIAL type"
+        ),
+    ] = None
+
     @field_validator("code", mode="before")
     @classmethod
     def uppercase_code(cls, v: str) -> str:
@@ -93,6 +110,11 @@ class ResourceUpdate(BaseModel):
     cost_rate: Annotated[Decimal | None, Field(ge=Decimal("0"))] = None
     effective_date: date | None = None
     is_active: bool | None = None
+
+    # Material quantity fields
+    quantity_unit: str | None = None
+    unit_cost: Annotated[Decimal | None, Field(ge=Decimal("0"))] = None
+    quantity_available: Annotated[Decimal | None, Field(ge=Decimal("0"))] = None
 
     @field_validator("code", mode="before")
     @classmethod
@@ -185,6 +207,16 @@ class ResourceAssignmentCreate(ResourceAssignmentBase):
     activity_id: UUID = Field(description="Activity to assign resource to")
     resource_id: UUID = Field(description="Resource to assign")
 
+    # Cost tracking fields
+    planned_hours: Annotated[
+        Decimal | None,
+        Field(default=None, ge=Decimal("0"), description="Planned hours for this assignment"),
+    ] = None
+    quantity_assigned: Annotated[
+        Decimal | None,
+        Field(default=None, ge=Decimal("0"), description="Quantity assigned for MATERIAL type"),
+    ] = None
+
 
 class ResourceAssignmentUpdate(BaseModel):
     """Schema for updating a resource assignment."""
@@ -192,6 +224,10 @@ class ResourceAssignmentUpdate(BaseModel):
     units: Annotated[Decimal | None, Field(ge=Decimal("0"), le=Decimal("10"))] = None
     start_date: date | None = None
     finish_date: date | None = None
+
+    # Cost tracking fields
+    planned_hours: Annotated[Decimal | None, Field(ge=Decimal("0"))] = None
+    quantity_assigned: Annotated[Decimal | None, Field(ge=Decimal("0"))] = None
 
     @model_validator(mode="after")
     def validate_dates(self) -> ResourceAssignmentUpdate:
@@ -211,6 +247,14 @@ class ResourceAssignmentResponse(ResourceAssignmentBase):
     activity_id: UUID
     resource_id: UUID
     resource: ResourceSummary | None = None
+
+    # Cost tracking fields
+    planned_hours: Decimal | None = None
+    actual_hours: Decimal = Decimal("0")
+    planned_cost: Decimal | None = None
+    actual_cost: Decimal = Decimal("0")
+    quantity_assigned: Decimal | None = None
+    quantity_consumed: Decimal = Decimal("0")
 
 
 class ResourceAssignmentListResponse(BaseModel):
@@ -298,3 +342,55 @@ class ResourceCalendarRangeResponse(BaseModel):
     entries: list[ResourceCalendarResponse]
     working_days: int = Field(ge=0, description="Total working days in range")
     total_hours: Decimal = Field(ge=Decimal("0"), description="Total available hours")
+
+
+# =============================================================================
+# Resource Cost Entry Schemas
+# =============================================================================
+
+
+class CostEntryCreate(BaseModel):
+    """Schema for creating a cost entry."""
+
+    entry_date: date = Field(description="Date of the cost entry")
+    hours_worked: Annotated[
+        Decimal,
+        Field(default=Decimal("0"), ge=Decimal("0"), description="Hours worked on this date"),
+    ]
+    quantity_used: Annotated[
+        Decimal | None,
+        Field(default=None, ge=Decimal("0"), description="Quantity used for MATERIAL type"),
+    ] = None
+    notes: str | None = Field(default=None, max_length=1000, description="Optional notes")
+
+
+class CostEntryUpdate(BaseModel):
+    """Schema for updating a cost entry."""
+
+    hours_worked: Annotated[Decimal | None, Field(ge=Decimal("0"))] = None
+    quantity_used: Annotated[Decimal | None, Field(ge=Decimal("0"))] = None
+    notes: str | None = None
+
+
+class CostEntryResponse(BaseModel):
+    """Schema for cost entry response."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    assignment_id: UUID
+    entry_date: date
+    hours_worked: Decimal
+    cost_incurred: Decimal
+    quantity_used: Decimal | None
+    notes: str | None
+    created_at: datetime
+
+
+class CostEntryListResponse(BaseModel):
+    """List of cost entries."""
+
+    items: list[CostEntryResponse]
+    total: int = Field(ge=0)
+    total_hours: Decimal = Field(ge=Decimal("0"), description="Sum of hours worked")
+    total_cost: Decimal = Field(ge=Decimal("0"), description="Sum of costs incurred")

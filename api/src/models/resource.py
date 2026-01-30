@@ -26,6 +26,7 @@ from src.models.enums import ResourceType
 if TYPE_CHECKING:
     from src.models.activity import Activity
     from src.models.program import Program
+    from src.models.resource_cost import ResourceCostEntry
 
 
 class Resource(Base):
@@ -94,6 +95,25 @@ class Resource(Base):
         Numeric(precision=15, scale=2),
         nullable=True,
         comment="Hourly cost rate",
+    )
+
+    # Material quantity fields (for MATERIAL type)
+    quantity_unit: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
+        comment="Unit of measurement for materials (e.g., 'units', 'kg', 'meters')",
+    )
+
+    unit_cost: Mapped[Decimal | None] = mapped_column(
+        Numeric(precision=12, scale=2),
+        nullable=True,
+        comment="Cost per unit for MATERIAL type resources",
+    )
+
+    quantity_available: Mapped[Decimal | None] = mapped_column(
+        Numeric(precision=15, scale=2),
+        nullable=True,
+        comment="Total available quantity for MATERIAL type",
     )
 
     # Availability
@@ -225,6 +245,47 @@ class ResourceAssignment(Base):
         comment="Assignment finish date (defaults to activity finish)",
     )
 
+    # Time-based cost tracking (for LABOR/EQUIPMENT)
+    planned_hours: Mapped[Decimal | None] = mapped_column(
+        Numeric(precision=10, scale=2),
+        nullable=True,
+        comment="Planned hours for this assignment",
+    )
+
+    actual_hours: Mapped[Decimal] = mapped_column(
+        Numeric(precision=10, scale=2),
+        nullable=False,
+        default=Decimal("0"),
+        comment="Actual hours worked",
+    )
+
+    planned_cost: Mapped[Decimal | None] = mapped_column(
+        Numeric(precision=15, scale=2),
+        nullable=True,
+        comment="Planned cost (planned_hours * cost_rate)",
+    )
+
+    actual_cost: Mapped[Decimal] = mapped_column(
+        Numeric(precision=15, scale=2),
+        nullable=False,
+        default=Decimal("0"),
+        comment="Actual cost incurred",
+    )
+
+    # Quantity tracking (for MATERIAL type)
+    quantity_assigned: Mapped[Decimal | None] = mapped_column(
+        Numeric(precision=15, scale=2),
+        nullable=True,
+        comment="Quantity assigned for MATERIAL type",
+    )
+
+    quantity_consumed: Mapped[Decimal] = mapped_column(
+        Numeric(precision=15, scale=2),
+        nullable=False,
+        default=Decimal("0"),
+        comment="Quantity consumed for MATERIAL type",
+    )
+
     # Relationships
     activity: Mapped["Activity"] = relationship(
         "Activity",
@@ -234,6 +295,12 @@ class ResourceAssignment(Base):
     resource: Mapped["Resource"] = relationship(
         "Resource",
         back_populates="assignments",
+    )
+
+    cost_entries: Mapped[list["ResourceCostEntry"]] = relationship(
+        "ResourceCostEntry",
+        back_populates="assignment",
+        cascade="all, delete-orphan",
     )
 
     # Table-level configuration

@@ -45,6 +45,9 @@ from src.models.report_audit import ReportAudit
 # Week 14: Resource models
 from src.models.resource import Resource, ResourceAssignment, ResourceCalendar
 
+# Week 17: Resource cost tracking
+from src.models.resource_cost import ResourceCostEntry
+
 # Import models
 from src.models.user import User
 from src.models.variance_explanation import VarianceExplanation
@@ -77,6 +80,8 @@ __all__ = [
     "Resource",
     "ResourceAssignment",
     "ResourceCalendar",
+    # Week 17: Resource cost tracking
+    "ResourceCostEntry",
     "SoftDeleteMixin",
     "SyncDirection",
     "SyncStatus",
