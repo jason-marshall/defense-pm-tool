@@ -12,10 +12,10 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 from uuid import UUID  # noqa: TC003 - Required at runtime for SQLAlchemy
 
-from sqlalchemy import Boolean, Date, ForeignKey, Integer, Numeric, String, Text
-from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy import Boolean, Date, ForeignKey, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.types import JSON
 
 from src.models.base import Base
 
@@ -76,9 +76,10 @@ class CalendarTemplate(Base):
         default=Decimal("8.0"),
     )
 
-    # Working days as array of integers (1=Monday, 7=Sunday per ISO 8601)
+    # Working days as JSON array of integers (1=Monday, 7=Sunday per ISO 8601)
+    # Using JSON for PostgreSQL/SQLite compatibility
     working_days: Mapped[list[int]] = mapped_column(
-        ARRAY(Integer),
+        JSON,
         nullable=False,
         default=[1, 2, 3, 4, 5],  # Monday-Friday
     )

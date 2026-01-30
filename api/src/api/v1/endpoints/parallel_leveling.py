@@ -260,10 +260,10 @@ async def compare_leveling_algorithms(
     )
 
 
-def _determine_recommendation(
+def _determine_recommendation(  # noqa: PLR0911
     serial_result: LevelingResult,
     parallel_result: ParallelLevelingResult,
-) -> str:  # noqa: PLR0911
+) -> str:
     """Determine which algorithm to recommend based on results.
 
     Priority order:

@@ -117,7 +117,7 @@ class TestCalendarImportPreview:
                     headers=auth_headers,
                 )
 
-            assert response.status_code == 400
+            assert response.status_code == 422  # Validation error
         finally:
             txt_path.unlink()
 
@@ -398,7 +398,7 @@ class TestCalendarImportValidation:
                     headers=auth_headers,
                 )
 
-            assert response.status_code == 400
+            assert response.status_code == 422  # Validation error
         finally:
             xml_path.unlink()
 
