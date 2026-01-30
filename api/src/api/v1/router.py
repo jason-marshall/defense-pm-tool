@@ -7,6 +7,7 @@ from src.api.v1.endpoints import (
     api_keys,
     auth,
     baselines,
+    calendar_import,
     dependencies,
     evms,
     histogram,
@@ -143,3 +144,6 @@ api_router.include_router(leveling.router)
 
 # Week 15: Resource histograms
 api_router.include_router(histogram.router)
+
+# Week 18: Calendar import
+api_router.include_router(calendar_import.router)
