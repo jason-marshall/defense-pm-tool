@@ -15,3 +15,4 @@ export { WBSTree } from './WBSTree/WBSTree';
 export { EVMSDashboard } from './EVMSDashboard/EVMSDashboard';
 export { ImportModal } from './Import/ImportModal';
 export { ResourceList, ResourceForm, AssignmentModal, ResourceHistogram, LevelingPanel } from './Resources';
+export { GanttResourceView } from './GanttResource';
