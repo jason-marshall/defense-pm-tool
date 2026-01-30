@@ -1,9 +1,9 @@
 # Defense Program Management Tool
 
 [![CI](https://github.com/jason-marshall/defense-pm-tool/actions/workflows/ci.yml/badge.svg)](https://github.com/jason-marshall/defense-pm-tool/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-1.0.0-green.svg)](docs/RELEASE_NOTES_v1.0.0.md)
-[![Coverage](https://img.shields.io/badge/coverage-80%25%2B-green.svg)](https://codecov.io/gh/jason-marshall/defense-pm-tool)
-[![Tests](https://img.shields.io/badge/tests-2400%2B-green.svg)]()
+[![Version](https://img.shields.io/badge/version-1.1.0-green.svg)](docs/RELEASE_NOTES_v1.1.0.md)
+[![Coverage](https://img.shields.io/badge/coverage-81%25%2B-green.svg)](https://codecov.io/gh/jason-marshall/defense-pm-tool)
+[![Tests](https://img.shields.io/badge/tests-2700%2B-green.svg)]()
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)]()
 [![License](https://img.shields.io/badge/license-Proprietary-red.svg)]()
 
@@ -328,11 +328,24 @@ docker-compose -f docker-compose.prod.yml up -d
 - Performance benchmarks documented in PERFORMANCE.md
 
 ### Test Coverage
-- 1800+ automated tests (unit, integration, E2E)
-- 80%+ code coverage maintained
-- Week 11 E2E security and scenarios test suite
+- 2700+ automated tests (unit, integration, E2E)
+- 81%+ code coverage maintained
+- Comprehensive E2E test suites for all features
 
 ---
+
+## v1.1.0 Release (February 2026)
+
+Defense PM Tool v1.1.0 adds **Resource Management** capabilities:
+- Resource types (LABOR, EQUIPMENT, MATERIAL)
+- Resource assignment to activities with allocation %
+- Capacity calendars and scheduling
+- Overallocation detection with period grouping
+- Serial resource leveling algorithm
+- Resource histogram visualization
+- 5 new frontend components
+
+See [Release Notes v1.1.0](docs/RELEASE_NOTES_v1.1.0.md) for complete details.
 
 ## v1.0.0 Release (January 2026)
 
@@ -346,16 +359,27 @@ Defense PM Tool v1.0.0 is **production-ready** with:
 - OWASP Top 10 security compliance
 - All performance benchmarks GREEN
 
-See [Release Notes](docs/RELEASE_NOTES_v1.0.0.md) for complete details.
+See [Release Notes v1.0.0](docs/RELEASE_NOTES_v1.0.0.md) for complete details.
 
 ## Roadmap
 
-### v1.1.0 (Planned) - Resource Management
-- Resource model and CRUD operations
-- Resource assignment to activities
-- Capacity calendars
-- Resource leveling algorithm
-- Over-allocation detection
+### v1.2.0 (March 2026) - Advanced Resource Management
+- Resource cost integration with automatic ACWP
+- Material quantity tracking
+- MS Project calendar import
+- Parallel resource leveling algorithm
+- Cross-program resource pools
+- Gantt chart with resource view
+
+See [v1.2.0 Roadmap](docs/ROADMAP_v1.2.0.md) for detailed weekly plan.
+
+### v1.1.0 (February 2026) - Resource Management ✅
+- Resource model and CRUD operations ✅
+- Resource assignment to activities ✅
+- Capacity calendars ✅
+- Serial resource leveling algorithm ✅
+- Over-allocation detection ✅
+- Resource histogram visualization ✅
 
 ## Contributing
 
@@ -367,4 +391,4 @@ Proprietary - All rights reserved
 
 ---
 
-*Defense PM Tool v1.0.0 - January 2026 - Production Release*
+*Defense PM Tool v1.1.0 - February 2026 - Resource Management Release*
