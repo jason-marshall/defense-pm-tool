@@ -3,7 +3,7 @@
 > **Project**: Defense PM Tool with EVMS/CPM capabilities
 > **Repository**: https://github.com/jason-marshall/defense-pm-tool
 > **Developer**: Single developer, 3-month timeline
-> **Current Phase**: v1.1.0 Released - February 2026
+> **Current Phase**: Week 17 - v1.2.0 Kickoff
 
 ---
 
@@ -771,6 +771,40 @@ pytest -v -s
 - [x] RELEASE_NOTES_v1.1.0.md
 - [x] v1.1.0 release complete
 
+## ✅ v1.1.0 RELEASE COMPLETE (Weeks 13-16)
+
+Defense PM Tool v1.1.0 Resource Management Release:
+- [x] CI/CD Pipeline (GitHub Actions)
+- [x] Production Monitoring (Prometheus)
+- [x] Redis Caching
+- [x] Load Testing (50+ concurrent users)
+- [x] Resource Model (LABOR/EQUIPMENT/MATERIAL)
+- [x] Resource CRUD endpoints (13 endpoints)
+- [x] Resource Assignment system
+- [x] Resource Calendar support
+- [x] Overallocation Detection
+- [x] Serial Resource Leveling
+- [x] Resource Histogram visualization
+- [x] Frontend components (ResourceList, ResourceForm, AssignmentModal, ResourceHistogram, LevelingPanel)
+- [x] Documentation updates (API_GUIDE, USER_GUIDE, RELEASE_NOTES)
+- [x] v1.1.0 tag and release
+- [x] 2700+ tests, 81%+ coverage
+
+### 🔶 In Progress (Week 17: v1.2.0 Foundation)
+- [ ] v1.2.0 Roadmap document
+- [ ] Resource cost tracking enhancement
+- [ ] ResourceCostService for EVMS integration
+- [ ] Material quantity tracking model
+- [ ] Cost and quantity API endpoints
+- [ ] Week 17 E2E tests
+- [ ] 2750+ tests, 81%+ coverage target
+
+### ⏳ Upcoming (v1.2.0)
+- [ ] MS Project resource calendar import
+- [ ] Parallel resource leveling algorithm
+- [ ] Cross-program resource sharing
+- [ ] Gantt chart with resource view
+
 ## v1.0.0 RELEASE COMPLETE
 
 Defense PM Tool v1.0.0 is production-ready with:
@@ -1010,7 +1044,8 @@ See `api/docs/PERFORMANCE.md` for detailed analysis and optimization recommendat
 
 ---
 
-*Last Updated: January 2026*
+*Last Updated: February 2026*
 *v1.1.0 RELEASED - February 2026*
-*2700+ tests, 81%+ coverage, 57+ API endpoints*
-*Focus: Resource Leveling Algorithm*
+*Week 17: v1.2.0 Foundation*
+*2715+ tests, 81%+ coverage, 57+ API endpoints*
+*Focus: Resource Cost Tracking & Material Quantities*
