@@ -19,6 +19,7 @@ from src.api.v1.endpoints import (
     programs,
     reports,
     resource_cost,
+    resource_pools,
     resources,
     scenarios,
     schedule,
@@ -148,3 +149,6 @@ api_router.include_router(histogram.router)
 # Week 17: Resource cost and material tracking
 api_router.include_router(resource_cost.router)
 api_router.include_router(resource_cost.material_router)
+
+# Week 20: Resource pools for cross-program sharing
+api_router.include_router(resource_pools.router)
