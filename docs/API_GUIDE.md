@@ -1,6 +1,6 @@
 # Defense PM Tool - API Guide
 
-A comprehensive API guide for system integrators and developers using the Defense Program Management Tool v1.1.0.
+A comprehensive API guide for system integrators and developers using the Defense Program Management Tool v1.2.0.
 
 ## Table of Contents
 
@@ -12,13 +12,15 @@ A comprehensive API guide for system integrators and developers using the Defens
 6. [Schedule Calculation (CPM)](#schedule-calculation-cpm)
 7. [EVMS API](#evms-api)
 8. [Resource Management](#resource-management)
-9. [Baselines API](#baselines-api)
-10. [Monte Carlo Simulation](#monte-carlo-simulation)
-11. [Scenario Planning](#scenario-planning)
-12. [Reports API](#reports-api)
-13. [Jira Integration](#jira-integration)
-14. [Error Handling](#error-handling)
-15. [Rate Limiting](#rate-limiting)
+9. [Resource Cost Tracking (v1.2.0)](#resource-cost-tracking-v120)
+10. [Material Tracking (v1.2.0)](#material-tracking-v120)
+11. [Baselines API](#baselines-api)
+12. [Monte Carlo Simulation](#monte-carlo-simulation)
+13. [Scenario Planning](#scenario-planning)
+14. [Reports API](#reports-api)
+15. [Jira Integration](#jira-integration)
+16. [Error Handling](#error-handling)
+17. [Rate Limiting](#rate-limiting)
 
 ---
 
@@ -807,6 +809,252 @@ if histogram["summary"]["resources_with_overallocation"] > 0:
 
 ---
 
+## Resource Cost Tracking (v1.2.0)
+
+Track resource costs and material consumption for EVMS integration.
+
+### Activity Cost Breakdown
+
+Get cost breakdown for an activity including resource-level details:
+
+```bash
+curl https://api.defense-pm-tool.com/api/v1/cost/activities/$ACTIVITY_ID \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Response
+
+```json
+{
+  "activity_id": "uuid",
+  "activity_code": "A-001",
+  "activity_name": "Design Phase",
+  "planned_cost": "6000.00",
+  "actual_cost": "3000.00",
+  "cost_variance": "3000.00",
+  "percent_spent": "50.00",
+  "resource_breakdown": [
+    {
+      "resource_id": "uuid",
+      "resource_code": "ENG-001",
+      "resource_name": "Senior Engineer",
+      "resource_type": "labor",
+      "planned_cost": "6000.00",
+      "actual_cost": "3000.00"
+    }
+  ]
+}
+```
+
+### WBS Cost Rollup
+
+Get cost rolled up to WBS level:
+
+```bash
+# Include child WBS elements (default)
+curl "https://api.defense-pm-tool.com/api/v1/cost/wbs/$WBS_ID?include_children=true" \
+  -H "Authorization: Bearer $TOKEN"
+
+# WBS only (exclude children)
+curl "https://api.defense-pm-tool.com/api/v1/cost/wbs/$WBS_ID?include_children=false" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Program Cost Summary
+
+Get comprehensive cost summary for a program:
+
+```bash
+curl https://api.defense-pm-tool.com/api/v1/cost/programs/$PROGRAM_ID \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Response
+
+```json
+{
+  "program_id": "uuid",
+  "total_planned_cost": "100000.00",
+  "total_actual_cost": "75000.00",
+  "total_cost_variance": "25000.00",
+  "labor_cost": "50000.00",
+  "equipment_cost": "15000.00",
+  "material_cost": "10000.00",
+  "resource_count": 15,
+  "activity_count": 50,
+  "wbs_breakdown": [
+    {
+      "wbs_id": "uuid",
+      "wbs_code": "1.1",
+      "wbs_name": "Engineering",
+      "planned_cost": "50000.00",
+      "actual_cost": "40000.00",
+      "cost_variance": "10000.00",
+      "activity_count": 25
+    }
+  ]
+}
+```
+
+### EVMS ACWP Sync
+
+Sync actual costs to EVMS period ACWP:
+
+```bash
+curl -X POST "https://api.defense-pm-tool.com/api/v1/cost/programs/$PROGRAM_ID/evms-sync?period_id=$PERIOD_ID" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Response
+
+```json
+{
+  "period_id": "uuid",
+  "acwp_updated": "75000.00",
+  "wbs_elements_updated": 25,
+  "success": true,
+  "warnings": []
+}
+```
+
+### Record Cost Entry
+
+Record actual hours or material usage for an assignment:
+
+```bash
+curl -X POST https://api.defense-pm-tool.com/api/v1/cost/assignments/$ASSIGNMENT_ID/entries \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "entry_date": "2026-02-01",
+    "hours_worked": "8.00",
+    "notes": "Design review work"
+  }'
+```
+
+### Response
+
+```json
+{
+  "id": "uuid",
+  "assignment_id": "uuid",
+  "entry_date": "2026-02-01",
+  "hours_worked": "8.00",
+  "cost_incurred": "1200.00",
+  "quantity_used": null,
+  "notes": "Design review work",
+  "created_at": "2026-02-01T09:00:00Z"
+}
+```
+
+---
+
+## Material Tracking (v1.2.0)
+
+Track material resource quantities and consumption.
+
+### Create Material Resource
+
+```bash
+curl -X POST https://api.defense-pm-tool.com/api/v1/resources \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "program_id": "uuid",
+    "name": "Steel Plates",
+    "code": "MAT-001",
+    "resource_type": "material",
+    "quantity_unit": "kg",
+    "unit_cost": "15.50",
+    "quantity_available": "1000.00"
+  }'
+```
+
+### Get Material Status
+
+Get current status of a material resource:
+
+```bash
+curl https://api.defense-pm-tool.com/api/v1/materials/resources/$RESOURCE_ID \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Response
+
+```json
+{
+  "resource_id": "uuid",
+  "resource_code": "MAT-001",
+  "resource_name": "Steel Plates",
+  "quantity_unit": "kg",
+  "quantity_available": "1000.00",
+  "quantity_assigned": "500.00",
+  "quantity_consumed": "200.00",
+  "quantity_remaining": "800.00",
+  "percent_consumed": "20.00",
+  "unit_cost": "15.50",
+  "total_value": "15500.00",
+  "consumed_value": "3100.00"
+}
+```
+
+### Consume Material
+
+Record material consumption for an assignment:
+
+```bash
+curl -X POST https://api.defense-pm-tool.com/api/v1/materials/assignments/$ASSIGNMENT_ID/consume \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "quantity": "50.00"
+  }'
+```
+
+### Response
+
+```json
+{
+  "assignment_id": "uuid",
+  "quantity_consumed": "50.00",
+  "remaining_assigned": "150.00",
+  "cost_incurred": "775.00"
+}
+```
+
+### Program Materials Summary
+
+Get summary of all materials in a program:
+
+```bash
+curl https://api.defense-pm-tool.com/api/v1/materials/programs/$PROGRAM_ID \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Response
+
+```json
+{
+  "program_id": "uuid",
+  "material_count": 5,
+  "total_value": "50000.00",
+  "consumed_value": "15000.00",
+  "remaining_value": "35000.00",
+  "materials": [
+    {
+      "resource_id": "uuid",
+      "resource_code": "MAT-001",
+      "resource_name": "Steel Plates",
+      "quantity_available": "1000.00",
+      "quantity_consumed": "200.00",
+      "percent_consumed": "20.00"
+    }
+  ]
+}
+```
+
+---
+
 ## Baselines API
 
 ### Create Baseline
@@ -1161,5 +1409,5 @@ Full interactive API documentation:
 
 ---
 
-*Defense PM Tool v1.1.0 - API Guide*
+*Defense PM Tool v1.2.0 - API Guide*
 *Last Updated: February 2026*

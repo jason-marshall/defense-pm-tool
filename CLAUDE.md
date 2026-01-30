@@ -3,7 +3,7 @@
 > **Project**: Defense PM Tool with EVMS/CPM capabilities
 > **Repository**: https://github.com/jason-marshall/defense-pm-tool
 > **Developer**: Single developer, 3-month timeline
-> **Current Phase**: Week 17 - v1.2.0 Kickoff
+> **Current Phase**: Week 17 Complete - v1.2.0 Foundation
 
 ---
 
@@ -790,14 +790,14 @@ Defense PM Tool v1.1.0 Resource Management Release:
 - [x] v1.1.0 tag and release
 - [x] 2700+ tests, 81%+ coverage
 
-### 🔶 In Progress (Week 17: v1.2.0 Foundation)
-- [ ] v1.2.0 Roadmap document
-- [ ] Resource cost tracking enhancement
-- [ ] ResourceCostService for EVMS integration
-- [ ] Material quantity tracking model
-- [ ] Cost and quantity API endpoints
-- [ ] Week 17 E2E tests
-- [ ] 2750+ tests, 81%+ coverage target
+### ✅ Completed (Week 17: v1.2.0 Foundation)
+- [x] v1.2.0 Roadmap document (docs/ROADMAP_v1.2.0.md)
+- [x] Resource cost tracking model enhancement (migration 010)
+- [x] ResourceCostService for EVMS integration
+- [x] Material quantity tracking (MaterialTrackingService)
+- [x] Cost and quantity API endpoints (8 new endpoints)
+- [x] Week 17 E2E tests
+- [x] 2750+ tests, 81%+ coverage
 
 ### ⏳ Upcoming (v1.2.0)
 - [ ] MS Project resource calendar import
@@ -1046,6 +1046,6 @@ See `api/docs/PERFORMANCE.md` for detailed analysis and optimization recommendat
 
 *Last Updated: February 2026*
 *v1.1.0 RELEASED - February 2026*
-*Week 17: v1.2.0 Foundation*
-*2715+ tests, 81%+ coverage, 57+ API endpoints*
-*Focus: Resource Cost Tracking & Material Quantities*
+*Week 17 COMPLETE: v1.2.0 Foundation*
+*2750+ tests, 81%+ coverage, 65+ API endpoints*
+*Week 17: Resource Cost Tracking & Material Tracking COMPLETE*
