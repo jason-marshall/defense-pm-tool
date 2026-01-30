@@ -3,7 +3,7 @@
 > **Project**: Defense PM Tool with EVMS/CPM capabilities
 > **Repository**: https://github.com/jason-marshall/defense-pm-tool
 > **Developer**: Single developer, 3-month timeline
-> **Current Phase**: v1.1.0, Week 15 - Resource Leveling
+> **Current Phase**: v1.1.0, Week 16 - Polish & Release
 
 ---
 
@@ -750,14 +750,24 @@ pytest -v -s
 - [x] Week 14 E2E tests (16 tests)
 - [x] 2550+ tests, 80%+ coverage maintained
 
-### 🔶 In Progress (Month 4 - Week 15): Resource Leveling
-- [ ] Enhanced resource loading with activity dates
-- [ ] Over-allocation detection service
-- [ ] Serial resource leveling algorithm
-- [ ] Leveling API endpoint
-- [ ] Resource histogram service
-- [ ] Histogram API endpoints
-- [ ] Week 15 E2E tests
+### ✅ Completed (Month 4 - Week 15): Resource Leveling
+- [x] Enhanced resource loading with activity dates
+- [x] OverallocationService for conflict detection
+- [x] Serial resource leveling algorithm (ResourceLevelingService)
+- [x] Leveling API endpoints (run, preview, apply)
+- [x] ResourceHistogramService for visualization
+- [x] Histogram API endpoints (resource, program)
+- [x] Week 15 E2E tests
+- [x] 2600+ tests, 80%+ coverage maintained
+
+### 🔶 In Progress (Month 4 - Week 16): Polish & Release
+- [ ] Resource management frontend pages
+- [ ] Resource histogram visualization
+- [ ] Update USER_GUIDE.md
+- [ ] Update API_GUIDE.md
+- [ ] Final performance verification
+- [ ] RELEASE_NOTES_v1.1.0.md
+- [ ] v1.1.0 tag and release
 
 ## v1.0.0 RELEASE COMPLETE
 
@@ -876,25 +886,25 @@ Defense PM Tool v1.0.0 is production-ready with:
 - [x] Week 13 E2E tests
 - [x] 2500+ tests, 80%+ coverage maintained
 
-### 🔶 In Progress (Week 14: Resource Foundation)
-- [ ] Resource model (api/src/models/resource.py)
-- [ ] Migration 010_resources.py
-- [ ] Resource schemas (api/src/schemas/resource.py)
-- [ ] Resource repository (api/src/repositories/resource.py)
-- [ ] Resource CRUD endpoints (api/src/api/v1/endpoints/resources.py)
-- [ ] ResourceAssignment model and repository
-- [ ] ResourceCalendar model and repository
-- [ ] Assignment/calendar endpoints
-- [ ] Week 14 unit tests
-- [ ] Week 14 E2E tests
+### ✅ Completed (Week 14: Resource Foundation)
+- [x] Resource model (api/src/models/resource.py)
+- [x] Migration 010_resources.py
+- [x] Resource schemas (api/src/schemas/resource.py)
+- [x] Resource repository (api/src/repositories/resource.py)
+- [x] Resource CRUD endpoints (api/src/api/v1/endpoints/resources.py)
+- [x] ResourceAssignment model and repository
+- [x] ResourceCalendar model and repository
+- [x] Assignment/calendar endpoints
+- [x] Week 14 unit tests
+- [x] Week 14 E2E tests
 
-### ⏳ Upcoming (Weeks 15-16: Resource Leveling & Release)
-- [ ] Resource loading calculation service
-- [ ] Over-allocation detection
-- [ ] Serial resource leveling algorithm
-- [ ] Resource histogram endpoint
-- [ ] Frontend resource management UI
-- [ ] v1.1.0 release documentation
+### ✅ Completed (Week 15: Resource Leveling)
+- [x] Resource loading calculation service
+- [x] Over-allocation detection
+- [x] Serial resource leveling algorithm
+- [x] Resource histogram endpoint
+- [x] Leveling API endpoints
+- [x] Week 15 E2E tests
 
 ---
 
@@ -999,5 +1009,6 @@ See `api/docs/PERFORMANCE.md` for detailed analysis and optimization recommendat
 ---
 
 *Last Updated: January 2026*
-*Week 15 In Progress - 2550+ tests, 80.18% coverage*
+*Week 15 Complete - 2600+ tests, 80%+ coverage*
+*Week 16 Focus: Frontend Polish & v1.1.0 Release*
 *Focus: Resource Leveling Algorithm*
