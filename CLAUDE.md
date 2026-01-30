@@ -3,7 +3,7 @@
 > **Project**: Defense PM Tool with EVMS/CPM capabilities
 > **Repository**: https://github.com/jason-marshall/defense-pm-tool
 > **Developer**: Single developer, 3-month timeline
-> **Current Phase**: v1.1.0, Week 16 - Polish & Release
+> **Current Phase**: v1.1.0 Released - February 2026
 
 ---
 
@@ -760,14 +760,16 @@ pytest -v -s
 - [x] Week 15 E2E tests
 - [x] 2600+ tests, 80%+ coverage maintained
 
-### 🔶 In Progress (Month 4 - Week 16): Polish & Release
-- [ ] Resource management frontend pages
-- [ ] Resource histogram visualization
-- [ ] Update USER_GUIDE.md
-- [ ] Update API_GUIDE.md
-- [ ] Final performance verification
-- [ ] RELEASE_NOTES_v1.1.0.md
-- [ ] v1.1.0 tag and release
+### ✅ Completed (Month 4 - Week 16): Polish & Release
+- [x] ResourceList component (PR #103)
+- [x] ResourceForm component (PR #103)
+- [x] AssignmentModal component (PR #104)
+- [x] ResourceHistogram component (PR #105)
+- [x] LevelingPanel component (PR #106)
+- [x] Update USER_GUIDE.md with Resource Management
+- [x] Update API_GUIDE.md to v1.1.0
+- [x] RELEASE_NOTES_v1.1.0.md
+- [x] v1.1.0 release complete
 
 ## v1.0.0 RELEASE COMPLETE
 
@@ -1009,6 +1011,6 @@ See `api/docs/PERFORMANCE.md` for detailed analysis and optimization recommendat
 ---
 
 *Last Updated: January 2026*
-*Week 15 Complete - 2600+ tests, 80%+ coverage*
-*Week 16 Focus: Frontend Polish & v1.1.0 Release*
+*v1.1.0 RELEASED - February 2026*
+*2700+ tests, 81%+ coverage, 57+ API endpoints*
 *Focus: Resource Leveling Algorithm*
