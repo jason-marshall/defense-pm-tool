@@ -16,6 +16,7 @@ from src.api.v1.endpoints import (
     leveling,
     management_reserve,
     overallocations,
+    parallel_leveling,
     programs,
     reports,
     resources,
@@ -143,3 +144,6 @@ api_router.include_router(leveling.router)
 
 # Week 15: Resource histograms
 api_router.include_router(histogram.router)
+
+# Week 19: Parallel resource leveling
+api_router.include_router(parallel_leveling.router)
