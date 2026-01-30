@@ -3,7 +3,7 @@
 > **Project**: Defense PM Tool with EVMS/CPM capabilities
 > **Repository**: https://github.com/jason-marshall/defense-pm-tool
 > **Developer**: Single developer, 3-month timeline
-> **Current Phase**: Week 21 In Progress - Gantt Resource View
+> **Current Phase**: Week 21 Complete - Gantt Resource View
 
 ---
 
@@ -811,17 +811,22 @@ Defense PM Tool v1.1.0 Resource Management Release:
 **PARALLEL NOTE**: This branch runs alongside Weeks 17, 18, 19.
 Do not merge until all parallel branches complete.
 
-### 🔶 In Progress (Week 21: Gantt Resource View)
-**Branch: feature/week21-gantt-resource**
-- [ ] GanttChart React component with D3.js
-- [ ] Resource lane visualization
-- [ ] Activity bar rendering with dependencies
-- [ ] Resource assignment overlay
-- [ ] Interactive zoom and scroll
-- [ ] Week 21 E2E tests
+### ✅ Completed (Week 21: Gantt Resource View)
+- [x] GanttResourceView component with resource lanes
+- [x] Resource sidebar with type badges and capacity
+- [x] Timeline header with day/week/month scale
+- [x] Assignment bars with drag-drop editing
+- [x] Resize handles for assignment duration changes
+- [x] useAssignmentDrag hook for drag state management
+- [x] Resource filter panel with search, type filters
+- [x] useResourceFilter hook for filter logic
+- [x] Utilization overlay visualization
+- [x] Week 21 unit tests (41 tests)
+- [x] Documentation updates
 
 ### ⏳ Upcoming (v1.2.0)
 - [ ] Gantt interactions and editing (Week 22)
+- [ ] Gantt-Histogram synchronization
 
 ## v1.0.0 RELEASE COMPLETE
 
@@ -1064,6 +1069,6 @@ See `api/docs/PERFORMANCE.md` for detailed analysis and optimization recommendat
 
 *Last Updated: February 2026*
 *v1.2.0 RELEASED - February 2026*
-*Week 21 IN PROGRESS: Gantt Resource View*
-*2775+ tests, 81%+ coverage, 77+ API endpoints*
-*Week 21: Gantt Chart with Resource View*
+*Week 21 COMPLETE: Gantt Resource View*
+*2800+ tests, 81%+ coverage, 77+ API endpoints*
+*Week 21: GanttResourceView with Drag-Drop Editing*

@@ -21,6 +21,7 @@ A comprehensive API guide for system integrators and developers using the Defens
 15. [Jira Integration](#jira-integration)
 16. [Error Handling](#error-handling)
 17. [Rate Limiting](#rate-limiting)
+18. [Frontend Components (v1.2.0)](#frontend-components-v120)
 
 ---
 
@@ -1395,6 +1396,97 @@ def api_request_with_retry(url, headers, max_retries=3):
             continue
         return response
     raise Exception("Max retries exceeded")
+```
+
+---
+
+## Frontend Components (v1.2.0)
+
+### GanttResourceView
+
+The GanttResourceView component provides visual resource management with a resource-centric timeline view.
+
+#### Features
+
+- **Resource Lanes**: Resources displayed as rows with their assignments as bars
+- **Timeline Scales**: Day, Week, or Month view options
+- **Drag-Drop Editing**: Move assignments by dragging, resize by dragging edges
+- **Utilization Overlay**: Color-coded capacity usage visualization
+- **Resource Filtering**: Search by name/code, filter by type (Labor/Equipment/Material)
+- **Overallocation Highlighting**: Visual indicators for over-capacity periods
+
+#### Integration
+
+```typescript
+import { GanttResourceView } from '@/components/GanttResource';
+
+// Basic usage
+<GanttResourceView
+  programId="uuid-of-program"
+  startDate={new Date('2026-01-01')}
+  endDate={new Date('2026-12-31')}
+/>
+
+// With event handlers
+<GanttResourceView
+  programId={programId}
+  onAssignmentChange={(change) => {
+    // change: { assignmentId, type: 'move'|'resize'|'delete', newStartDate?, newEndDate? }
+    console.log('Assignment changed:', change);
+  }}
+  onAssignmentClick={(assignmentId) => {
+    // Navigate to assignment details
+    navigate(`/assignments/${assignmentId}`);
+  }}
+  resourceFilter={['resource-id-1', 'resource-id-2']} // Optional: filter to specific resources
+/>
+```
+
+#### Related Hooks
+
+```typescript
+// Filter resources
+import { useResourceFilter } from '@/hooks/useResourceFilter';
+
+const { filter, setFilter, filteredResources, stats, clearFilters } = useResourceFilter(resources);
+
+// Drag-drop state management
+import { useAssignmentDrag } from '@/hooks/useAssignmentDrag';
+
+const { isDragging, previewDates, handleDragStart } = useAssignmentDrag(dayWidth, onChange);
+```
+
+#### Types
+
+```typescript
+interface ResourceLane {
+  resourceId: string;
+  resourceCode: string;
+  resourceName: string;
+  resourceType: 'labor' | 'equipment' | 'material';
+  capacityPerDay: number;
+  assignments: AssignmentBar[];
+  dailyUtilization: Map<string, number>;
+}
+
+interface AssignmentBar {
+  assignmentId: string;
+  activityId: string;
+  activityCode: string;
+  activityName: string;
+  startDate: Date;
+  endDate: Date;
+  units: number;
+  isCritical: boolean;
+  isOverallocated: boolean;
+}
+
+interface AssignmentChange {
+  assignmentId: string;
+  type: 'move' | 'resize' | 'delete';
+  newStartDate?: Date;
+  newEndDate?: Date;
+}
 ```
 
 ---
