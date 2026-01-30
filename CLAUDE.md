@@ -3,7 +3,7 @@
 > **Project**: Defense PM Tool with EVMS/CPM capabilities
 > **Repository**: https://github.com/jason-marshall/defense-pm-tool
 > **Developer**: Single developer, 3-month timeline
-> **Current Phase**: Week 17 Complete - v1.2.0 Foundation
+> **Current Phase**: Week 20 Complete - v1.2.0 Resource Pools
 
 ---
 
@@ -799,14 +799,14 @@ Defense PM Tool v1.1.0 Resource Management Release:
 - [x] Week 17 E2E tests
 - [x] 2750+ tests, 81%+ coverage
 
-### 🔶 In Progress (Week 20: Resource Pools - PARALLEL)
+### ✅ Completed (Week 20: Resource Pools - PARALLEL)
 **Branch: feature/v1.2.0-week20-resource-pools**
-- [ ] ResourcePool model (migration 013)
-- [ ] Pool membership management
-- [ ] Cross-program availability service
-- [ ] Conflict detection across programs
-- [ ] Resource pool API endpoints
-- [ ] Week 20 E2E tests
+- [x] ResourcePool model (migration 013)
+- [x] Pool membership management
+- [x] Cross-program availability service
+- [x] Conflict detection across programs
+- [x] Resource pool API endpoints (12 endpoints)
+- [x] Week 20 E2E tests (24 tests)
 
 **PARALLEL NOTE**: This branch runs alongside Weeks 17, 18, 19.
 Do not merge until all parallel branches complete.
@@ -1057,6 +1057,6 @@ See `api/docs/PERFORMANCE.md` for detailed analysis and optimization recommendat
 
 *Last Updated: February 2026*
 *v1.1.0 RELEASED - February 2026*
-*Week 17 COMPLETE: v1.2.0 Foundation*
-*2750+ tests, 81%+ coverage, 65+ API endpoints*
-*Week 17: Resource Cost Tracking & Material Tracking COMPLETE*
+*Week 20 COMPLETE: v1.2.0 Resource Pools*
+*2775+ tests, 81%+ coverage, 77+ API endpoints*
+*Week 20: Cross-Program Resource Pools COMPLETE*
