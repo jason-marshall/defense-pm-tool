@@ -14,4 +14,4 @@ export {
 export { WBSTree } from './WBSTree/WBSTree';
 export { EVMSDashboard } from './EVMSDashboard/EVMSDashboard';
 export { ImportModal } from './Import/ImportModal';
-export { ResourceList, ResourceForm } from './Resources';
+export { ResourceList, ResourceForm, AssignmentModal } from './Resources';
