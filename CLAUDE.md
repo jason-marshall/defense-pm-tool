@@ -3,7 +3,7 @@
 > **Project**: Defense PM Tool with EVMS/CPM capabilities
 > **Repository**: https://github.com/jason-marshall/defense-pm-tool
 > **Developer**: Single developer, 3-month timeline
-> **Current Phase**: Week 21 Complete - Gantt Resource View
+> **Current Phase**: Week 22 In Progress - v1.2.0 Polish & Release
 
 ---
 
@@ -824,9 +824,20 @@ Do not merge until all parallel branches complete.
 - [x] Week 21 unit tests (41 tests)
 - [x] Documentation updates
 
-### ⏳ Upcoming (v1.2.0)
-- [ ] Gantt interactions and editing (Week 22)
-- [ ] Gantt-Histogram synchronization
+### 🔶 In Progress (Week 22: Polish & Release)
+- [ ] Documentation audit and updates
+  - [ ] API_GUIDE.md - Resource Pool endpoints
+  - [ ] USER_GUIDE.md - Resource Pool instructions
+  - [ ] DEPLOYMENT.md - v1.2.0 changes
+  - [ ] README.md - version update
+- [ ] RELEASE_NOTES_v1.2.0.md
+- [ ] Final performance verification
+- [ ] Final E2E test suite
+- [ ] v1.2.0 tag and release
+
+### ⏳ Upcoming (v1.3.0)
+- [ ] Resource skills and certification tracking
+- [ ] Automated resource recommendations
 
 ## v1.0.0 RELEASE COMPLETE
 
