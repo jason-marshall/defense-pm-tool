@@ -4,6 +4,8 @@ from decimal import Decimal
 from unittest.mock import MagicMock
 from uuid import uuid4
 
+import pytest
+
 from src.services.resource_cost import (
     ActivityCostSummary,
     EVMSSyncResult,
@@ -258,6 +260,379 @@ class TestResourceCostServiceInit:
         service = ResourceCostService(mock_db)
 
         assert service.db == mock_db
+
+
+class TestCalculateAssignmentCostAsync:
+    """Async tests for calculate_assignment_cost method."""
+
+    @pytest.fixture
+    def service(self):
+        """Create service with mocked db."""
+        from unittest.mock import AsyncMock
+        db = AsyncMock()
+        return ResourceCostService(db)
+
+    @pytest.mark.asyncio
+    async def test_assignment_not_found_returns_zeros(self, service):
+        """Should return zeros when assignment not found."""
+        from unittest.mock import AsyncMock
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = None
+        service.db.execute = AsyncMock(return_value=mock_result)
+
+        planned, actual = await service.calculate_assignment_cost(uuid4())
+
+        assert planned == Decimal("0")
+        assert actual == Decimal("0")
+
+    @pytest.mark.asyncio
+    async def test_labor_resource_cost_calculation(self, service):
+        """Should calculate costs for labor resource."""
+        from unittest.mock import AsyncMock
+        from src.models.enums import ResourceType
+
+        resource = MagicMock()
+        resource.resource_type = ResourceType.LABOR
+        resource.cost_rate = Decimal("100.00")
+
+        assignment = MagicMock()
+        assignment.resource = resource
+        assignment.planned_hours = Decimal("40.00")
+        assignment.actual_hours = Decimal("35.00")
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = assignment
+        service.db.execute = AsyncMock(return_value=mock_result)
+
+        planned, actual = await service.calculate_assignment_cost(uuid4())
+
+        assert planned == Decimal("4000.00")
+        assert actual == Decimal("3500.00")
+
+    @pytest.mark.asyncio
+    async def test_material_resource_cost_calculation(self, service):
+        """Should calculate costs for material resource."""
+        from unittest.mock import AsyncMock
+        from src.models.enums import ResourceType
+
+        resource = MagicMock()
+        resource.resource_type = ResourceType.MATERIAL
+        resource.unit_cost = Decimal("25.00")
+
+        assignment = MagicMock()
+        assignment.resource = resource
+        assignment.quantity_assigned = Decimal("100.00")
+        assignment.quantity_consumed = Decimal("80.00")
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = assignment
+        service.db.execute = AsyncMock(return_value=mock_result)
+
+        planned, actual = await service.calculate_assignment_cost(uuid4())
+
+        assert planned == Decimal("2500.00")
+        assert actual == Decimal("2000.00")
+
+    @pytest.mark.asyncio
+    async def test_equipment_resource_cost_calculation(self, service):
+        """Should calculate costs for equipment resource."""
+        from unittest.mock import AsyncMock
+        from src.models.enums import ResourceType
+
+        resource = MagicMock()
+        resource.resource_type = ResourceType.EQUIPMENT
+        resource.cost_rate = Decimal("200.00")
+
+        assignment = MagicMock()
+        assignment.resource = resource
+        assignment.planned_hours = Decimal("20.00")
+        assignment.actual_hours = Decimal("18.00")
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = assignment
+        service.db.execute = AsyncMock(return_value=mock_result)
+
+        planned, actual = await service.calculate_assignment_cost(uuid4())
+
+        assert planned == Decimal("4000.00")
+        assert actual == Decimal("3600.00")
+
+    @pytest.mark.asyncio
+    async def test_none_cost_rate_returns_zero(self, service):
+        """Should handle None cost rate."""
+        from unittest.mock import AsyncMock
+        from src.models.enums import ResourceType
+
+        resource = MagicMock()
+        resource.resource_type = ResourceType.LABOR
+        resource.cost_rate = None
+
+        assignment = MagicMock()
+        assignment.resource = resource
+        assignment.planned_hours = Decimal("40.00")
+        assignment.actual_hours = Decimal("35.00")
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = assignment
+        service.db.execute = AsyncMock(return_value=mock_result)
+
+        planned, actual = await service.calculate_assignment_cost(uuid4())
+
+        assert planned == Decimal("0.00")
+        assert actual == Decimal("0.00")
+
+
+class TestCalculateActivityCostAsync:
+    """Async tests for calculate_activity_cost method."""
+
+    @pytest.fixture
+    def service(self):
+        """Create service with mocked db."""
+        from unittest.mock import AsyncMock
+        db = AsyncMock()
+        return ResourceCostService(db)
+
+    @pytest.mark.asyncio
+    async def test_activity_not_found_raises_error(self, service):
+        """Should raise ValueError when activity not found."""
+        from unittest.mock import AsyncMock
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = None
+        service.db.execute = AsyncMock(return_value=mock_result)
+
+        with pytest.raises(ValueError) as exc_info:
+            await service.calculate_activity_cost(uuid4())
+        assert "not found" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_activity_with_no_assignments(self, service):
+        """Should handle activity with no assignments."""
+        from unittest.mock import AsyncMock
+
+        activity = MagicMock()
+        activity.id = uuid4()
+        activity.code = "A-001"
+        activity.name = "Test Activity"
+        activity.resource_assignments = []
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = activity
+        service.db.execute = AsyncMock(return_value=mock_result)
+
+        result = await service.calculate_activity_cost(activity.id)
+
+        assert result.planned_cost == Decimal("0.00")
+        assert result.actual_cost == Decimal("0.00")
+        assert result.resource_breakdown == []
+
+    @pytest.mark.asyncio
+    async def test_skips_deleted_assignments(self, service):
+        """Should skip deleted assignments."""
+        from unittest.mock import AsyncMock
+        from src.models.enums import ResourceType
+
+        resource = MagicMock()
+        resource.id = uuid4()
+        resource.code = "R-001"
+        resource.name = "Resource"
+        resource.resource_type = ResourceType.LABOR
+        resource.cost_rate = Decimal("100.00")
+
+        deleted_assignment = MagicMock()
+        deleted_assignment.deleted_at = "2026-01-01"
+        deleted_assignment.resource = resource
+
+        activity = MagicMock()
+        activity.id = uuid4()
+        activity.code = "A-001"
+        activity.name = "Test"
+        activity.resource_assignments = [deleted_assignment]
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = activity
+        service.db.execute = AsyncMock(return_value=mock_result)
+
+        result = await service.calculate_activity_cost(activity.id)
+
+        assert result.planned_cost == Decimal("0.00")
+        assert len(result.resource_breakdown) == 0
+
+    @pytest.mark.asyncio
+    async def test_calculates_correct_totals(self, service):
+        """Should calculate correct cost totals."""
+        from unittest.mock import AsyncMock
+        from src.models.enums import ResourceType
+
+        resource = MagicMock()
+        resource.id = uuid4()
+        resource.code = "ENG-001"
+        resource.name = "Engineer"
+        resource.resource_type = ResourceType.LABOR
+        resource.cost_rate = Decimal("100.00")
+
+        assignment = MagicMock()
+        assignment.deleted_at = None
+        assignment.resource = resource
+        assignment.planned_hours = Decimal("80.00")
+        assignment.actual_hours = Decimal("70.00")
+
+        activity = MagicMock()
+        activity.id = uuid4()
+        activity.code = "A-001"
+        activity.name = "Design"
+        activity.resource_assignments = [assignment]
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = activity
+        service.db.execute = AsyncMock(return_value=mock_result)
+
+        result = await service.calculate_activity_cost(activity.id)
+
+        assert result.planned_cost == Decimal("8000.00")
+        assert result.actual_cost == Decimal("7000.00")
+        assert result.cost_variance == Decimal("1000.00")
+        assert result.percent_spent == Decimal("87.50")
+        assert len(result.resource_breakdown) == 1
+
+
+class TestCalculateWBSCostAsync:
+    """Async tests for calculate_wbs_cost method."""
+
+    @pytest.fixture
+    def service(self):
+        """Create service with mocked db."""
+        from unittest.mock import AsyncMock
+        db = AsyncMock()
+        return ResourceCostService(db)
+
+    @pytest.mark.asyncio
+    async def test_wbs_not_found_raises_error(self, service):
+        """Should raise ValueError when WBS not found."""
+        from unittest.mock import AsyncMock
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = None
+        service.db.execute = AsyncMock(return_value=mock_result)
+
+        with pytest.raises(ValueError) as exc_info:
+            await service.calculate_wbs_cost(uuid4())
+        assert "not found" in str(exc_info.value)
+
+
+class TestGetResourceCostSummaryAsync:
+    """Async tests for get_resource_cost_summary method."""
+
+    @pytest.fixture
+    def service(self):
+        """Create service with mocked db."""
+        from unittest.mock import AsyncMock
+        db = AsyncMock()
+        return ResourceCostService(db)
+
+    @pytest.mark.asyncio
+    async def test_no_assignments_returns_zeros(self, service):
+        """Should return zeros for resource with no assignments."""
+        from unittest.mock import AsyncMock
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = []
+        service.db.execute = AsyncMock(return_value=mock_result)
+
+        resource_id = uuid4()
+        result = await service.get_resource_cost_summary(resource_id)
+
+        assert result["resource_id"] == str(resource_id)
+        assert result["assignment_count"] == 0
+        assert result["total_planned_hours"] == Decimal("0.00")
+        assert result["total_actual_hours"] == Decimal("0.00")
+        assert result["cost_variance"] == Decimal("0.00")
+
+    @pytest.mark.asyncio
+    async def test_sums_multiple_assignments(self, service):
+        """Should sum up values from multiple assignments."""
+        from unittest.mock import AsyncMock
+
+        assignment1 = MagicMock()
+        assignment1.planned_hours = Decimal("40.00")
+        assignment1.actual_hours = Decimal("35.00")
+        assignment1.planned_cost = Decimal("4000.00")
+        assignment1.actual_cost = Decimal("3500.00")
+
+        assignment2 = MagicMock()
+        assignment2.planned_hours = Decimal("20.00")
+        assignment2.actual_hours = Decimal("22.00")
+        assignment2.planned_cost = Decimal("2000.00")
+        assignment2.actual_cost = Decimal("2200.00")
+
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = [assignment1, assignment2]
+        service.db.execute = AsyncMock(return_value=mock_result)
+
+        result = await service.get_resource_cost_summary(uuid4())
+
+        assert result["assignment_count"] == 2
+        assert result["total_planned_hours"] == Decimal("60.00")
+        assert result["total_actual_hours"] == Decimal("57.00")
+        assert result["total_planned_cost"] == Decimal("6000.00")
+        assert result["total_actual_cost"] == Decimal("5700.00")
+        assert result["cost_variance"] == Decimal("300.00")
+
+
+class TestRecordCostEntryAsync:
+    """Async tests for record_cost_entry method."""
+
+    @pytest.fixture
+    def service(self):
+        """Create service with mocked db."""
+        from unittest.mock import AsyncMock
+        db = AsyncMock()
+        db.commit = AsyncMock()
+        db.refresh = AsyncMock()
+        db.add = MagicMock()
+        return ResourceCostService(db)
+
+    @pytest.mark.asyncio
+    async def test_assignment_not_found_raises_error(self, service):
+        """Should raise ValueError when assignment not found."""
+        from unittest.mock import AsyncMock
+        from datetime import date as dt_date
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = None
+        service.db.execute = AsyncMock(return_value=mock_result)
+
+        with pytest.raises(ValueError) as exc_info:
+            await service.record_cost_entry(
+                assignment_id=uuid4(),
+                entry_date=dt_date(2026, 1, 15),
+                hours_worked=Decimal("8.00"),
+            )
+        assert "not found" in str(exc_info.value)
+
+
+class TestGetAssignmentCostEntriesAsync:
+    """Async tests for get_assignment_cost_entries method."""
+
+    @pytest.fixture
+    def service(self):
+        """Create service with mocked db."""
+        from unittest.mock import AsyncMock
+        db = AsyncMock()
+        return ResourceCostService(db)
+
+    @pytest.mark.asyncio
+    async def test_returns_entries_list(self, service):
+        """Should return list of cost entries."""
+        from unittest.mock import AsyncMock
+
+        mock_entry1 = MagicMock()
+        mock_entry2 = MagicMock()
+
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = [mock_entry1, mock_entry2]
+        service.db.execute = AsyncMock(return_value=mock_result)
+
+        result = await service.get_assignment_cost_entries(uuid4())
+
+        assert len(result) == 2
 
 
 class TestCostCalculationScenarios:
