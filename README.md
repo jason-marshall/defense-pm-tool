@@ -1,17 +1,17 @@
 # Defense Program Management Tool
 
 [![CI](https://github.com/jason-marshall/defense-pm-tool/actions/workflows/ci.yml/badge.svg)](https://github.com/jason-marshall/defense-pm-tool/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-1.1.0-green.svg)](docs/RELEASE_NOTES_v1.1.0.md)
+[![Version](https://img.shields.io/badge/version-1.2.0-green.svg)](docs/RELEASE_NOTES_v1.2.0.md)
 [![Coverage](https://img.shields.io/badge/coverage-81%25%2B-green.svg)](https://codecov.io/gh/jason-marshall/defense-pm-tool)
-[![Tests](https://img.shields.io/badge/tests-2700%2B-green.svg)]()
+[![Tests](https://img.shields.io/badge/tests-2950%2B-green.svg)]()
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)]()
 [![License](https://img.shields.io/badge/license-Proprietary-red.svg)]()
 
 Enterprise-grade program management with EVMS (Earned Value Management System) compliance for defense contractors. Schedule optimization, Monte Carlo simulation, and CPR reporting.
 
-## v1.0.0 Features
+## Features
 
-### Core Capabilities
+### Core Capabilities (v1.0.0)
 
 - **Program Management**: Create and manage defense programs with contract details
 - **Work Breakdown Structure (WBS)**: Hierarchical WBS with PostgreSQL ltree for efficient queries
@@ -19,18 +19,35 @@ Enterprise-grade program management with EVMS (Earned Value Management System) c
 - **Critical Path Method (CPM) Engine**: Forward/backward pass with float calculation
 - **EVMS Dashboard**: Real-time metrics including CPI, SPI, EAC, VAC, TCPI with trend charts
 - **MS Project Import**: XML import with preview mode and validation
-- **CPR Format 1 Reports**: Contract Performance Reports (WBS Summary) in JSON/HTML
+- **CPR Format 1, 3, 5 Reports**: Contract Performance Reports with PDF export
+
+### Resource Management (v1.1.0)
+
+- **Resource Tracking**: Labor, equipment, and material resources
+- **Resource Assignment**: Allocate resources to activities
+- **Resource Leveling**: Resolve overallocations automatically
+- **Resource Histogram**: Visual utilization over time
+
+### Advanced Resource Management (v1.2.0)
+
+- **Resource Cost Tracking**: Automatic ACWP calculation from actuals
+- **Material Tracking**: Quantity-based inventory management
+- **MS Project Calendar Import**: Import resource calendars from XML
+- **Parallel Leveling**: Optimized multi-resource leveling algorithm
+- **Cross-Program Resource Pools**: Share resources with conflict detection
+- **Gantt Resource View**: Visual drag-and-drop assignment editing
 
 ### Performance
 
-- CPM calculation: <500ms for 1000 activities, <2000ms for 5000 activities
-- Redis caching for CPM results and EVMS dashboard
-- Efficient WBS queries with ltree extension
+- CPM calculation: <12ms for 1000 activities
+- Dashboard load: <200ms
+- Monte Carlo simulation: <5s for 1000 iterations
+- All benchmarks GREEN
 
 ### Test Coverage
 
-- 2400+ automated tests (unit, integration, E2E, security, performance)
-- 80%+ code coverage
+- 2950+ automated tests (unit, integration, E2E, security, performance)
+- 81%+ code coverage
 - Comprehensive E2E test suite for all workflows
 - Performance benchmark tests (all GREEN)
 
