@@ -10,15 +10,19 @@ A comprehensive guide to using the Defense Program Management Tool v1.2.0 for sc
 4. [Activities & Dependencies](#activities--dependencies)
 5. [Schedule Analysis (CPM)](#schedule-analysis-cpm)
 6. [Resource Management](#resource-management) *(New in v1.1.0)*
-7. [EVMS Management](#evms-management)
-8. [Baselines](#baselines)
-9. [Monte Carlo Simulation](#monte-carlo-simulation)
-10. [Scenario Planning](#scenario-planning)
-11. [Import & Export](#import--export)
-12. [Reports](#reports)
-13. [Jira Integration](#jira-integration)
-14. [API Access](#api-access)
-15. [Best Practices](#best-practices)
+7. [Resource Cost Tracking](#resource-cost-tracking) *(New in v1.2.0)*
+8. [Calendar Import](#calendar-import) *(New in v1.2.0)*
+9. [Parallel Leveling](#parallel-leveling) *(New in v1.2.0)*
+10. [Resource Pools](#resource-pools) *(New in v1.2.0)*
+11. [EVMS Management](#evms-management)
+12. [Baselines](#baselines)
+13. [Monte Carlo Simulation](#monte-carlo-simulation)
+14. [Scenario Planning](#scenario-planning)
+15. [Import & Export](#import--export)
+16. [Reports](#reports)
+17. [Jira Integration](#jira-integration)
+18. [API Access](#api-access)
+19. [Best Practices](#best-practices)
 
 > **For API/Integration Documentation**: See [API_GUIDE.md](API_GUIDE.md) for detailed API documentation for system integrators.
 
@@ -351,6 +355,261 @@ Resource leveling automatically resolves overallocations by delaying non-critica
 4. **Monitor utilization**: Keep resources at 70-85% target
 5. **Level early**: Run leveling during planning phase
 6. **Document assumptions**: Note resource allocation rationale
+
+---
+
+## Resource Cost Tracking
+
+*New in v1.2.0*
+
+Track actual costs from resource assignments for automatic EVMS ACWP calculation.
+
+### Recording Actual Costs
+
+1. Navigate to the activity or assignment
+2. Click "Record Actuals" or the cost icon
+3. Enter for each date worked:
+   - **Date**: The work date
+   - **Hours Worked**: Actual hours (for labor/equipment)
+   - **Quantity Used**: Units consumed (for materials)
+   - **Notes**: Optional work description
+4. Click "Save Entry"
+
+### Viewing Cost Summaries
+
+**Activity Cost Breakdown:**
+1. Open an activity
+2. Click "Cost Summary" tab
+3. View:
+   - Planned vs. actual cost
+   - Cost variance (under/over budget)
+   - Percent spent
+   - Resource-level breakdown
+
+**WBS Cost Rollup:**
+1. Navigate to WBS view
+2. Click on a WBS element
+3. View rolled-up costs from all child activities
+
+**Program Cost Summary:**
+1. Go to Program dashboard
+2. Click "Cost Summary"
+3. View total planned, actual, and variance by:
+   - Resource type (Labor, Equipment, Material)
+   - WBS breakdown
+
+### EVMS Cost Integration
+
+Sync resource costs to EVMS ACWP automatically:
+
+1. Navigate to "EVMS" → "Periods"
+2. Select the period to update
+3. Click "Sync Resource Costs"
+4. Review the sync results:
+   - Updated ACWP value
+   - Number of WBS elements updated
+   - Any warnings
+5. Confirm to apply
+
+**Benefits of Automatic ACWP:**
+- Eliminates manual data entry
+- Ensures consistency between resource and EVMS data
+- Reduces reporting errors
+- Provides real-time cost visibility
+
+---
+
+## Calendar Import
+
+*New in v1.2.0*
+
+Import resource calendars from MS Project to set up working days and holidays.
+
+### Supported Calendar Elements
+
+| Element | Description |
+|---------|-------------|
+| **Working Days** | Standard Mon-Fri, custom configurations |
+| **Holidays** | Non-working days (company holidays) |
+| **Exceptions** | Custom overrides for specific dates |
+| **Working Hours** | Per-day working time definitions |
+
+### Importing Calendars
+
+1. Prepare your MS Project XML file with calendar definitions
+2. Navigate to "Resources" → "Import Calendars"
+3. Click "Choose File" and select your XML file
+4. Set the date range for calendar generation
+5. Click "Preview Import"
+
+**Preview Results:**
+- List of calendars found in the file
+- Resource mappings (which calendars apply to which resources)
+- Total holidays/exceptions identified
+- Any warnings or conflicts
+
+6. Review the preview carefully
+7. Click "Import" to apply
+
+### After Import
+
+- Resource calendars are created or updated
+- Calendar entries are generated for the date range
+- Histogram and leveling will respect non-working days
+
+### Tips
+
+- Export fresh calendar data from MS Project before importing
+- Ensure resource names in MS Project match your system
+- Re-import if you update calendars in MS Project
+- Extend the date range for longer-duration programs
+
+---
+
+## Parallel Leveling
+
+*New in v1.2.0*
+
+Optimized resource leveling algorithm for complex multi-resource schedules.
+
+### When to Use Parallel Leveling
+
+| Scenario | Recommendation |
+|----------|----------------|
+| Simple schedule (<50 activities) | Serial leveling is sufficient |
+| Many shared resources | Use parallel for better results |
+| Multiple overallocations | Parallel handles complex conflicts better |
+| Need minimal schedule extension | Compare both algorithms |
+
+### Running Parallel Leveling
+
+1. Navigate to "Resources" → "Leveling Panel"
+2. Select "Parallel Algorithm" (if available)
+3. Configure options:
+   - **Preserve Critical Path**: Recommended ON
+   - **Level Within Float**: Use available slack first
+   - **Max Iterations**: Default 100
+4. Click "Run Parallel Leveling"
+5. Review results
+
+### Comparing Algorithms
+
+To decide between serial and parallel:
+
+1. Click "Compare Algorithms"
+2. Both algorithms run with the same options
+3. Review the comparison:
+   - Schedule extension (fewer days is better)
+   - Activities shifted (fewer is less disruptive)
+   - Success rate (conflicts resolved)
+4. Note the recommended algorithm
+5. Apply the preferred result
+
+### Understanding Results
+
+**Parallel leveling advantages:**
+- Considers all resources simultaneously
+- Builds complete conflict matrix upfront
+- Uses multi-factor priority scoring
+- Often finds shorter schedule extension
+
+**The recommendation is based on:**
+1. Schedule extension (primary factor)
+2. Number of activities shifted
+3. Remaining conflicts (if both incomplete)
+
+---
+
+## Resource Pools
+
+*New in v1.2.0*
+
+Share resources across multiple programs with cross-program conflict detection.
+
+### What Are Resource Pools?
+
+Resource pools allow organizations to:
+- Share specialized resources across programs
+- Detect scheduling conflicts between programs
+- Manage enterprise-wide resource capacity
+- Coordinate resource allocation centrally
+
+### Creating a Resource Pool
+
+1. Navigate to "Resource Pools" (in main navigation)
+2. Click "Create Pool"
+3. Enter:
+   - **Code**: Unique identifier (e.g., "ENG-POOL")
+   - **Name**: Descriptive name
+   - **Description**: Purpose of the pool
+4. Click "Create"
+
+### Adding Resources to a Pool
+
+1. Open the resource pool
+2. Click "Add Member"
+3. Select the resource to add
+4. Set allocation percentage (what % of capacity is pooled)
+5. Click "Add"
+
+**Allocation Examples:**
+- **100%**: Entire resource capacity is available to pool programs
+- **50%**: Half capacity shared, half dedicated to home program
+
+### Granting Program Access
+
+1. Open the resource pool
+2. Click "Access Control"
+3. Click "Grant Access"
+4. Select a program
+5. Choose access level:
+   - **READ**: View availability only
+   - **ASSIGN**: Assign resources to activities
+   - **MANAGE**: Add/remove pool members
+6. Click "Grant"
+
+### Checking Availability
+
+1. Open the resource pool
+2. Click "View Availability"
+3. Set the date range
+4. Review:
+   - Per-resource available hours by day
+   - Existing assignments across programs
+   - Detected conflicts
+
+### Detecting Cross-Program Conflicts
+
+Conflicts occur when multiple programs over-assign a pooled resource.
+
+**Conflict indicators:**
+- Red highlighting in pool availability view
+- Conflict count badge on pool
+- Warnings when creating assignments
+
+**Resolving conflicts:**
+1. Identify the conflicting programs and dates
+2. Coordinate with program managers
+3. Adjust assignment dates or allocations
+4. Re-run leveling if needed
+
+### Before Assigning Pool Resources
+
+Use "Check Conflict" before creating assignments:
+
+1. In the assignment dialog, click "Check Availability"
+2. Enter proposed dates and allocation
+3. Review any conflicts that would result
+4. Adjust dates or find alternative resources if needed
+
+### Resource Pool Best Practices
+
+1. **Central ownership**: Assign pool management to resource managers
+2. **Clear naming**: Use consistent pool naming conventions
+3. **Regular reviews**: Check pool availability weekly
+4. **Communication**: Notify affected programs of changes
+5. **Limit pool size**: Smaller pools are easier to manage
+6. **Document policies**: Define pool access and priority rules
 
 ---
 

@@ -14,14 +14,17 @@ A comprehensive API guide for system integrators and developers using the Defens
 8. [Resource Management](#resource-management)
 9. [Resource Cost Tracking (v1.2.0)](#resource-cost-tracking-v120)
 10. [Material Tracking (v1.2.0)](#material-tracking-v120)
-11. [Baselines API](#baselines-api)
-12. [Monte Carlo Simulation](#monte-carlo-simulation)
-13. [Scenario Planning](#scenario-planning)
-14. [Reports API](#reports-api)
-15. [Jira Integration](#jira-integration)
-16. [Error Handling](#error-handling)
-17. [Rate Limiting](#rate-limiting)
-18. [Frontend Components (v1.2.0)](#frontend-components-v120)
+11. [Calendar Import (v1.2.0)](#calendar-import-v120)
+12. [Parallel Leveling (v1.2.0)](#parallel-leveling-v120)
+13. [Resource Pools (v1.2.0)](#resource-pools-v120)
+14. [Baselines API](#baselines-api)
+15. [Monte Carlo Simulation](#monte-carlo-simulation)
+16. [Scenario Planning](#scenario-planning)
+17. [Reports API](#reports-api)
+18. [Jira Integration](#jira-integration)
+19. [Error Handling](#error-handling)
+20. [Rate Limiting](#rate-limiting)
+21. [Frontend Components (v1.2.0)](#frontend-components-v120)
 
 ---
 
@@ -1049,6 +1052,387 @@ curl https://api.defense-pm-tool.com/api/v1/materials/programs/$PROGRAM_ID \
       "quantity_available": "1000.00",
       "quantity_consumed": "200.00",
       "percent_consumed": "20.00"
+    }
+  ]
+}
+```
+
+---
+
+## Calendar Import (v1.2.0)
+
+Import resource calendars from MS Project XML files.
+
+### Preview Calendar Import
+
+Preview what calendars will be imported before making changes:
+
+```bash
+curl -X POST "https://api.defense-pm-tool.com/api/v1/calendars/import/preview?program_id=$PROGRAM_ID&start_date=2026-01-01&end_date=2026-12-31" \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "file=@project.xml"
+```
+
+### Preview Response
+
+```json
+{
+  "calendars": [
+    {
+      "name": "Engineer A Calendar",
+      "uid": "2",
+      "working_days": [1, 2, 3, 4, 5],
+      "exceptions_count": 12
+    }
+  ],
+  "resource_mappings": [
+    {
+      "ms_project_name": "Engineer A",
+      "matched_resource_id": "uuid",
+      "matched_resource_code": "ENG-001",
+      "calendar_name": "Engineer A Calendar"
+    }
+  ],
+  "total_holidays": 12,
+  "date_range_start": "2026-01-01",
+  "date_range_end": "2026-12-31",
+  "warnings": []
+}
+```
+
+### Import Calendars
+
+Import calendars and apply to resources:
+
+```bash
+curl -X POST "https://api.defense-pm-tool.com/api/v1/calendars/import?program_id=$PROGRAM_ID&start_date=2026-01-01&end_date=2026-12-31" \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "file=@project.xml"
+```
+
+### Import Response
+
+```json
+{
+  "success": true,
+  "resources_updated": 15,
+  "calendar_entries_created": 180,
+  "templates_created": 3,
+  "warnings": []
+}
+```
+
+### Supported MS Project Calendar Elements
+
+| Element | Description |
+|---------|-------------|
+| `WeekDays` | Standard working day configuration |
+| `Exceptions` | Holidays and non-working periods |
+| `WorkingTimes` | Custom working hours per day |
+
+---
+
+## Parallel Leveling (v1.2.0)
+
+Optimized multi-resource leveling algorithm for complex schedules.
+
+### Run Parallel Leveling
+
+Run parallel resource leveling on a program:
+
+```bash
+curl -X POST https://api.defense-pm-tool.com/api/v1/programs/$PROGRAM_ID/level-parallel \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "preserve_critical_path": true,
+    "level_within_float": true,
+    "max_iterations": 100,
+    "target_resources": null
+  }'
+```
+
+### Parallel Leveling Response
+
+```json
+{
+  "program_id": "uuid",
+  "success": true,
+  "iterations_used": 42,
+  "activities_shifted": 12,
+  "shifts": [
+    {
+      "activity_id": "uuid",
+      "activity_code": "A-025",
+      "original_start": "2026-03-01",
+      "original_finish": "2026-03-15",
+      "new_start": "2026-03-08",
+      "new_finish": "2026-03-22",
+      "delay_days": 7,
+      "reason": "Resource conflict: ENG-001 overallocated"
+    }
+  ],
+  "remaining_overallocations": 0,
+  "new_project_finish": "2026-08-15",
+  "original_project_finish": "2026-08-01",
+  "schedule_extension_days": 14,
+  "warnings": [],
+  "conflicts_resolved": 25,
+  "resources_processed": 8
+}
+```
+
+### Preview Parallel Leveling
+
+Preview changes without applying:
+
+```bash
+curl "https://api.defense-pm-tool.com/api/v1/programs/$PROGRAM_ID/level-parallel/preview?preserve_critical_path=true&level_within_float=true" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Compare Leveling Algorithms
+
+Compare serial and parallel leveling results:
+
+```bash
+curl "https://api.defense-pm-tool.com/api/v1/programs/$PROGRAM_ID/level/compare?preserve_critical_path=true" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Comparison Response
+
+```json
+{
+  "serial": {
+    "success": true,
+    "iterations": 85,
+    "activities_shifted": 18,
+    "schedule_extension_days": 21,
+    "remaining_conflicts": 0
+  },
+  "parallel": {
+    "success": true,
+    "iterations": 42,
+    "activities_shifted": 12,
+    "schedule_extension_days": 14,
+    "remaining_conflicts": 0
+  },
+  "recommendation": "parallel",
+  "improvement": {
+    "extension_days_saved": 7,
+    "fewer_shifts": 6,
+    "fewer_iterations": 43
+  }
+}
+```
+
+### Leveling Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `preserve_critical_path` | boolean | true | Don't delay critical path activities |
+| `level_within_float` | boolean | true | Only delay within available float |
+| `max_iterations` | integer | 100 | Maximum iterations (1-1000) |
+| `target_resources` | array | null | Specific resource IDs to level |
+
+---
+
+## Resource Pools (v1.2.0)
+
+Share resources across programs with conflict detection.
+
+### Create Resource Pool
+
+```bash
+curl -X POST https://api.defense-pm-tool.com/api/v1/resource-pools \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Engineering Pool",
+    "code": "ENG-POOL",
+    "description": "Shared engineering resources across all programs"
+  }'
+```
+
+### Response
+
+```json
+{
+  "id": "uuid",
+  "name": "Engineering Pool",
+  "code": "ENG-POOL",
+  "description": "Shared engineering resources across all programs",
+  "owner_id": "uuid",
+  "is_active": true,
+  "created_at": "2026-02-01T10:00:00Z"
+}
+```
+
+### List Resource Pools
+
+List pools owned by or accessible to current user:
+
+```bash
+curl https://api.defense-pm-tool.com/api/v1/resource-pools \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Get Pool Details
+
+```bash
+curl https://api.defense-pm-tool.com/api/v1/resource-pools/$POOL_ID \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Update Pool
+
+```bash
+curl -X PATCH https://api.defense-pm-tool.com/api/v1/resource-pools/$POOL_ID \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Senior Engineering Pool",
+    "description": "Updated description"
+  }'
+```
+
+### Delete Pool
+
+```bash
+curl -X DELETE https://api.defense-pm-tool.com/api/v1/resource-pools/$POOL_ID \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Add Resource to Pool
+
+```bash
+curl -X POST https://api.defense-pm-tool.com/api/v1/resource-pools/$POOL_ID/members \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "resource_id": "uuid",
+    "allocation_percentage": 100
+  }'
+```
+
+### Response
+
+```json
+{
+  "id": "uuid",
+  "pool_id": "uuid",
+  "resource_id": "uuid",
+  "allocation_percentage": 100,
+  "created_at": "2026-02-01T10:00:00Z"
+}
+```
+
+### List Pool Members
+
+```bash
+curl https://api.defense-pm-tool.com/api/v1/resource-pools/$POOL_ID/members \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Remove Resource from Pool
+
+```bash
+curl -X DELETE https://api.defense-pm-tool.com/api/v1/resource-pools/$POOL_ID/members/$MEMBER_ID \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Grant Program Access
+
+Allow a program to use resources from a pool:
+
+```bash
+curl -X POST https://api.defense-pm-tool.com/api/v1/resource-pools/$POOL_ID/access \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "program_id": "uuid",
+    "access_level": "ASSIGN"
+  }'
+```
+
+### Access Levels
+
+| Level | Description |
+|-------|-------------|
+| `READ` | View pool resources and availability |
+| `ASSIGN` | Assign pool resources to activities |
+| `MANAGE` | Add/remove pool members |
+
+### Get Pool Availability
+
+Check availability of all resources in a pool:
+
+```bash
+curl "https://api.defense-pm-tool.com/api/v1/resource-pools/$POOL_ID/availability?start_date=2026-03-01&end_date=2026-03-31" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Availability Response
+
+```json
+{
+  "pool_id": "uuid",
+  "pool_name": "Engineering Pool",
+  "date_range_start": "2026-03-01",
+  "date_range_end": "2026-03-31",
+  "resources": [
+    {
+      "resource_id": "uuid",
+      "resource_name": "Senior Engineer",
+      "capacity_per_day": 8,
+      "daily_availability": {
+        "2026-03-01": 4,
+        "2026-03-02": 8
+      }
+    }
+  ],
+  "conflict_count": 2,
+  "conflicts": [
+    {
+      "resource_id": "uuid",
+      "resource_name": "Senior Engineer",
+      "conflict_date": "2026-03-15",
+      "programs_involved": ["Program A", "Program B"],
+      "overallocation_hours": 4
+    }
+  ]
+}
+```
+
+### Check Assignment Conflict
+
+Check if a new assignment would cause cross-program conflicts:
+
+```bash
+curl -X POST https://api.defense-pm-tool.com/api/v1/resource-pools/check-conflict \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "resource_id": "uuid",
+    "program_id": "uuid",
+    "start_date": "2026-03-01",
+    "end_date": "2026-03-15",
+    "units": 8
+  }'
+```
+
+### Conflict Check Response
+
+```json
+{
+  "has_conflicts": true,
+  "conflict_count": 3,
+  "conflicts": [
+    {
+      "date": "2026-03-05",
+      "programs": ["Program A", "Program B"],
+      "overallocation_hours": 4
     }
   ]
 }
