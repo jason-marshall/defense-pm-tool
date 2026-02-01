@@ -536,3 +536,77 @@ class TestResourceServiceCalendarGeneration:
 
             create_call_args = mock_create.call_args[0][0]
             assert create_call_args[0]["available_hours"] == Decimal("10.0")
+
+    @pytest.mark.asyncio
+    async def test_generate_default_calendar_marks_weekends_non_working(
+        self, service: ResourceService
+    ) -> None:
+        """Test calendar marks weekends as non-working when include_weekends=False."""
+        resource_id = uuid4()
+
+        # Full week including weekend (Jan 15-21, 2024) - Mon to Sun
+        start_date = date(2024, 1, 15)  # Monday
+        end_date = date(2024, 1, 21)  # Sunday
+
+        # All 7 entries expected, but weekends marked non-working
+        mock_entries = [MagicMock() for _ in range(7)]
+
+        with (
+            patch.object(service._calendar_repo, "delete_range", new_callable=AsyncMock),
+            patch.object(
+                service._calendar_repo, "bulk_create_entries", new_callable=AsyncMock
+            ) as mock_create,
+        ):
+            mock_create.return_value = mock_entries
+
+            entries = await service.generate_default_calendar(
+                resource_id, start_date, end_date, include_weekends=False
+            )
+
+            # Should get all 7 entries
+            assert len(entries) == 7
+
+            # Verify entries - weekdays are working, weekends are not
+            create_call_args = mock_create.call_args[0][0]
+            assert len(create_call_args) == 7
+
+            for entry_data in create_call_args:
+                day_of_week = entry_data["calendar_date"].weekday()
+                if day_of_week < 5:  # Weekday
+                    assert entry_data["is_working_day"] is True
+                    assert entry_data["available_hours"] == Decimal("8.0")
+                else:  # Weekend
+                    assert entry_data["is_working_day"] is False
+                    assert entry_data["available_hours"] == Decimal("0")
+
+    @pytest.mark.asyncio
+    async def test_generate_default_calendar_weekend_only_range(
+        self, service: ResourceService
+    ) -> None:
+        """Test calendar when date range is weekend only."""
+        resource_id = uuid4()
+
+        # Saturday and Sunday only (Jan 20-21, 2024)
+        start_date = date(2024, 1, 20)  # Saturday
+        end_date = date(2024, 1, 21)  # Sunday
+
+        mock_entries = [MagicMock() for _ in range(2)]
+
+        with (
+            patch.object(service._calendar_repo, "delete_range", new_callable=AsyncMock),
+            patch.object(
+                service._calendar_repo, "bulk_create_entries", new_callable=AsyncMock
+            ) as mock_create,
+        ):
+            mock_create.return_value = mock_entries
+
+            entries = await service.generate_default_calendar(
+                resource_id, start_date, end_date, include_weekends=False
+            )
+
+            # Both days should be created as non-working
+            create_call_args = mock_create.call_args[0][0]
+            assert len(create_call_args) == 2
+            for entry_data in create_call_args:
+                assert entry_data["is_working_day"] is False
+                assert entry_data["available_hours"] == Decimal("0")

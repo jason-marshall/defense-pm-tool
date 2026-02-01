@@ -497,3 +497,316 @@ class TestSCurveExporterIntegration:
 
         # SVG should be larger (text-based)
         assert len(svg_result) > len(png_result) / 10  # Just a sanity check
+
+
+class TestSCurveExporterAdditionalCoverage:
+    """Additional tests for improved coverage."""
+
+    def test_plot_eac_forecast_with_forecast_value_key(self):
+        """Should plot EAC forecast using forecast_value key as fallback."""
+        exporter = SCurveExporter()
+        data = {
+            "data_points": [
+                {"period": 1, "bcws_cumulative": 1000},
+                {"period": 2, "bcws_cumulative": 2000},
+            ],
+            "eac_forecast": [
+                {"period": 3, "forecast_value": 2500},
+                {"period": 4, "forecast_value": 3000},
+            ],
+        }
+
+        result = exporter.export_png(data)
+
+        assert isinstance(result, bytes)
+
+    def test_confidence_bands_with_p10_p90_keys(self):
+        """Should plot confidence bands using p10/p90 keys."""
+        exporter = SCurveExporter()
+        data = {
+            "data_points": [
+                {"period": 1, "bcws_cumulative": 1000},
+                {"period": 2, "bcws_cumulative": 2000},
+            ],
+            "confidence_bands": [
+                {"period": 3, "p10": 2500, "p90": 3500},
+                {"period": 4, "p10": 3500, "p90": 4500},
+            ],
+        }
+
+        result = exporter.export_png(data)
+
+        assert isinstance(result, bytes)
+
+    def test_eac_range_with_decimal_strings(self):
+        """Should handle Decimal strings in EAC range."""
+        exporter = SCurveExporter()
+        data = {
+            "data_points": [
+                {"period": 1, "bcws_cumulative": 1000},
+            ],
+            "eac_range": {
+                "p10": Decimal("9000.00"),
+                "p50": Decimal("10000.00"),
+                "p90": Decimal("11000.00"),
+            },
+        }
+
+        result = exporter.export_png(data)
+
+        assert isinstance(result, bytes)
+
+    def test_eac_range_without_p50(self):
+        """Should handle EAC range without P50."""
+        exporter = SCurveExporter()
+        data = {
+            "data_points": [
+                {"period": 1, "bcws_cumulative": 1000},
+            ],
+            "eac_range": {
+                "p10": 9000,
+                "p90": 11000,
+                # No p50
+            },
+        }
+
+        result = exporter.export_png(data)
+
+        assert isinstance(result, bytes)
+
+    def test_confidence_bands_with_decimal_values(self):
+        """Should handle Decimal values in confidence bands."""
+        exporter = SCurveExporter()
+        data = {
+            "data_points": [
+                {"period": 1, "bcws_cumulative": 1000},
+            ],
+            "confidence_bands": [
+                {"period": 2, "lower": Decimal("2500.50"), "upper": Decimal("3500.50")},
+            ],
+        }
+
+        result = exporter.export_png(data)
+
+        assert isinstance(result, bytes)
+
+    def test_confidence_bands_with_string_values(self):
+        """Should handle string values in confidence bands."""
+        exporter = SCurveExporter()
+        data = {
+            "data_points": [
+                {"period": 1, "bcws_cumulative": 1000},
+            ],
+            "confidence_bands": [
+                {"period": 2, "lower": "2500.50", "upper": "3500.50"},
+            ],
+        }
+
+        result = exporter.export_png(data)
+
+        assert isinstance(result, bytes)
+
+    def test_confidence_bands_missing_period(self):
+        """Should handle confidence bands with missing period."""
+        exporter = SCurveExporter()
+        data = {
+            "data_points": [
+                {"period": 1, "bcws_cumulative": 1000},
+            ],
+            "confidence_bands": [
+                {"lower": 2500, "upper": 3500},  # Missing period
+                {"period": 2, "lower": 3500, "upper": 4500},
+            ],
+        }
+
+        result = exporter.export_png(data)
+
+        assert isinstance(result, bytes)
+
+    def test_confidence_bands_missing_values(self):
+        """Should skip confidence bands with missing lower/upper."""
+        exporter = SCurveExporter()
+        data = {
+            "data_points": [
+                {"period": 1, "bcws_cumulative": 1000},
+            ],
+            "confidence_bands": [
+                {"period": 2},  # Missing lower and upper
+                {"period": 3, "lower": 3500, "upper": 4500},
+            ],
+        }
+
+        result = exporter.export_png(data)
+
+        assert isinstance(result, bytes)
+
+    def test_no_grid_option(self):
+        """Should hide grid when option is False."""
+        exporter = SCurveExporter()
+        config = SCurveExportConfig(show_grid=False)
+        data = {
+            "data_points": [
+                {"period": 1, "bcws_cumulative": 1000},
+            ],
+        }
+
+        result = exporter.export_png(data, config)
+
+        assert isinstance(result, bytes)
+
+    def test_no_legend_option(self):
+        """Should hide legend when option is False."""
+        exporter = SCurveExporter()
+        config = SCurveExportConfig(show_legend=False)
+        data = {
+            "data_points": [
+                {"period": 1, "bcws_cumulative": 1000},
+            ],
+        }
+
+        result = exporter.export_png(data, config)
+
+        assert isinstance(result, bytes)
+
+    def test_period_number_fallback(self):
+        """Should use period_number key when period key is missing."""
+        exporter = SCurveExporter()
+        data = {
+            "data_points": [
+                {"period_number": 1, "bcws_cumulative": 1000},
+                {"period_number": 2, "bcws_cumulative": 2000},
+            ],
+        }
+
+        result = exporter.export_png(data)
+
+        assert isinstance(result, bytes)
+
+    def test_index_fallback_for_period(self):
+        """Should use index when both period keys are missing."""
+        exporter = SCurveExporter()
+        data = {
+            "data_points": [
+                {"bcws_cumulative": 1000},  # No period key
+                {"bcws_cumulative": 2000},
+            ],
+        }
+
+        result = exporter.export_png(data)
+
+        assert isinstance(result, bytes)
+
+    def test_eac_forecast_empty_values(self):
+        """Should handle EAC forecast with no extractable values."""
+        exporter = SCurveExporter()
+        data = {
+            "data_points": [
+                {"period": 1, "bcws_cumulative": 1000},
+            ],
+            "eac_forecast": [
+                {"period": 2},  # No eac or forecast_value
+            ],
+        }
+
+        result = exporter.export_png(data)
+
+        assert isinstance(result, bytes)
+
+    def test_extract_values_only_bcws(self):
+        """Should handle data with only BCWS values."""
+        exporter = SCurveExporter()
+        data = {
+            "data_points": [
+                {"period": 1, "bcws_cumulative": 1000},
+                {"period": 2, "bcws_cumulative": 2000},
+            ],
+        }
+
+        result = exporter.export_png(data)
+
+        assert isinstance(result, bytes)
+
+    def test_extract_values_only_bcwp(self):
+        """Should handle data with only BCWP values."""
+        exporter = SCurveExporter()
+        data = {
+            "data_points": [
+                {"period": 1, "bcwp_cumulative": 900},
+                {"period": 2, "bcwp_cumulative": 1800},
+            ],
+        }
+
+        result = exporter.export_png(data)
+
+        assert isinstance(result, bytes)
+
+    def test_extract_values_only_acwp(self):
+        """Should handle data with only ACWP values."""
+        exporter = SCurveExporter()
+        data = {
+            "data_points": [
+                {"period": 1, "acwp_cumulative": 950},
+                {"period": 2, "acwp_cumulative": 1900},
+            ],
+        }
+
+        result = exporter.export_png(data)
+
+        assert isinstance(result, bytes)
+
+    def test_confidence_bands_multiple_periods_fill_between(self):
+        """Should fill between confidence bands across multiple periods."""
+        exporter = SCurveExporter()
+        data = {
+            "data_points": [
+                {"period": 1, "bcws_cumulative": 1000},
+                {"period": 2, "bcws_cumulative": 2000},
+                {"period": 3, "bcws_cumulative": 3000},
+            ],
+            "confidence_bands": [
+                {"period": 1, "lower": 900, "upper": 1100},
+                {"period": 2, "lower": 1800, "upper": 2200},
+                {"period": 3, "lower": 2700, "upper": 3300},
+            ],
+        }
+
+        result = exporter.export_png(data)
+
+        assert isinstance(result, bytes)
+        assert len(result) > 0
+
+    def test_confidence_bands_using_p10_p90_fallback(self):
+        """Should use p10/p90 as fallback for lower/upper in confidence bands."""
+        exporter = SCurveExporter()
+        data = {
+            "data_points": [
+                {"period": 1, "bcws_cumulative": 1000},
+            ],
+            "confidence_bands": [
+                {"period": 1, "p10": 900, "p90": 1100},
+                {"period": 2, "p10": 1800, "p90": 2200},
+            ],
+        }
+
+        result = exporter.export_png(data)
+
+        assert isinstance(result, bytes)
+
+    def test_confidence_bands_with_all_numeric_types(self):
+        """Should handle int, float, Decimal, and string numeric values."""
+        exporter = SCurveExporter()
+        data = {
+            "data_points": [
+                {"period": 1, "bcws_cumulative": 1000},
+            ],
+            "confidence_bands": [
+                {"period": 1, "lower": 900, "upper": 1100},  # int
+                {"period": 2, "lower": 1800.5, "upper": 2200.5},  # float
+                {"period": 3, "lower": Decimal("2700.50"), "upper": Decimal("3300.50")},
+                {"period": 4, "lower": "3600.50", "upper": "4400.50"},  # string
+            ],
+        }
+
+        result = exporter.export_png(data)
+
+        assert isinstance(result, bytes)

@@ -301,3 +301,443 @@ class TestInventoryScenarios:
         is_low = percent_remaining < Decimal("20")
         assert is_low is True
         assert MaterialTrackingService._round(percent_remaining) == Decimal("10.00")
+
+
+import pytest
+from unittest.mock import AsyncMock, patch
+
+
+class TestGetMaterialStatusAsync:
+    """Async tests for get_material_status method."""
+
+    @pytest.fixture
+    def mock_db(self):
+        """Create mock database session."""
+        return AsyncMock()
+
+    @pytest.fixture
+    def service(self, mock_db):
+        """Create MaterialTrackingService with mock db."""
+        return MaterialTrackingService(mock_db)
+
+    @pytest.mark.asyncio
+    async def test_get_material_status_not_found(self, service, mock_db):
+        """Should raise error when resource not found."""
+        from unittest.mock import MagicMock
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = None
+        mock_db.execute.return_value = mock_result
+
+        resource_id = uuid4()
+        with pytest.raises(ValueError, match=f"Resource {resource_id} not found"):
+            await service.get_material_status(resource_id)
+
+    @pytest.mark.asyncio
+    async def test_get_material_status_not_material_type(self, service, mock_db):
+        """Should raise error when resource is not MATERIAL type."""
+        from unittest.mock import MagicMock
+        from src.models.enums import ResourceType
+
+        mock_resource = MagicMock()
+        mock_resource.id = uuid4()
+        mock_resource.resource_type = ResourceType.LABOR
+        mock_resource.assignments = []
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = mock_resource
+        mock_db.execute.return_value = mock_result
+
+        with pytest.raises(ValueError, match="is not a MATERIAL type"):
+            await service.get_material_status(mock_resource.id)
+
+    @pytest.mark.asyncio
+    async def test_get_material_status_success(self, service, mock_db):
+        """Should return material status for valid MATERIAL resource."""
+        from unittest.mock import MagicMock
+        from src.models.enums import ResourceType
+
+        resource_id = uuid4()
+        mock_resource = MagicMock()
+        mock_resource.id = resource_id
+        mock_resource.code = "MAT-001"
+        mock_resource.name = "Test Material"
+        mock_resource.resource_type = ResourceType.MATERIAL
+        mock_resource.quantity_available = Decimal("1000.00")
+        mock_resource.quantity_unit = "kg"
+        mock_resource.unit_cost = Decimal("10.00")
+
+        # Mock assignments
+        mock_assignment = MagicMock()
+        mock_assignment.deleted_at = None
+        mock_assignment.quantity_assigned = Decimal("500.00")
+        mock_assignment.quantity_consumed = Decimal("200.00")
+        mock_resource.assignments = [mock_assignment]
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = mock_resource
+        mock_db.execute.return_value = mock_result
+
+        status = await service.get_material_status(resource_id)
+
+        assert status.resource_id == resource_id
+        assert status.resource_code == "MAT-001"
+        assert status.quantity_available == Decimal("1000.00")
+        assert status.quantity_consumed == Decimal("200.00")
+        assert status.quantity_remaining == Decimal("800.00")
+
+    @pytest.mark.asyncio
+    async def test_get_material_status_with_deleted_assignments(self, service, mock_db):
+        """Should skip deleted assignments in calculations."""
+        from unittest.mock import MagicMock
+        from datetime import datetime
+        from src.models.enums import ResourceType
+
+        resource_id = uuid4()
+        mock_resource = MagicMock()
+        mock_resource.id = resource_id
+        mock_resource.code = "MAT-002"
+        mock_resource.name = "Test Material 2"
+        mock_resource.resource_type = ResourceType.MATERIAL
+        mock_resource.quantity_available = Decimal("500.00")
+        mock_resource.quantity_unit = "units"
+        mock_resource.unit_cost = Decimal("5.00")
+
+        # Active assignment
+        mock_assignment1 = MagicMock()
+        mock_assignment1.deleted_at = None
+        mock_assignment1.quantity_assigned = Decimal("100.00")
+        mock_assignment1.quantity_consumed = Decimal("50.00")
+
+        # Deleted assignment - should be skipped
+        mock_assignment2 = MagicMock()
+        mock_assignment2.deleted_at = datetime.now()
+        mock_assignment2.quantity_assigned = Decimal("200.00")
+        mock_assignment2.quantity_consumed = Decimal("100.00")
+
+        mock_resource.assignments = [mock_assignment1, mock_assignment2]
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = mock_resource
+        mock_db.execute.return_value = mock_result
+
+        status = await service.get_material_status(resource_id)
+
+        # Should only count active assignment
+        assert status.quantity_assigned == Decimal("100.00")
+        assert status.quantity_consumed == Decimal("50.00")
+
+
+class TestConsumeMaterialAsync:
+    """Async tests for consume_material method."""
+
+    @pytest.fixture
+    def mock_db(self):
+        """Create mock database session."""
+        return AsyncMock()
+
+    @pytest.fixture
+    def service(self, mock_db):
+        """Create MaterialTrackingService with mock db."""
+        return MaterialTrackingService(mock_db)
+
+    @pytest.mark.asyncio
+    async def test_consume_material_assignment_not_found(self, service, mock_db):
+        """Should raise error when assignment not found."""
+        from unittest.mock import MagicMock
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = None
+        mock_db.execute.return_value = mock_result
+
+        assignment_id = uuid4()
+        with pytest.raises(ValueError, match=f"Assignment {assignment_id} not found"):
+            await service.consume_material(assignment_id, Decimal("10"))
+
+    @pytest.mark.asyncio
+    async def test_consume_material_not_material_type(self, service, mock_db):
+        """Should raise error when resource is not MATERIAL type."""
+        from unittest.mock import MagicMock
+        from src.models.enums import ResourceType
+
+        mock_resource = MagicMock()
+        mock_resource.resource_type = ResourceType.LABOR
+
+        mock_assignment = MagicMock()
+        mock_assignment.resource = mock_resource
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = mock_assignment
+        mock_db.execute.return_value = mock_result
+
+        with pytest.raises(ValueError, match="Can only consume material resources"):
+            await service.consume_material(uuid4(), Decimal("10"))
+
+    @pytest.mark.asyncio
+    async def test_consume_material_exceeds_assigned(self, service, mock_db):
+        """Should raise error when consumption exceeds assigned quantity."""
+        from unittest.mock import MagicMock
+        from src.models.enums import ResourceType
+
+        mock_resource = MagicMock()
+        mock_resource.resource_type = ResourceType.MATERIAL
+        mock_resource.unit_cost = Decimal("10.00")
+
+        mock_assignment = MagicMock()
+        mock_assignment.resource = mock_resource
+        mock_assignment.quantity_assigned = Decimal("100.00")
+        mock_assignment.quantity_consumed = Decimal("90.00")
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = mock_assignment
+        mock_db.execute.return_value = mock_result
+
+        with pytest.raises(ValueError, match="would exceed assigned quantity"):
+            await service.consume_material(uuid4(), Decimal("20"))
+
+    @pytest.mark.asyncio
+    async def test_consume_material_success(self, service, mock_db):
+        """Should successfully consume material."""
+        from unittest.mock import MagicMock
+        from src.models.enums import ResourceType
+
+        mock_resource = MagicMock()
+        mock_resource.resource_type = ResourceType.MATERIAL
+        mock_resource.unit_cost = Decimal("10.00")
+
+        assignment_id = uuid4()
+        mock_assignment = MagicMock()
+        mock_assignment.resource = mock_resource
+        mock_assignment.quantity_assigned = Decimal("100.00")
+        mock_assignment.quantity_consumed = Decimal("50.00")
+        mock_assignment.actual_cost = Decimal("500.00")
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = mock_assignment
+        mock_db.execute.return_value = mock_result
+
+        result = await service.consume_material(assignment_id, Decimal("25"))
+
+        assert result.assignment_id == assignment_id
+        assert result.quantity_consumed == Decimal("75.00")
+        assert result.remaining_assigned == Decimal("25.00")
+        assert result.cost_incurred == Decimal("250.00")
+        mock_db.commit.assert_awaited_once()
+
+
+class TestValidateMaterialAssignmentAsync:
+    """Async tests for validate_material_assignment method."""
+
+    @pytest.fixture
+    def mock_db(self):
+        """Create mock database session."""
+        return AsyncMock()
+
+    @pytest.fixture
+    def service(self, mock_db):
+        """Create MaterialTrackingService with mock db."""
+        return MaterialTrackingService(mock_db)
+
+    @pytest.mark.asyncio
+    async def test_validate_assignment_exceeds_available(self, service, mock_db):
+        """Should raise error when requested quantity exceeds available."""
+        from unittest.mock import MagicMock
+        from src.models.enums import ResourceType
+
+        resource_id = uuid4()
+        mock_resource = MagicMock()
+        mock_resource.id = resource_id
+        mock_resource.code = "MAT-001"
+        mock_resource.name = "Test Material"
+        mock_resource.resource_type = ResourceType.MATERIAL
+        mock_resource.quantity_available = Decimal("100.00")
+        mock_resource.quantity_unit = "kg"
+        mock_resource.unit_cost = Decimal("10.00")
+        mock_resource.assignments = []
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = mock_resource
+        mock_db.execute.return_value = mock_result
+
+        with pytest.raises(ValueError, match="exceeds available"):
+            await service.validate_material_assignment(resource_id, Decimal("150"))
+
+    @pytest.mark.asyncio
+    async def test_validate_assignment_success(self, service, mock_db):
+        """Should return True when quantity is available."""
+        from unittest.mock import MagicMock
+        from src.models.enums import ResourceType
+
+        resource_id = uuid4()
+        mock_resource = MagicMock()
+        mock_resource.id = resource_id
+        mock_resource.code = "MAT-001"
+        mock_resource.name = "Test Material"
+        mock_resource.resource_type = ResourceType.MATERIAL
+        mock_resource.quantity_available = Decimal("100.00")
+        mock_resource.quantity_unit = "kg"
+        mock_resource.unit_cost = Decimal("10.00")
+        mock_resource.assignments = []
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = mock_resource
+        mock_db.execute.return_value = mock_result
+
+        result = await service.validate_material_assignment(resource_id, Decimal("50"))
+        assert result is True
+
+
+class TestUpdateMaterialInventoryAsync:
+    """Async tests for update_material_inventory method."""
+
+    @pytest.fixture
+    def mock_db(self):
+        """Create mock database session."""
+        return AsyncMock()
+
+    @pytest.fixture
+    def service(self, mock_db):
+        """Create MaterialTrackingService with mock db."""
+        return MaterialTrackingService(mock_db)
+
+    @pytest.mark.asyncio
+    async def test_update_inventory_not_found(self, service, mock_db):
+        """Should raise error when resource not found."""
+        from unittest.mock import MagicMock
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = None
+        mock_db.execute.return_value = mock_result
+
+        resource_id = uuid4()
+        with pytest.raises(ValueError, match=f"Resource {resource_id} not found"):
+            await service.update_material_inventory(resource_id, Decimal("100"))
+
+    @pytest.mark.asyncio
+    async def test_update_inventory_not_material_type(self, service, mock_db):
+        """Should raise error when resource is not MATERIAL type."""
+        from unittest.mock import MagicMock
+        from src.models.enums import ResourceType
+
+        resource_id = uuid4()
+        mock_resource = MagicMock()
+        mock_resource.id = resource_id
+        mock_resource.resource_type = ResourceType.EQUIPMENT
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = mock_resource
+        mock_db.execute.return_value = mock_result
+
+        with pytest.raises(ValueError, match="is not a MATERIAL type"):
+            await service.update_material_inventory(resource_id, Decimal("100"))
+
+
+class TestGetMaterialAssignmentStatusAsync:
+    """Async tests for get_material_assignment_status method."""
+
+    @pytest.fixture
+    def mock_db(self):
+        """Create mock database session."""
+        return AsyncMock()
+
+    @pytest.fixture
+    def service(self, mock_db):
+        """Create MaterialTrackingService with mock db."""
+        return MaterialTrackingService(mock_db)
+
+    @pytest.mark.asyncio
+    async def test_get_assignment_status_not_found(self, service, mock_db):
+        """Should raise error when assignment not found."""
+        from unittest.mock import MagicMock
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = None
+        mock_db.execute.return_value = mock_result
+
+        assignment_id = uuid4()
+        with pytest.raises(ValueError, match=f"Assignment {assignment_id} not found"):
+            await service.get_material_assignment_status(assignment_id)
+
+    @pytest.mark.asyncio
+    async def test_get_assignment_status_not_material(self, service, mock_db):
+        """Should raise error when assignment is not for material."""
+        from unittest.mock import MagicMock
+        from src.models.enums import ResourceType
+
+        mock_resource = MagicMock()
+        mock_resource.resource_type = ResourceType.LABOR
+
+        mock_assignment = MagicMock()
+        mock_assignment.resource = mock_resource
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = mock_assignment
+        mock_db.execute.return_value = mock_result
+
+        with pytest.raises(ValueError, match="Assignment is not for a material resource"):
+            await service.get_material_assignment_status(uuid4())
+
+    @pytest.mark.asyncio
+    async def test_get_assignment_status_success(self, service, mock_db):
+        """Should return assignment status dict."""
+        from unittest.mock import MagicMock
+        from src.models.enums import ResourceType
+
+        resource_id = uuid4()
+        assignment_id = uuid4()
+
+        mock_resource = MagicMock()
+        mock_resource.id = resource_id
+        mock_resource.code = "MAT-001"
+        mock_resource.name = "Test Material"
+        mock_resource.resource_type = ResourceType.MATERIAL
+        mock_resource.quantity_unit = "kg"
+        mock_resource.unit_cost = Decimal("10.00")
+
+        mock_assignment = MagicMock()
+        mock_assignment.resource = mock_resource
+        mock_assignment.quantity_assigned = Decimal("100.00")
+        mock_assignment.quantity_consumed = Decimal("40.00")
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = mock_assignment
+        mock_db.execute.return_value = mock_result
+
+        result = await service.get_material_assignment_status(assignment_id)
+
+        assert result["resource_code"] == "MAT-001"
+        assert result["quantity_assigned"] == Decimal("100.00")
+        assert result["quantity_consumed"] == Decimal("40.00")
+        assert result["quantity_remaining"] == Decimal("60.00")
+        assert result["percent_consumed"] == Decimal("40.00")
+
+    @pytest.mark.asyncio
+    async def test_get_assignment_status_zero_assigned(self, service, mock_db):
+        """Should handle zero assigned quantity."""
+        from unittest.mock import MagicMock
+        from src.models.enums import ResourceType
+
+        resource_id = uuid4()
+        assignment_id = uuid4()
+
+        mock_resource = MagicMock()
+        mock_resource.id = resource_id
+        mock_resource.code = "MAT-001"
+        mock_resource.name = "Test Material"
+        mock_resource.resource_type = ResourceType.MATERIAL
+        mock_resource.quantity_unit = "kg"
+        mock_resource.unit_cost = Decimal("10.00")
+
+        mock_assignment = MagicMock()
+        mock_assignment.resource = mock_resource
+        mock_assignment.quantity_assigned = Decimal("0")
+        mock_assignment.quantity_consumed = Decimal("0")
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = mock_assignment
+        mock_db.execute.return_value = mock_result
+
+        result = await service.get_material_assignment_status(assignment_id)
+
+        assert result["quantity_assigned"] == Decimal("0.00")
+        assert result["percent_consumed"] == Decimal("0.00")
