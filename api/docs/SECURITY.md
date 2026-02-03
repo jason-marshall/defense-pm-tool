@@ -1,7 +1,7 @@
 # Security Controls
 
-> **Last Updated**: January 2026
-> **Version**: 1.0.0
+> **Last Updated**: March 2026
+> **Version**: 1.2.0
 > **Audit Status**: OWASP Top 10 2021 Compliant
 
 ---
@@ -38,6 +38,7 @@ This document outlines the security controls implemented in the Defense PM Tool 
 | Password Hashing | bcrypt with cost factor 12 | `src/core/auth.py:get_password_hash` |
 | JWT Signing | HS256 algorithm with secret key | `src/core/auth.py:create_access_token` |
 | Token Encryption | Fernet (AES-128) for Jira tokens | `src/services/jira_client.py` |
+| API Key Hashing | SHA-256 hash for API key storage | `src/core/api_key.py` |
 | No Sensitive Data in Logs | Passwords/tokens never logged | All logging calls |
 
 **Verification**:
@@ -282,8 +283,9 @@ Report security vulnerabilities to: security@example.com
 | Date | Auditor | Findings | Status |
 |------|---------|----------|--------|
 | January 2026 | Automated | 0 Critical, 0 High | PASS |
+| March 2026 | Automated (v1.2.0) | 0 Critical, 0 High | PASS |
 
 ---
 
 *This document is part of the Defense PM Tool security documentation.*
-*Last security audit: January 2026*
+*Last security audit: March 2026 (v1.2.0)*

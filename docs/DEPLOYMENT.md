@@ -1,6 +1,8 @@
 # Defense PM Tool - Deployment Guide
 
-This guide covers deployment options for the Defense Program Management Tool v1.0.0.
+This guide covers deployment options for the Defense Program Management Tool v1.2.0.
+
+> **Note**: v1.2.0 includes React 19 upgrade in the frontend. Ensure Node.js 20+ is installed.
 
 ## Table of Contents
 
@@ -603,11 +605,11 @@ Use a secrets manager in production:
 - [ ] Restore procedure documented and tested
 - [ ] Disaster recovery plan documented
 
-### v1.0.0 Release Verification
+### v1.2.0 Release Verification
 
 ```bash
 # Verify build
-docker build -f api/Dockerfile.prod -t defense-pm-tool-api:1.0.0 ./api
+docker build -f api/Dockerfile.prod -t defense-pm-tool-api:1.2.0 ./api
 
 # Verify health endpoint
 curl http://localhost:8000/health
@@ -742,4 +744,4 @@ echo "Backup created: $BACKUP_FILE"
 
 ---
 
-*Defense PM Tool v1.0.0 - Last updated: January 2026*
+*Defense PM Tool v1.2.0 - Last updated: March 2026*

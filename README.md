@@ -54,7 +54,7 @@ Enterprise-grade program management with EVMS (Earned Value Management System) c
 ## Tech Stack
 
 - **Backend**: Python 3.11+ / FastAPI / SQLAlchemy 2.0 / Pydantic 2.0
-- **Frontend**: React 18 / TypeScript / TailwindCSS
+- **Frontend**: React 19 / TypeScript / TailwindCSS
 - **Database**: PostgreSQL 15 with ltree extension
 - **Cache**: Redis 7
 - **Architecture**: Modular Monolith
@@ -201,14 +201,17 @@ defense-pm-tool/
 | **Variance** | Explanations CRUD, Management Reserve |
 | **Jira** | Integration Config, Sync, Mappings, Webhooks |
 
-See [API Reference](docs/api.md) for complete documentation.
+See [API Guide](docs/API_GUIDE.md) for complete documentation.
 
 ## Documentation
 
-- [API Reference](docs/api.md) - Complete REST API documentation
+- [API Guide](docs/API_GUIDE.md) - Complete REST API documentation (77+ endpoints)
 - [Deployment Guide](docs/DEPLOYMENT.md) - Deployment and configuration
 - [User Guide](docs/USER_GUIDE.md) - End-user documentation
 - [Architecture](docs/Architecture.md) - System architecture
+- [Troubleshooting](docs/TROUBLESHOOTING.md) - Common issues and solutions
+- [Frontend Guide](docs/FRONTEND_GUIDE.md) - Frontend development standards
+- [Upgrade Guide](docs/UPGRADE_GUIDE.md) - Version migration instructions
 - [CPM Algorithm](docs/cpm-algorithm.md) - CPM implementation details
 - [EVMS Formulas](docs/evms-formulas.md) - EVMS calculation specifications
 - [Coding Standards](CLAUDE.md) - Development guidelines
@@ -269,27 +272,6 @@ docker-compose -f docker-compose.prod.yml up -d
 - 1540+ automated tests (unit, integration, E2E)
 - 81%+ code coverage
 - Month 2 E2E integration test suite
-
----
-
-## Month 3 Features (In Progress)
-
-### Reporting
-- **CPR Format 1**: WBS Summary report with PDF export
-- **CPR Format 3**: Baseline report with time-phased PMB
-- **CPR Format 5**: Detailed EVMS report with variance analysis
-- **PDF Export**: Professional DFARS-compliant output (reportlab)
-- **Audit Trail**: Complete report generation history with checksums
-
-### Variance Management
-- **Variance Explanations**: Document significant variances per GL 21
-- **Corrective Actions**: Track remediation plans with expected resolution
-- **Management Reserve**: GL 28 compliant MR tracking with change history
-
-### Test Coverage
-- 1600+ automated tests (unit, integration, E2E)
-- 80%+ code coverage maintained
-- Week 9 E2E integration test suite
 
 ---
 
@@ -380,15 +362,15 @@ See [Release Notes v1.0.0](docs/RELEASE_NOTES_v1.0.0.md) for complete details.
 
 ## Roadmap
 
-### v1.2.0 (March 2026) - Advanced Resource Management
-- Resource cost integration with automatic ACWP
-- Material quantity tracking
-- MS Project calendar import
-- Parallel resource leveling algorithm
-- Cross-program resource pools
-- Gantt chart with resource view
+### v1.2.0 (March 2026) - Advanced Resource Management ✅
+- Resource cost integration with automatic ACWP ✅
+- Material quantity tracking ✅
+- MS Project calendar import ✅
+- Parallel resource leveling algorithm ✅
+- Cross-program resource pools ✅
+- Gantt chart with resource view ✅
 
-See [v1.2.0 Roadmap](docs/ROADMAP_v1.2.0.md) for detailed weekly plan.
+See [Release Notes v1.2.0](docs/RELEASE_NOTES_v1.2.0.md) for complete details.
 
 ### v1.1.0 (February 2026) - Resource Management ✅
 - Resource model and CRUD operations ✅
@@ -408,4 +390,4 @@ Proprietary - All rights reserved
 
 ---
 
-*Defense PM Tool v1.1.0 - February 2026 - Resource Management Release*
+*Defense PM Tool v1.2.0 - March 2026 - Advanced Resource Management Release*

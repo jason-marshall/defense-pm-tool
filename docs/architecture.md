@@ -1,7 +1,12 @@
 # Defense PM Tool - Architecture Document v2.0
 
-> **Updated**: January 2026 (Post Week 1 Implementation)
+> **Updated**: March 2026 (v1.2.0 Release)
 > **Status**: Living Document - Updated based on actual implementation
+>
+> **Note**: For detailed component documentation, see:
+> - [API Guide](API_GUIDE.md) - 77+ API endpoints
+> - [User Guide](USER_GUIDE.md) - End-user documentation
+> - [Deployment Guide](DEPLOYMENT.md) - Production deployment
 
 ---
 
@@ -424,6 +429,6 @@ See `.env.example` for complete list with documentation.
 
 ---
 
-*Document Version: 2.0*
-*Last Updated: January 2026*
+*Document Version: 2.1*
+*Last Updated: March 2026*
 *Author: Defense PM Tool Development Team*
