@@ -1,6 +1,5 @@
 """Unit tests for security audit module."""
 
-import pytest
 
 from src.core.security_audit import (
     FindingStatus,

@@ -1,9 +1,8 @@
 """Unit tests for CalendarImportService."""
 
-from datetime import date, timedelta
+from datetime import date
 from decimal import Decimal
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
@@ -453,6 +452,7 @@ class TestCalendarImportServiceGenerateEntries:
     async def test_generate_entries_single_day(self, service, mock_db):
         """Test generating entries for single day."""
         from datetime import time
+
         from src.services.calendar_import import (
             ImportedCalendar,
             ImportedWeekDay,
@@ -492,6 +492,7 @@ class TestCalendarImportServiceGenerateEntries:
     async def test_generate_entries_week(self, service, mock_db):
         """Test generating entries for a week."""
         from datetime import time
+
         from src.services.calendar_import import (
             ImportedCalendar,
             ImportedWeekDay,
@@ -537,6 +538,7 @@ class TestCalendarImportServiceGenerateEntries:
     async def test_generate_entries_with_exception(self, service, mock_db):
         """Test generating entries with holiday exception."""
         from datetime import time
+
         from src.services.calendar_import import (
             ImportedCalendar,
             ImportedException,
@@ -586,6 +588,7 @@ class TestCalendarImportServiceGenerateEntries:
     async def test_generate_entries_working_exception(self, service, mock_db):
         """Test generating entries with working exception (overtime)."""
         from datetime import time
+
         from src.services.calendar_import import (
             ImportedCalendar,
             ImportedException,
@@ -677,6 +680,7 @@ class TestCalendarImportServiceCreateTemplate:
     async def test_create_template_basic(self, service, mock_db):
         """Test creating template from calendar."""
         from datetime import time
+
         from src.services.calendar_import import (
             ImportedCalendar,
             ImportedWeekDay,

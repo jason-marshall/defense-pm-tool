@@ -1,8 +1,8 @@
 """Unit tests for CrossProgramAvailabilityService."""
 
-from datetime import date, timedelta
+from datetime import date
 from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest

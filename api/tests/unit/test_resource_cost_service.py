@@ -289,6 +289,7 @@ class TestCalculateAssignmentCostAsync:
     async def test_labor_resource_cost_calculation(self, service):
         """Should calculate costs for labor resource."""
         from unittest.mock import AsyncMock
+
         from src.models.enums import ResourceType
 
         resource = MagicMock()
@@ -313,6 +314,7 @@ class TestCalculateAssignmentCostAsync:
     async def test_material_resource_cost_calculation(self, service):
         """Should calculate costs for material resource."""
         from unittest.mock import AsyncMock
+
         from src.models.enums import ResourceType
 
         resource = MagicMock()
@@ -337,6 +339,7 @@ class TestCalculateAssignmentCostAsync:
     async def test_equipment_resource_cost_calculation(self, service):
         """Should calculate costs for equipment resource."""
         from unittest.mock import AsyncMock
+
         from src.models.enums import ResourceType
 
         resource = MagicMock()
@@ -361,6 +364,7 @@ class TestCalculateAssignmentCostAsync:
     async def test_none_cost_rate_returns_zero(self, service):
         """Should handle None cost rate."""
         from unittest.mock import AsyncMock
+
         from src.models.enums import ResourceType
 
         resource = MagicMock()
@@ -429,6 +433,7 @@ class TestCalculateActivityCostAsync:
     async def test_skips_deleted_assignments(self, service):
         """Should skip deleted assignments."""
         from unittest.mock import AsyncMock
+
         from src.models.enums import ResourceType
 
         resource = MagicMock()
@@ -461,6 +466,7 @@ class TestCalculateActivityCostAsync:
     async def test_calculates_correct_totals(self, service):
         """Should calculate correct cost totals."""
         from unittest.mock import AsyncMock
+
         from src.models.enums import ResourceType
 
         resource = MagicMock()
@@ -592,8 +598,8 @@ class TestRecordCostEntryAsync:
     @pytest.mark.asyncio
     async def test_assignment_not_found_raises_error(self, service):
         """Should raise ValueError when assignment not found."""
-        from unittest.mock import AsyncMock
         from datetime import date as dt_date
+        from unittest.mock import AsyncMock
 
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = None
@@ -648,7 +654,8 @@ class TestCalculateProgramCostAsync:
     @pytest.mark.asyncio
     async def test_program_cost_with_material_assignments(self, service):
         """Should calculate program cost including material resources."""
-        from unittest.mock import AsyncMock, patch
+        from unittest.mock import AsyncMock
+
         from src.models.enums import ResourceType
 
         # Create material resource assignment

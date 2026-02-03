@@ -165,6 +165,9 @@ class TestSimulationConfigRepositoryCreateConfig:
     def mock_session(self):
         """Create a mock async session."""
         session = AsyncMock()
+        # add/expire are synchronous methods in AsyncSession
+        session.add = MagicMock()
+        session.expire = MagicMock()
         return session
 
     @pytest.fixture
@@ -338,6 +341,9 @@ class TestSimulationResultRepositoryCreateResult:
     def mock_session(self):
         """Create a mock async session."""
         session = AsyncMock()
+        # add/expire are synchronous methods in AsyncSession
+        session.add = MagicMock()
+        session.expire = MagicMock()
         return session
 
     @pytest.fixture
@@ -422,6 +428,9 @@ class TestSimulationResultRepositoryMarkCompleted:
     def mock_session(self):
         """Create a mock async session."""
         session = AsyncMock()
+        # add/expire are synchronous methods in AsyncSession
+        session.add = MagicMock()
+        session.expire = MagicMock()
         return session
 
     @pytest.fixture
@@ -491,6 +500,9 @@ class TestSimulationResultRepositoryMarkFailed:
     def mock_session(self):
         """Create a mock async session."""
         session = AsyncMock()
+        # add/expire are synchronous methods in AsyncSession
+        session.add = MagicMock()
+        session.expire = MagicMock()
         return session
 
     @pytest.fixture

@@ -6,17 +6,16 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
-from fastapi import HTTPException
 
 from src.api.v1.endpoints.resource_cost import (
-    get_activity_cost,
-    get_wbs_cost,
-    get_program_cost_summary,
-    sync_costs_to_evms,
-    record_cost_entry,
-    get_material_status,
     consume_material,
+    get_activity_cost,
+    get_material_status,
+    get_program_cost_summary,
     get_program_materials,
+    get_wbs_cost,
+    record_cost_entry,
+    sync_costs_to_evms,
 )
 
 

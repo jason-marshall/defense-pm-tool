@@ -8,10 +8,10 @@ from uuid import uuid4
 import pytest
 
 from src.api.v1.endpoints.overallocations import (
-    get_resource_overallocations,
-    get_program_overallocations,
-    get_affected_activities,
     _period_to_response,
+    get_affected_activities,
+    get_program_overallocations,
+    get_resource_overallocations,
 )
 from src.services.overallocation import OverallocationPeriod
 

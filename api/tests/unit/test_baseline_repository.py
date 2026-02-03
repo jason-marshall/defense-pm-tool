@@ -326,6 +326,9 @@ class TestBaselineRepositoryCreateSnapshot:
     def mock_session(self):
         """Create a mock async session."""
         session = AsyncMock()
+        # add/expire are synchronous methods in AsyncSession
+        session.add = MagicMock()
+        session.expire = MagicMock()
         return session
 
     @pytest.fixture

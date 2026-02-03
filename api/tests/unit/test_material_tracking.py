@@ -303,8 +303,9 @@ class TestInventoryScenarios:
         assert MaterialTrackingService._round(percent_remaining) == Decimal("10.00")
 
 
+from unittest.mock import AsyncMock
+
 import pytest
-from unittest.mock import AsyncMock, patch
 
 
 class TestGetMaterialStatusAsync:
@@ -337,6 +338,7 @@ class TestGetMaterialStatusAsync:
     async def test_get_material_status_not_material_type(self, service, mock_db):
         """Should raise error when resource is not MATERIAL type."""
         from unittest.mock import MagicMock
+
         from src.models.enums import ResourceType
 
         mock_resource = MagicMock()
@@ -355,6 +357,7 @@ class TestGetMaterialStatusAsync:
     async def test_get_material_status_success(self, service, mock_db):
         """Should return material status for valid MATERIAL resource."""
         from unittest.mock import MagicMock
+
         from src.models.enums import ResourceType
 
         resource_id = uuid4()
@@ -389,8 +392,9 @@ class TestGetMaterialStatusAsync:
     @pytest.mark.asyncio
     async def test_get_material_status_with_deleted_assignments(self, service, mock_db):
         """Should skip deleted assignments in calculations."""
-        from unittest.mock import MagicMock
         from datetime import datetime
+        from unittest.mock import MagicMock
+
         from src.models.enums import ResourceType
 
         resource_id = uuid4()
@@ -458,6 +462,7 @@ class TestConsumeMaterialAsync:
     async def test_consume_material_not_material_type(self, service, mock_db):
         """Should raise error when resource is not MATERIAL type."""
         from unittest.mock import MagicMock
+
         from src.models.enums import ResourceType
 
         mock_resource = MagicMock()
@@ -477,6 +482,7 @@ class TestConsumeMaterialAsync:
     async def test_consume_material_exceeds_assigned(self, service, mock_db):
         """Should raise error when consumption exceeds assigned quantity."""
         from unittest.mock import MagicMock
+
         from src.models.enums import ResourceType
 
         mock_resource = MagicMock()
@@ -499,6 +505,7 @@ class TestConsumeMaterialAsync:
     async def test_consume_material_success(self, service, mock_db):
         """Should successfully consume material."""
         from unittest.mock import MagicMock
+
         from src.models.enums import ResourceType
 
         mock_resource = MagicMock()
@@ -542,6 +549,7 @@ class TestValidateMaterialAssignmentAsync:
     async def test_validate_assignment_exceeds_available(self, service, mock_db):
         """Should raise error when requested quantity exceeds available."""
         from unittest.mock import MagicMock
+
         from src.models.enums import ResourceType
 
         resource_id = uuid4()
@@ -566,6 +574,7 @@ class TestValidateMaterialAssignmentAsync:
     async def test_validate_assignment_success(self, service, mock_db):
         """Should return True when quantity is available."""
         from unittest.mock import MagicMock
+
         from src.models.enums import ResourceType
 
         resource_id = uuid4()
@@ -617,6 +626,7 @@ class TestUpdateMaterialInventoryAsync:
     async def test_update_inventory_not_material_type(self, service, mock_db):
         """Should raise error when resource is not MATERIAL type."""
         from unittest.mock import MagicMock
+
         from src.models.enums import ResourceType
 
         resource_id = uuid4()
@@ -662,6 +672,7 @@ class TestGetMaterialAssignmentStatusAsync:
     async def test_get_assignment_status_not_material(self, service, mock_db):
         """Should raise error when assignment is not for material."""
         from unittest.mock import MagicMock
+
         from src.models.enums import ResourceType
 
         mock_resource = MagicMock()
@@ -681,6 +692,7 @@ class TestGetMaterialAssignmentStatusAsync:
     async def test_get_assignment_status_success(self, service, mock_db):
         """Should return assignment status dict."""
         from unittest.mock import MagicMock
+
         from src.models.enums import ResourceType
 
         resource_id = uuid4()
@@ -715,6 +727,7 @@ class TestGetMaterialAssignmentStatusAsync:
     async def test_get_assignment_status_zero_assigned(self, service, mock_db):
         """Should handle zero assigned quantity."""
         from unittest.mock import MagicMock
+
         from src.models.enums import ResourceType
 
         resource_id = uuid4()

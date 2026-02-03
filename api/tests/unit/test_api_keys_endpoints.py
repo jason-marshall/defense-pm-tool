@@ -1,6 +1,6 @@
 """Unit tests for API key management endpoints."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
@@ -8,8 +8,8 @@ import pytest
 
 from src.api.v1.endpoints.api_keys import (
     create_api_key,
-    list_api_keys,
     get_api_key,
+    list_api_keys,
     revoke_api_key,
 )
 
@@ -28,7 +28,7 @@ class TestCreateAPIKey:
 
         key_id = uuid4()
         plain_key = "dpmt_test1234567890abcdef"
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         mock_api_key = MagicMock()
         mock_api_key.id = key_id
@@ -68,7 +68,7 @@ class TestCreateAPIKey:
 
         key_id = uuid4()
         plain_key = "dpmt_full1234567890abcdef"
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         mock_api_key = MagicMock()
         mock_api_key.id = key_id
@@ -112,7 +112,7 @@ class TestCreateAPIKey:
 
         key_id = uuid4()
         plain_key = "dpmt_perm1234567890abcdef"
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         mock_api_key = MagicMock()
         mock_api_key.id = key_id
@@ -143,14 +143,14 @@ class TestListAPIKeys:
     @pytest.mark.asyncio
     async def test_list_api_keys_success(self):
         """Should list all user API keys."""
-        from src.schemas.api_key import APIKeyListResponse, APIKeyResponse
+        from src.schemas.api_key import APIKeyResponse
 
         mock_db = AsyncMock()
         mock_user = MagicMock()
         user_id = uuid4()
         mock_user.id = user_id
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         key1_id = uuid4()
         key2_id = uuid4()
 
@@ -207,7 +207,7 @@ class TestGetAPIKey:
         mock_user.id = uuid4()
 
         key_id = uuid4()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         mock_key = MagicMock()
         mock_key.id = key_id

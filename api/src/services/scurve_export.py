@@ -212,7 +212,9 @@ class SCurveExporter:
             ax.grid(True, alpha=0.3)
 
         if config.show_legend:
-            ax.legend(loc="upper left", fontsize=config.font_size - 1)
+            handles, _labels = ax.get_legend_handles_labels()
+            if handles:
+                ax.legend(loc="upper left", fontsize=config.font_size - 1)
 
         # Format y-axis with currency formatting
         ax.yaxis.set_major_formatter(FuncFormatter(lambda x, _: f"${x:,.0f}"))

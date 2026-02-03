@@ -248,7 +248,12 @@ class TestBaseRepositoryCreate:
     @pytest.fixture
     def mock_session(self):
         """Create a mock async session."""
-        return AsyncMock()
+        session = AsyncMock()
+        # add/add_all/expire are synchronous methods in AsyncSession
+        session.add = MagicMock()
+        session.add_all = MagicMock()
+        session.expire = MagicMock()
+        return session
 
     @pytest.fixture
     def repo(self, mock_session):
@@ -628,7 +633,12 @@ class TestBaseRepositoryBulkCreate:
     @pytest.fixture
     def mock_session(self):
         """Create a mock async session."""
-        return AsyncMock()
+        session = AsyncMock()
+        # add/add_all/expire are synchronous methods in AsyncSession
+        session.add = MagicMock()
+        session.add_all = MagicMock()
+        session.expire = MagicMock()
+        return session
 
     @pytest.fixture
     def repo(self, mock_session):

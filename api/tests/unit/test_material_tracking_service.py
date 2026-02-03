@@ -8,10 +8,8 @@ import pytest
 
 from src.models.enums import ResourceType
 from src.services.material_tracking import (
-    MaterialConsumption,
     MaterialStatus,
     MaterialTrackingService,
-    ProgramMaterialSummary,
 )
 
 

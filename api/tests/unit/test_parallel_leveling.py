@@ -437,6 +437,7 @@ class TestParallelLevelingServiceInit:
     def test_service_init_with_session(self):
         """Test service initializes with database session."""
         from unittest.mock import MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = MagicMock()
@@ -448,6 +449,7 @@ class TestParallelLevelingServiceInit:
     def test_service_init_with_cache(self):
         """Test service initializes with optional cache."""
         from unittest.mock import MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = MagicMock()
@@ -462,9 +464,10 @@ class TestParallelLevelingServiceSelectActivityToDelay:
 
     def test_select_from_candidates(self):
         """Test selecting activity to delay from candidates."""
+        from unittest.mock import MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
         from src.services.resource_leveling import LevelingOptions
-        from unittest.mock import MagicMock
 
         service = ParallelLevelingService(MagicMock())
 
@@ -511,9 +514,10 @@ class TestParallelLevelingServiceSelectActivityToDelay:
 
     def test_select_skips_critical_path(self):
         """Test skipping critical path activities when option set."""
+        from unittest.mock import MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
         from src.services.resource_leveling import LevelingOptions
-        from unittest.mock import MagicMock
 
         service = ParallelLevelingService(MagicMock())
 
@@ -560,9 +564,10 @@ class TestParallelLevelingServiceSelectActivityToDelay:
 
     def test_select_none_when_all_critical(self):
         """Test returns None when all candidates are critical."""
+        from unittest.mock import MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
         from src.services.resource_leveling import LevelingOptions
-        from unittest.mock import MagicMock
 
         service = ParallelLevelingService(MagicMock())
 
@@ -608,9 +613,10 @@ class TestParallelLevelingServiceSelectActivityToDelay:
 
     def test_select_respects_float_constraint(self):
         """Test respecting level_within_float option."""
+        from unittest.mock import MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
         from src.services.resource_leveling import LevelingOptions
-        from unittest.mock import MagicMock
 
         service = ParallelLevelingService(MagicMock())
 
@@ -665,6 +671,7 @@ class TestParallelLevelingServiceLevelProgram:
     async def test_level_program_not_found(self):
         """Test handling program not found."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
@@ -684,6 +691,7 @@ class TestParallelLevelingServiceLevelProgram:
     async def test_level_program_no_activities(self):
         """Test handling program with no activities."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
@@ -710,7 +718,8 @@ class TestParallelLevelingServiceLevelProgram:
     @pytest.mark.asyncio
     async def test_level_program_no_conflicts(self):
         """Test handling program with no resource conflicts."""
-        from unittest.mock import AsyncMock, MagicMock, patch
+        from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
@@ -759,6 +768,7 @@ class TestParallelLevelingServiceApplyResult:
     async def test_apply_empty_result(self):
         """Test applying result with no shifts."""
         from unittest.mock import AsyncMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
@@ -783,6 +793,7 @@ class TestParallelLevelingServiceApplyResult:
     async def test_apply_result_with_shifts(self):
         """Test applying result with shifts."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
         from src.services.resource_leveling import ActivityShift
 
@@ -838,6 +849,7 @@ class TestParallelLevelingServiceHelpers:
     async def test_get_project_finish_no_activities(self):
         """Test _get_project_finish with no activities."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
@@ -859,6 +871,7 @@ class TestParallelLevelingServiceHelpers:
     async def test_get_project_finish_with_activities(self):
         """Test _get_project_finish with activities."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
@@ -883,6 +896,7 @@ class TestParallelLevelingServiceHelpers:
     async def test_get_project_finish_uses_planned_finish(self):
         """Test _get_project_finish uses planned_finish when early_finish is None."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
@@ -903,6 +917,7 @@ class TestParallelLevelingServiceHelpers:
     async def test_get_project_finish_no_program(self):
         """Test _get_project_finish when program not found."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
@@ -921,6 +936,7 @@ class TestParallelLevelingServiceHelpers:
     async def test_calculate_priorities(self):
         """Test _calculate_priorities creates priority map."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
@@ -957,6 +973,7 @@ class TestParallelLevelingServiceHelpers:
     async def test_build_conflict_matrix_empty_dates(self):
         """Test _build_conflict_matrix with empty activity dates."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
         from src.services.resource_leveling import LevelingOptions
 
@@ -975,6 +992,7 @@ class TestParallelLevelingServiceHelpers:
     async def test_build_conflict_matrix_target_resources(self):
         """Test _build_conflict_matrix filters by target resources."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
         from src.services.resource_leveling import LevelingOptions
 
@@ -1014,6 +1032,7 @@ class TestParallelLevelingServiceHelpers:
     async def test_build_conflict_matrix_no_resources(self):
         """Test _build_conflict_matrix with no resources."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
         from src.services.resource_leveling import LevelingOptions
 
@@ -1033,6 +1052,7 @@ class TestParallelLevelingServiceHelpers:
     async def test_build_conflict_matrix_skips_weekends(self):
         """Test _build_conflict_matrix skips weekend days."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
         from src.services.resource_leveling import LevelingOptions
 
@@ -1069,6 +1089,7 @@ class TestParallelLevelingServiceHelpers:
     async def test_build_conflict_matrix_detects_overallocation(self):
         """Test _build_conflict_matrix detects resource overallocation."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
         from src.services.resource_leveling import LevelingOptions
 
@@ -1116,6 +1137,7 @@ class TestParallelLevelingServiceHelpers:
     async def test_calculate_minimum_delay_resource_not_found(self):
         """Test _calculate_minimum_delay returns 1 when resource not found."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
@@ -1137,6 +1159,7 @@ class TestParallelLevelingServiceHelpers:
     async def test_calculate_minimum_delay_no_assignment(self):
         """Test _calculate_minimum_delay returns 1 when no assignment found."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
@@ -1169,6 +1192,7 @@ class TestParallelLevelingServiceHelpers:
     async def test_propagate_to_successors_no_dependencies(self):
         """Test _propagate_to_successors with no successors."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
@@ -1190,6 +1214,7 @@ class TestParallelLevelingServiceHelpers:
     async def test_propagate_to_successors_fs_dependency(self):
         """Test _propagate_to_successors with finish-to-start dependency."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
@@ -1233,6 +1258,7 @@ class TestParallelLevelingServiceHelpers:
     async def test_propagate_to_successors_ss_dependency(self):
         """Test _propagate_to_successors with start-to-start dependency."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
@@ -1276,6 +1302,7 @@ class TestParallelLevelingServiceHelpers:
     async def test_propagate_to_successors_ff_dependency(self):
         """Test _propagate_to_successors with finish-to-finish dependency."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
@@ -1320,6 +1347,7 @@ class TestParallelLevelingServiceHelpers:
     async def test_propagate_to_successors_sf_dependency(self):
         """Test _propagate_to_successors with start-to-finish dependency."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
@@ -1364,6 +1392,7 @@ class TestParallelLevelingServiceHelpers:
     async def test_propagate_to_successors_default_dependency_type(self):
         """Test _propagate_to_successors with unknown dependency type."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
@@ -1407,6 +1436,7 @@ class TestParallelLevelingServiceHelpers:
     async def test_propagate_successor_not_in_lookup(self):
         """Test _propagate_to_successors skips successors not in lookup."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
@@ -1442,6 +1472,7 @@ class TestParallelLevelingServiceHelpers:
     async def test_propagate_successor_not_in_dates(self):
         """Test _propagate_to_successors skips successors not in activity_dates."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
@@ -1477,6 +1508,7 @@ class TestParallelLevelingServiceHelpers:
     async def test_propagate_no_update_if_earlier(self):
         """Test _propagate_to_successors does not update if new date is earlier."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
@@ -1513,6 +1545,7 @@ class TestParallelLevelingServiceHelpers:
     async def test_apply_result_activity_not_found(self):
         """Test apply_leveling_result handles activity not found."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
         from src.services.resource_leveling import ActivityShift
 
@@ -1552,6 +1585,7 @@ class TestParallelLevelingServiceHelpers:
     async def test_apply_result_multiple_shifts_same_activity(self):
         """Test apply_leveling_result uses latest shift for same activity."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
         from src.services.resource_leveling import ActivityShift
 
@@ -1613,8 +1647,9 @@ class TestParallelLevelingMainLoop:
     @pytest.mark.asyncio
     async def test_leveling_loop_with_conflict_resolution(self):
         """Test full leveling loop with conflict detection and resolution."""
-        from unittest.mock import AsyncMock, MagicMock
         from heapq import heappush
+        from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService, ResourceConflict
         from src.services.resource_leveling import LevelingOptions
 
@@ -1722,8 +1757,9 @@ class TestParallelLevelingMainLoop:
     @pytest.mark.asyncio
     async def test_leveling_loop_cannot_delay_any_activity(self):
         """Test loop when no activity can be delayed."""
-        from unittest.mock import AsyncMock, MagicMock
         from heapq import heappush
+        from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService, ResourceConflict
         from src.services.resource_leveling import LevelingOptions
 
@@ -1805,8 +1841,9 @@ class TestParallelLevelingMainLoop:
     @pytest.mark.asyncio
     async def test_leveling_loop_delay_days_zero(self):
         """Test loop when calculated delay is zero."""
-        from unittest.mock import AsyncMock, MagicMock
         from heapq import heappush
+        from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService, ResourceConflict
         from src.services.resource_leveling import LevelingOptions
 
@@ -1901,6 +1938,7 @@ class TestCalculateMinimumDelay:
     async def test_delay_with_assignment_found(self):
         """Test calculating delay when activity has assignment."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
@@ -1945,6 +1983,7 @@ class TestCalculateMinimumDelay:
     async def test_delay_no_matching_assignment(self):
         """Test delay when no matching assignment exists."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
@@ -1990,6 +2029,7 @@ class TestCalculateMinimumDelay:
     async def test_delay_resource_not_found(self):
         """Test delay returns 1 when resource not found."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
@@ -2019,6 +2059,7 @@ class TestCalculateMinimumDelay:
     async def test_delay_with_overlapping_activities(self):
         """Test delay with other activities occupying resource."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
@@ -2071,6 +2112,7 @@ class TestCalculateMinimumDelay:
     async def test_delay_with_weekend_skipping(self):
         """Test delay calculation skips weekends."""
         from unittest.mock import AsyncMock, MagicMock
+
         from src.services.parallel_leveling import ParallelLevelingService
 
         mock_session = AsyncMock()
