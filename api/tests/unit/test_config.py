@@ -63,6 +63,7 @@ class TestSettings:
             DATABASE_URL="postgresql://user:pass@localhost:5432/db",
             REDIS_URL="redis://localhost:6379/0",
             SECRET_KEY="a" * 32,
+            ENCRYPTION_SALT="custom-production-salt",
             ENVIRONMENT="production",
         )
         assert settings.is_production is True
@@ -134,6 +135,30 @@ class TestSettings:
                 DATABASE_POOL_MIN_SIZE=20,
                 DATABASE_POOL_MAX_SIZE=5,
             )
+
+    def test_encryption_salt_required_in_production(self) -> None:
+        """Should require custom ENCRYPTION_SALT in production."""
+        from pydantic import ValidationError as PydanticValidationError
+
+        with pytest.raises(PydanticValidationError):
+            Settings(
+                DATABASE_URL="postgresql://user:pass@localhost:5432/db",
+                REDIS_URL="redis://localhost:6379/0",
+                SECRET_KEY="a" * 32,
+                ENVIRONMENT="production",
+                # Uses default salt, should fail in production
+            )
+
+    def test_encryption_salt_custom_in_production(self) -> None:
+        """Should accept custom ENCRYPTION_SALT in production."""
+        settings = Settings(
+            DATABASE_URL="postgresql://user:pass@localhost:5432/db",
+            REDIS_URL="redis://localhost:6379/0",
+            SECRET_KEY="a" * 32,
+            ENCRYPTION_SALT="my-custom-production-salt",
+            ENVIRONMENT="production",
+        )
+        assert settings.ENCRYPTION_SALT == "my-custom-production-salt"
 
     def test_cors_origins_from_string(self) -> None:
         """Should parse CORS origins from comma-separated string."""

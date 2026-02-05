@@ -1,6 +1,6 @@
 """Repository for Monte Carlo simulation operations."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -202,7 +202,7 @@ class SimulationResultRepository(BaseRepository[SimulationResult]):
 
         if sim_result:
             sim_result.status = SimulationStatus.RUNNING
-            sim_result.started_at = datetime.utcnow()
+            sim_result.started_at = datetime.now(UTC)
             await self.session.flush()
 
         return sim_result
@@ -239,7 +239,7 @@ class SimulationResultRepository(BaseRepository[SimulationResult]):
 
         if sim_result:
             sim_result.status = SimulationStatus.COMPLETED
-            sim_result.completed_at = datetime.utcnow()
+            sim_result.completed_at = datetime.now(UTC)
             sim_result.iterations_completed = iterations_completed
             sim_result.duration_results = duration_results
             sim_result.cost_results = cost_results
@@ -263,7 +263,7 @@ class SimulationResultRepository(BaseRepository[SimulationResult]):
 
         if sim_result:
             sim_result.status = SimulationStatus.FAILED
-            sim_result.completed_at = datetime.utcnow()
+            sim_result.completed_at = datetime.now(UTC)
             sim_result.error_message = error_message
             await self.session.flush()
 

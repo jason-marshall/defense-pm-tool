@@ -57,7 +57,18 @@ class Settings(BaseSettings):
     BCRYPT_ROUNDS: int = 12
 
     # Encryption - Salt for token encryption (Jira API tokens, etc.)
+    # Override via ENCRYPTION_SALT env var in production
     ENCRYPTION_SALT: str = "defense-pm-tool-encryption-salt"
+
+    @model_validator(mode="after")
+    def validate_encryption_salt(self) -> "Settings":
+        """Require a custom ENCRYPTION_SALT in production."""
+        if self.ENVIRONMENT == "production" and self.ENCRYPTION_SALT == "defense-pm-tool-encryption-salt":
+            raise ValueError(
+                "ENCRYPTION_SALT must be overridden in production. "
+                'Generate one with: python -c "import secrets; print(secrets.token_urlsafe(16))"'
+            )
+        return self
 
     # CORS
     CORS_ORIGINS: list[str] = [

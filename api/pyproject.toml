@@ -75,7 +75,7 @@ markers = [
     "evms: EVMS calculation tests",
 ]
 filterwarnings = [
-    "ignore::DeprecationWarning",
+    "ignore::DeprecationWarning:slowapi.*:",
 ]
 
 [tool.coverage.run]
