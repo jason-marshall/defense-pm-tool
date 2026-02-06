@@ -75,7 +75,7 @@ class TestResourceRepositoryGetByProgram:
 
         mock_session.execute.side_effect = [count_result, items_result]
 
-        items, total = await repo.get_by_program(
+        _, total = await repo.get_by_program(
             uuid4(),
             resource_type=ResourceType.LABOR,
         )
@@ -96,7 +96,7 @@ class TestResourceRepositoryGetByProgram:
 
         mock_session.execute.side_effect = [count_result, items_result]
 
-        items, total = await repo.get_by_program(
+        _, total = await repo.get_by_program(
             uuid4(),
             is_active=True,
         )

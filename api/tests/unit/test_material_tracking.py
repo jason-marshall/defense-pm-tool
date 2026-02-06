@@ -1,8 +1,10 @@
 """Unit tests for MaterialTrackingService."""
 
 from decimal import Decimal
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
+
+import pytest
 
 from src.services.material_tracking import (
     MaterialConsumption,
@@ -301,11 +303,6 @@ class TestInventoryScenarios:
         is_low = percent_remaining < Decimal("20")
         assert is_low is True
         assert MaterialTrackingService._round(percent_remaining) == Decimal("10.00")
-
-
-from unittest.mock import AsyncMock
-
-import pytest
 
 
 class TestGetMaterialStatusAsync:

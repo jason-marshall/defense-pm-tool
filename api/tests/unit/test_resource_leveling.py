@@ -950,7 +950,7 @@ class TestRecalculateSuccessors:
         await service._recalculate_successors(predecessor_id, working_dates, activity_lookup)
 
         # Successor should be pushed to start after predecessor finishes
-        new_start, new_finish = working_dates[successor_id]
+        new_start, _ = working_dates[successor_id]
         assert new_start == date(2024, 1, 20)  # Day after predecessor finish + 1
 
     @pytest.mark.asyncio
@@ -1143,7 +1143,7 @@ class TestCountRemainingOverallocations:
         assert count == 1
 
 
-class TestFindNextAvailableSlot:
+class TestFindNextAvailableSlotExtended:
     """Tests for _find_next_available_slot method."""
 
     @pytest.mark.asyncio
@@ -1331,7 +1331,7 @@ class TestRecalculateSuccessorsExtended:
 
         # FF: successor should finish when predecessor finishes
         # Predecessor finishes Jan 25, successor has 5 day duration
-        new_start, new_finish = working_dates[successor_id]
+        _, new_finish = working_dates[successor_id]
         assert new_finish == date(2024, 1, 25)
 
     @pytest.mark.asyncio
@@ -1372,7 +1372,7 @@ class TestRecalculateSuccessorsExtended:
         await service._recalculate_successors(predecessor_id, working_dates, activity_lookup)
 
         # SF: successor finish at predecessor start (Jan 20)
-        new_start, new_finish = working_dates[successor_id]
+        _, new_finish = working_dates[successor_id]
         assert new_finish == date(2024, 1, 20)
 
     @pytest.mark.asyncio

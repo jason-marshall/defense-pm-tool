@@ -1340,7 +1340,7 @@ class TestParallelLevelingServiceHelpers:
         await service._propagate_to_successors(predecessor_id, activity_dates, activity_lookup)
 
         # FF: successor should finish when predecessor finishes
-        new_start, new_finish = activity_dates[successor_id]
+        _, new_finish = activity_dates[successor_id]
         assert new_finish == date(2026, 1, 20)
 
     @pytest.mark.asyncio
@@ -1385,7 +1385,7 @@ class TestParallelLevelingServiceHelpers:
         await service._propagate_to_successors(predecessor_id, activity_dates, activity_lookup)
 
         # SF: successor finish at predecessor start
-        new_start, new_finish = activity_dates[successor_id]
+        _, new_finish = activity_dates[successor_id]
         assert new_finish == date(2026, 1, 15)
 
     @pytest.mark.asyncio

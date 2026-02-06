@@ -253,7 +253,7 @@ class TestResourceCostServiceCalculateActivityCost:
         mock_result.scalar_one_or_none.return_value = None
         mock_db.execute.return_value = mock_result
 
-        with pytest.raises(ValueError, match="Activity .* not found"):
+        with pytest.raises(ValueError, match=r"Activity .* not found"):
             await service.calculate_activity_cost(uuid4())
 
     @pytest.mark.asyncio
@@ -388,7 +388,7 @@ class TestResourceCostServiceCalculateWBSCost:
         mock_result.scalar_one_or_none.return_value = None
         mock_db.execute.return_value = mock_result
 
-        with pytest.raises(ValueError, match="WBS .* not found"):
+        with pytest.raises(ValueError, match=r"WBS .* not found"):
             await service.calculate_wbs_cost(uuid4())
 
     @pytest.mark.asyncio
@@ -550,7 +550,7 @@ class TestResourceCostServiceRecordCostEntry:
         mock_result.scalar_one_or_none.return_value = None
         mock_db.execute.return_value = mock_result
 
-        with pytest.raises(ValueError, match="Assignment .* not found"):
+        with pytest.raises(ValueError, match=r"Assignment .* not found"):
             await service.record_cost_entry(uuid4(), date(2026, 1, 15))
 
     @pytest.mark.asyncio
