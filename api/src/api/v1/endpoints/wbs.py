@@ -127,11 +127,10 @@ async def create_wbs_element(
 
     wbs_repo = WBSElementRepository(db)
 
-    # Get wbs_code - required for path building
+    # Get wbs_code - auto-generate if not provided
     wbs_code = element_in.wbs_code
     if not wbs_code:
-        # TODO: Auto-generate wbs_code if not provided
-        raise ValueError("wbs_code is required")
+        wbs_code = await _generate_wbs_code(wbs_repo, element_in.program_id, element_in.parent_id)
 
     # Build path based on parent
     if element_in.parent_id:
@@ -148,6 +147,7 @@ async def create_wbs_element(
         level = 1
 
     element_data = element_in.model_dump()
+    element_data["wbs_code"] = wbs_code
     element_data["path"] = path
     element_data["level"] = level
 
@@ -214,3 +214,59 @@ async def delete_wbs_element(
 
     await repo.delete(element.id)
     await db.commit()
+
+
+async def _generate_wbs_code(
+    repo: WBSElementRepository,
+    program_id: UUID,
+    parent_id: UUID | None,
+) -> str:
+    """Auto-generate a hierarchical WBS code.
+
+    For root elements: finds the next available integer (1, 2, 3...).
+    For child elements: appends the next available sub-number to parent's code
+    (e.g., parent "1.2" -> child "1.2.1", "1.2.2", etc.).
+
+    Args:
+        repo: WBS element repository
+        program_id: Program ID for the new element
+        parent_id: Parent element ID (None for root)
+
+    Returns:
+        Auto-generated WBS code string
+    """
+    if parent_id:
+        parent = await repo.get_by_id(parent_id)
+        if not parent:
+            raise NotFoundError(
+                f"Parent WBS element {parent_id} not found",
+                "PARENT_WBS_NOT_FOUND",
+            )
+        siblings = await repo.get_children(parent_id)
+        parent_code = parent.wbs_code
+    else:
+        siblings = await repo.get_root_elements(program_id)
+        parent_code = ""
+
+    # Find the highest existing numeric suffix among siblings
+    max_num = 0
+    for sibling in siblings:
+        code = sibling.wbs_code
+        # Extract the last segment of the code
+        if parent_code:
+            suffix = code[len(parent_code) + 1:] if code.startswith(parent_code + ".") else code
+        else:
+            suffix = code
+
+        # Try to parse the suffix as integer
+        try:
+            num = int(suffix)
+            max_num = max(max_num, num)
+        except ValueError:
+            continue
+
+    next_num = max_num + 1
+
+    if parent_code:
+        return f"{parent_code}.{next_num}"
+    return str(next_num)

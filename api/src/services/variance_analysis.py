@@ -207,6 +207,7 @@ class VarianceAnalysisService:
         self,
         period_data: list[dict[str, Any]],
         threshold_percent: Decimal | None = None,
+        historical_data: dict[UUID, list[dict[str, Any]]] | None = None,
     ) -> list[VarianceAlert]:
         """Detect WBS elements with significant variances.
 
@@ -223,6 +224,9 @@ class VarianceAnalysisService:
                 - sv: Schedule variance amount
                 - cv: Cost variance amount
             threshold_percent: Override threshold (uses config default if None)
+            historical_data: Optional dict mapping WBS ID to historical periods
+                for trend calculation. When provided, alerts will have computed
+                trend directions instead of defaulting to STABLE.
 
         Returns:
             List of VarianceAlert sorted by severity (critical first)
@@ -248,6 +252,20 @@ class VarianceAnalysisService:
             sv_percent = (sv / bcws * 100).quantize(Decimal("0.01"))
             cv_percent = (cv / bcws * 100).quantize(Decimal("0.01"))
 
+            # Calculate trends from history if available
+            sv_trend = TrendDirection.STABLE
+            cv_trend = TrendDirection.STABLE
+            if historical_data and wbs_id in historical_data:
+                history = historical_data[wbs_id]
+                sv_trend_data = self.build_variance_trend(
+                    wbs_id, wbs_code, VarianceType.SCHEDULE, history
+                )
+                cv_trend_data = self.build_variance_trend(
+                    wbs_id, wbs_code, VarianceType.COST, history
+                )
+                sv_trend = sv_trend_data.trend_direction
+                cv_trend = cv_trend_data.trend_direction
+
             # Check schedule variance
             if abs(sv_percent) >= threshold:
                 severity = self.classify_severity(sv_percent)
@@ -261,7 +279,7 @@ class VarianceAnalysisService:
                         variance_percent=sv_percent,
                         severity=severity,
                         period_name=period_name,
-                        trend=TrendDirection.STABLE,  # TODO: Calculate from history
+                        trend=sv_trend,
                         explanation_required=self.requires_explanation(sv_percent),
                     )
                 )
@@ -279,7 +297,7 @@ class VarianceAnalysisService:
                         variance_percent=cv_percent,
                         severity=severity,
                         period_name=period_name,
-                        trend=TrendDirection.STABLE,  # TODO: Calculate from history
+                        trend=cv_trend,
                         explanation_required=self.requires_explanation(cv_percent),
                     )
                 )

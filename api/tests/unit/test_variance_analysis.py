@@ -419,6 +419,199 @@ class TestVarianceAnalysisServiceDetectVariances:
         )
         assert len(alerts_custom) == 1
 
+    def test_detect_with_historical_data_worsening(self):
+        """Should calculate worsening trend from historical data."""
+        service = VarianceAnalysisService()
+        wbs_id = uuid4()
+        period_data = [
+            {
+                "wbs_id": wbs_id,
+                "wbs_code": "1.1",
+                "wbs_name": "WBS 1.1",
+                "period_name": "March 2026",
+                "cumulative_bcws": Decimal("100000"),
+                "sv": Decimal("-15000"),
+                "cv": Decimal("0"),
+            },
+        ]
+
+        historical_data = {
+            wbs_id: [
+                {
+                    "period_name": "Jan",
+                    "cumulative_bcws": Decimal("100000"),
+                    "sv": Decimal("-5000"),
+                    "cv": Decimal("0"),
+                },
+                {
+                    "period_name": "Feb",
+                    "cumulative_bcws": Decimal("100000"),
+                    "sv": Decimal("-10000"),
+                    "cv": Decimal("0"),
+                },
+                {
+                    "period_name": "Mar",
+                    "cumulative_bcws": Decimal("100000"),
+                    "sv": Decimal("-15000"),
+                    "cv": Decimal("0"),
+                },
+            ],
+        }
+
+        alerts = service.detect_significant_variances(
+            period_data, historical_data=historical_data
+        )
+
+        assert len(alerts) == 1
+        assert alerts[0].trend == TrendDirection.WORSENING
+
+    def test_detect_with_historical_data_improving(self):
+        """Should calculate improving trend from historical data."""
+        service = VarianceAnalysisService()
+        wbs_id = uuid4()
+        period_data = [
+            {
+                "wbs_id": wbs_id,
+                "wbs_code": "1.1",
+                "wbs_name": "WBS 1.1",
+                "period_name": "March 2026",
+                "cumulative_bcws": Decimal("100000"),
+                "sv": Decimal("-11000"),
+                "cv": Decimal("0"),
+            },
+        ]
+
+        historical_data = {
+            wbs_id: [
+                {
+                    "period_name": "Jan",
+                    "cumulative_bcws": Decimal("100000"),
+                    "sv": Decimal("-20000"),
+                    "cv": Decimal("0"),
+                },
+                {
+                    "period_name": "Feb",
+                    "cumulative_bcws": Decimal("100000"),
+                    "sv": Decimal("-15000"),
+                    "cv": Decimal("0"),
+                },
+                {
+                    "period_name": "Mar",
+                    "cumulative_bcws": Decimal("100000"),
+                    "sv": Decimal("-11000"),
+                    "cv": Decimal("0"),
+                },
+            ],
+        }
+
+        alerts = service.detect_significant_variances(
+            period_data, historical_data=historical_data
+        )
+
+        assert len(alerts) == 1
+        assert alerts[0].trend == TrendDirection.IMPROVING
+
+    def test_detect_without_historical_data_defaults_stable(self):
+        """Should default to STABLE when no historical data provided."""
+        service = VarianceAnalysisService()
+        period_data = [
+            self.create_period_data(
+                "1.1",
+                Decimal("100000"),
+                Decimal("-15000"),
+                Decimal("0"),
+            ),
+        ]
+
+        alerts = service.detect_significant_variances(period_data)
+
+        assert len(alerts) == 1
+        assert alerts[0].trend == TrendDirection.STABLE
+
+    def test_detect_with_historical_data_cost_trend(self):
+        """Should calculate cost variance trend from historical data."""
+        service = VarianceAnalysisService()
+        wbs_id = uuid4()
+        period_data = [
+            {
+                "wbs_id": wbs_id,
+                "wbs_code": "1.1",
+                "wbs_name": "WBS 1.1",
+                "period_name": "March 2026",
+                "cumulative_bcws": Decimal("100000"),
+                "sv": Decimal("0"),
+                "cv": Decimal("-15000"),
+            },
+        ]
+
+        historical_data = {
+            wbs_id: [
+                {
+                    "period_name": "Jan",
+                    "cumulative_bcws": Decimal("100000"),
+                    "sv": Decimal("0"),
+                    "cv": Decimal("-5000"),
+                },
+                {
+                    "period_name": "Feb",
+                    "cumulative_bcws": Decimal("100000"),
+                    "sv": Decimal("0"),
+                    "cv": Decimal("-10000"),
+                },
+                {
+                    "period_name": "Mar",
+                    "cumulative_bcws": Decimal("100000"),
+                    "sv": Decimal("0"),
+                    "cv": Decimal("-15000"),
+                },
+            ],
+        }
+
+        alerts = service.detect_significant_variances(
+            period_data, historical_data=historical_data
+        )
+
+        assert len(alerts) == 1
+        assert alerts[0].variance_type == VarianceType.COST
+        assert alerts[0].trend == TrendDirection.WORSENING
+
+    def test_detect_with_partial_historical_data(self):
+        """Should handle WBS with no historical data gracefully."""
+        service = VarianceAnalysisService()
+        wbs_id = uuid4()
+        other_wbs_id = uuid4()
+        period_data = [
+            {
+                "wbs_id": wbs_id,
+                "wbs_code": "1.1",
+                "wbs_name": "WBS 1.1",
+                "period_name": "March 2026",
+                "cumulative_bcws": Decimal("100000"),
+                "sv": Decimal("-15000"),
+                "cv": Decimal("0"),
+            },
+        ]
+
+        # Historical data exists but for a different WBS
+        historical_data = {
+            other_wbs_id: [
+                {
+                    "period_name": "Jan",
+                    "cumulative_bcws": Decimal("100000"),
+                    "sv": Decimal("-5000"),
+                    "cv": Decimal("0"),
+                },
+            ],
+        }
+
+        alerts = service.detect_significant_variances(
+            period_data, historical_data=historical_data
+        )
+
+        assert len(alerts) == 1
+        # No history for this WBS, defaults to STABLE
+        assert alerts[0].trend == TrendDirection.STABLE
+
 
 class TestVarianceAnalysisServiceCalculateTrend:
     """Tests for trend calculation."""
