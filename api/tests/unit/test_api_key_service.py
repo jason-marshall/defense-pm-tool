@@ -1,7 +1,7 @@
 """Unit tests for API Key service."""
 
 from datetime import UTC, datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
@@ -375,6 +375,31 @@ class TestAPIKeyServiceVerifyKey:
 
         assert result == api_key
         assert result.last_used_at is not None
+
+    @pytest.mark.asyncio
+    async def test_verify_key_uses_constant_time_comparison(self, mock_session: AsyncMock) -> None:
+        """Should use hmac.compare_digest for constant-time hash comparison."""
+        plain_key = "dpm_test1234_correctsecret"
+        api_key = APIKey(
+            id=str(uuid4()),
+            user_id=str(uuid4()),
+            name="Test Key",
+            key_prefix="dpm_test1234",
+            key_hash=APIKeyService.hash_key(plain_key),
+            is_active=True,
+            expires_at=datetime.now(UTC) + timedelta(days=30),
+        )
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = api_key
+        mock_session.execute.return_value = mock_result
+
+        service = APIKeyService(mock_session)
+        with patch(
+            "src.services.api_key_service.hmac.compare_digest", return_value=True
+        ) as mock_compare:
+            await service.verify_key(plain_key)
+            mock_compare.assert_called_once()
 
 
 class TestAPIKeyServiceRevokeKey:

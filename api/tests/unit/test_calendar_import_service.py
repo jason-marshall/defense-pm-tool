@@ -707,9 +707,7 @@ class TestCalendarImportServiceCreateTemplate:
             ],
         )
 
-        template = await service._create_template_from_calendar(
-            program_id, calendar, import_id
-        )
+        template = await service._create_template_from_calendar(program_id, calendar, import_id)
 
         assert template.name == "Standard"
         assert template.program_id == program_id

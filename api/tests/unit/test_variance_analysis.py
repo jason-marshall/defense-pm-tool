@@ -458,9 +458,7 @@ class TestVarianceAnalysisServiceDetectVariances:
             ],
         }
 
-        alerts = service.detect_significant_variances(
-            period_data, historical_data=historical_data
-        )
+        alerts = service.detect_significant_variances(period_data, historical_data=historical_data)
 
         assert len(alerts) == 1
         assert alerts[0].trend == TrendDirection.WORSENING
@@ -504,9 +502,7 @@ class TestVarianceAnalysisServiceDetectVariances:
             ],
         }
 
-        alerts = service.detect_significant_variances(
-            period_data, historical_data=historical_data
-        )
+        alerts = service.detect_significant_variances(period_data, historical_data=historical_data)
 
         assert len(alerts) == 1
         assert alerts[0].trend == TrendDirection.IMPROVING
@@ -567,9 +563,7 @@ class TestVarianceAnalysisServiceDetectVariances:
             ],
         }
 
-        alerts = service.detect_significant_variances(
-            period_data, historical_data=historical_data
-        )
+        alerts = service.detect_significant_variances(period_data, historical_data=historical_data)
 
         assert len(alerts) == 1
         assert alerts[0].variance_type == VarianceType.COST
@@ -604,9 +598,7 @@ class TestVarianceAnalysisServiceDetectVariances:
             ],
         }
 
-        alerts = service.detect_significant_variances(
-            period_data, historical_data=historical_data
-        )
+        alerts = service.detect_significant_variances(period_data, historical_data=historical_data)
 
         assert len(alerts) == 1
         # No history for this WBS, defaults to STABLE

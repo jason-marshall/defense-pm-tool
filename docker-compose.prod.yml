@@ -62,6 +62,10 @@ services:
       # CORS - restrict to production domains
       CORS_ORIGINS: ${CORS_ORIGINS}
 
+      # Security headers
+      CSP_ENABLED: "true"
+      HSTS_ENABLED: "true"
+
       # Rate limiting
       RATE_LIMIT_ENABLED: "true"
 

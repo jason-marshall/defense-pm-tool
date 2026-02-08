@@ -181,3 +181,41 @@ class TestSettings:
             CORS_ORIGINS=["http://localhost:3000"],
         )
         assert settings.CORS_ORIGINS == ["http://localhost:3000"]
+
+    def test_csp_enabled_default(self) -> None:
+        """CSP_ENABLED should default to True."""
+        settings = Settings(
+            DATABASE_URL="postgresql://user:pass@localhost:5432/db",
+            REDIS_URL="redis://localhost:6379/0",
+            SECRET_KEY="a" * 32,
+        )
+        assert settings.CSP_ENABLED is True
+
+    def test_hsts_enabled_default(self) -> None:
+        """HSTS_ENABLED should default to False."""
+        settings = Settings(
+            DATABASE_URL="postgresql://user:pass@localhost:5432/db",
+            REDIS_URL="redis://localhost:6379/0",
+            SECRET_KEY="a" * 32,
+        )
+        assert settings.HSTS_ENABLED is False
+
+    def test_hsts_enabled_override(self) -> None:
+        """HSTS_ENABLED should be overridable."""
+        settings = Settings(
+            DATABASE_URL="postgresql://user:pass@localhost:5432/db",
+            REDIS_URL="redis://localhost:6379/0",
+            SECRET_KEY="a" * 32,
+            HSTS_ENABLED=True,
+        )
+        assert settings.HSTS_ENABLED is True
+
+    def test_csp_disabled_override(self) -> None:
+        """CSP_ENABLED should be overridable to False."""
+        settings = Settings(
+            DATABASE_URL="postgresql://user:pass@localhost:5432/db",
+            REDIS_URL="redis://localhost:6379/0",
+            SECRET_KEY="a" * 32,
+            CSP_ENABLED=False,
+        )
+        assert settings.CSP_ENABLED is False

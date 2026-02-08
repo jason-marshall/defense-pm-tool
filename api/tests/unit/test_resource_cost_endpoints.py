@@ -113,9 +113,7 @@ class TestGetWBSCost:
 
         with patch("src.api.v1.endpoints.resource_cost.ResourceCostService") as mock_service_class:
             mock_service = MagicMock()
-            mock_service.calculate_wbs_cost = AsyncMock(
-                side_effect=ValueError("WBS not found")
-            )
+            mock_service.calculate_wbs_cost = AsyncMock(side_effect=ValueError("WBS not found"))
             mock_service_class.return_value = mock_service
 
             with pytest.raises(NotFoundError) as exc_info:
@@ -221,7 +219,9 @@ class TestRecordCostEntry:
             mock_service.record_cost_entry = AsyncMock(return_value=mock_result)
             mock_service_class.return_value = mock_service
 
-            with patch("src.schemas.resource_cost.CostEntryResponse.model_validate") as mock_validate:
+            with patch(
+                "src.schemas.resource_cost.CostEntryResponse.model_validate"
+            ) as mock_validate:
                 mock_validate.return_value = MagicMock(
                     id=mock_result.id,
                     assignment_id=assignment_id,
@@ -249,9 +249,7 @@ class TestRecordCostEntry:
 
         with patch("src.api.v1.endpoints.resource_cost.ResourceCostService") as mock_service_class:
             mock_service = MagicMock()
-            mock_service.record_cost_entry = AsyncMock(
-                side_effect=ValueError("Invalid entry")
-            )
+            mock_service.record_cost_entry = AsyncMock(side_effect=ValueError("Invalid entry"))
             mock_service_class.return_value = mock_service
 
             with pytest.raises(ValidationError) as exc_info:
@@ -284,7 +282,9 @@ class TestGetMaterialStatus:
         mock_status.total_value = Decimal("50000.00")
         mock_status.consumed_value = Decimal("25000.00")
 
-        with patch("src.api.v1.endpoints.resource_cost.MaterialTrackingService") as mock_service_class:
+        with patch(
+            "src.api.v1.endpoints.resource_cost.MaterialTrackingService"
+        ) as mock_service_class:
             mock_service = MagicMock()
             mock_service.get_material_status = AsyncMock(return_value=mock_status)
             mock_service_class.return_value = mock_service
@@ -304,7 +304,9 @@ class TestGetMaterialStatus:
         mock_db = AsyncMock()
         mock_user = MagicMock()
 
-        with patch("src.api.v1.endpoints.resource_cost.MaterialTrackingService") as mock_service_class:
+        with patch(
+            "src.api.v1.endpoints.resource_cost.MaterialTrackingService"
+        ) as mock_service_class:
             mock_service = MagicMock()
             mock_service.get_material_status = AsyncMock(
                 side_effect=ValueError("Resource not found")
@@ -337,7 +339,9 @@ class TestConsumeMaterial:
         mock_result.remaining_assigned = Decimal("20.0")
         mock_result.cost_incurred = Decimal("5000.00")
 
-        with patch("src.api.v1.endpoints.resource_cost.MaterialTrackingService") as mock_service_class:
+        with patch(
+            "src.api.v1.endpoints.resource_cost.MaterialTrackingService"
+        ) as mock_service_class:
             mock_service = MagicMock()
             mock_service.consume_material = AsyncMock(return_value=mock_result)
             mock_service_class.return_value = mock_service
@@ -359,7 +363,9 @@ class TestConsumeMaterial:
 
         request = MaterialConsumptionRequest(quantity=Decimal("1000.0"))  # Too much
 
-        with patch("src.api.v1.endpoints.resource_cost.MaterialTrackingService") as mock_service_class:
+        with patch(
+            "src.api.v1.endpoints.resource_cost.MaterialTrackingService"
+        ) as mock_service_class:
             mock_service = MagicMock()
             mock_service.consume_material = AsyncMock(
                 side_effect=ValueError("Insufficient quantity")
@@ -404,7 +410,9 @@ class TestGetProgramMaterials:
         mock_summary.remaining_value = Decimal("75000.00")
         mock_summary.materials = [mock_material]
 
-        with patch("src.api.v1.endpoints.resource_cost.MaterialTrackingService") as mock_service_class:
+        with patch(
+            "src.api.v1.endpoints.resource_cost.MaterialTrackingService"
+        ) as mock_service_class:
             mock_service = MagicMock()
             mock_service.get_program_materials = AsyncMock(return_value=mock_summary)
             mock_service_class.return_value = mock_service
@@ -430,7 +438,9 @@ class TestGetProgramMaterials:
         mock_summary.remaining_value = Decimal("0.00")
         mock_summary.materials = []
 
-        with patch("src.api.v1.endpoints.resource_cost.MaterialTrackingService") as mock_service_class:
+        with patch(
+            "src.api.v1.endpoints.resource_cost.MaterialTrackingService"
+        ) as mock_service_class:
             mock_service = MagicMock()
             mock_service.get_program_materials = AsyncMock(return_value=mock_summary)
             mock_service_class.return_value = mock_service

@@ -217,15 +217,19 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-API-Key", "X-Correlation-ID"],
 )
 
 # Request tracing middleware - adds correlation IDs and metrics
 app.add_middleware(RequestTracingMiddleware)
 
 # Security headers middleware - adds security headers to all responses
-app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(
+    SecurityHeadersMiddleware,
+    csp_enabled=settings.CSP_ENABLED,
+    hsts_enabled=settings.HSTS_ENABLED,
+)
 
 # Rate limiting (can be disabled via RATE_LIMIT_ENABLED=false for testing)
 if settings.RATE_LIMIT_ENABLED:

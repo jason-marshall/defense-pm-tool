@@ -64,7 +64,9 @@ class TestGetResourceOverallocations:
             affected_activities=[],
         )
 
-        with patch("src.api.v1.endpoints.overallocations.OverallocationService") as mock_service_class:
+        with patch(
+            "src.api.v1.endpoints.overallocations.OverallocationService"
+        ) as mock_service_class:
             mock_service = MagicMock()
             mock_service.detect_resource_overallocations = AsyncMock(return_value=[mock_period])
             mock_service_class.return_value = mock_service
@@ -87,7 +89,9 @@ class TestGetResourceOverallocations:
         mock_user = MagicMock()
         resource_id = uuid4()
 
-        with patch("src.api.v1.endpoints.overallocations.OverallocationService") as mock_service_class:
+        with patch(
+            "src.api.v1.endpoints.overallocations.OverallocationService"
+        ) as mock_service_class:
             mock_service = MagicMock()
             mock_service.detect_resource_overallocations = AsyncMock(return_value=[])
             mock_service_class.return_value = mock_service
@@ -136,7 +140,9 @@ class TestGetProgramOverallocations:
         mock_report.critical_path_affected = False
         mock_report.periods = [mock_period]
 
-        with patch("src.api.v1.endpoints.overallocations.OverallocationService") as mock_service_class:
+        with patch(
+            "src.api.v1.endpoints.overallocations.OverallocationService"
+        ) as mock_service_class:
             mock_service = MagicMock()
             mock_service.detect_program_overallocations = AsyncMock(return_value=mock_report)
             mock_service_class.return_value = mock_service
@@ -172,7 +178,9 @@ class TestGetProgramOverallocations:
         mock_report.critical_path_affected = False
         mock_report.periods = []
 
-        with patch("src.api.v1.endpoints.overallocations.OverallocationService") as mock_service_class:
+        with patch(
+            "src.api.v1.endpoints.overallocations.OverallocationService"
+        ) as mock_service_class:
             mock_service = MagicMock()
             mock_service.detect_program_overallocations = AsyncMock(return_value=mock_report)
             mock_service_class.return_value = mock_service
@@ -203,7 +211,9 @@ class TestGetAffectedActivities:
         activity1_id = uuid4()
         activity2_id = uuid4()
 
-        with patch("src.api.v1.endpoints.overallocations.OverallocationService") as mock_service_class:
+        with patch(
+            "src.api.v1.endpoints.overallocations.OverallocationService"
+        ) as mock_service_class:
             mock_service = MagicMock()
             mock_service.get_affected_activities = AsyncMock(
                 return_value=[activity1_id, activity2_id]
@@ -228,7 +238,9 @@ class TestGetAffectedActivities:
         mock_user = MagicMock()
         resource_id = uuid4()
 
-        with patch("src.api.v1.endpoints.overallocations.OverallocationService") as mock_service_class:
+        with patch(
+            "src.api.v1.endpoints.overallocations.OverallocationService"
+        ) as mock_service_class:
             mock_service = MagicMock()
             mock_service.get_affected_activities = AsyncMock(return_value=[])
             mock_service_class.return_value = mock_service

@@ -65,9 +65,7 @@ def make_mock_wbs(**overrides):
     elem.level = overrides.get("level", 2)
     elem.path = overrides.get("path", "1.1")
     elem.is_control_account = overrides.get("is_control_account", False)
-    elem.budget_at_completion = overrides.get(
-        "budget_at_completion", Decimal("100000.00")
-    )
+    elem.budget_at_completion = overrides.get("budget_at_completion", Decimal("100000.00"))
     elem.description = overrides.get("description", "Software dev phase")
     return elem
 
@@ -89,9 +87,7 @@ class TestWriteActivitiesCSV:
         writer = csv.writer(output)
         mock_db = AsyncMock()
 
-        with patch(
-            "src.api.v1.endpoints.import_export.ActivityRepository"
-        ) as MockRepo:
+        with patch("src.api.v1.endpoints.import_export.ActivityRepository") as MockRepo:
             MockRepo.return_value.get_by_program = AsyncMock(return_value=[])
             await _write_activities_csv(writer, uuid4(), mock_db)
 
@@ -109,12 +105,8 @@ class TestWriteActivitiesCSV:
         mock_db = AsyncMock()
         activity = make_mock_activity()
 
-        with patch(
-            "src.api.v1.endpoints.import_export.ActivityRepository"
-        ) as MockRepo:
-            MockRepo.return_value.get_by_program = AsyncMock(
-                return_value=[activity]
-            )
+        with patch("src.api.v1.endpoints.import_export.ActivityRepository") as MockRepo:
+            MockRepo.return_value.get_by_program = AsyncMock(return_value=[activity])
             await _write_activities_csv(writer, uuid4(), mock_db)
 
         rows = parse_csv_output(output)
@@ -146,12 +138,8 @@ class TestWriteActivitiesCSV:
             ev_method=None,
         )
 
-        with patch(
-            "src.api.v1.endpoints.import_export.ActivityRepository"
-        ) as MockRepo:
-            MockRepo.return_value.get_by_program = AsyncMock(
-                return_value=[activity]
-            )
+        with patch("src.api.v1.endpoints.import_export.ActivityRepository") as MockRepo:
+            MockRepo.return_value.get_by_program = AsyncMock(return_value=[activity])
             await _write_activities_csv(writer, uuid4(), mock_db)
 
         rows = parse_csv_output(output)
@@ -172,12 +160,8 @@ class TestWriteActivitiesCSV:
             make_mock_activity(code="ACT-003", name="Task C"),
         ]
 
-        with patch(
-            "src.api.v1.endpoints.import_export.ActivityRepository"
-        ) as MockRepo:
-            MockRepo.return_value.get_by_program = AsyncMock(
-                return_value=activities
-            )
+        with patch("src.api.v1.endpoints.import_export.ActivityRepository") as MockRepo:
+            MockRepo.return_value.get_by_program = AsyncMock(return_value=activities)
             await _write_activities_csv(writer, uuid4(), mock_db)
 
         rows = parse_csv_output(output)
@@ -190,13 +174,9 @@ class TestWriteActivitiesCSV:
         writer = csv.writer(output)
         mock_db = AsyncMock()
 
-        with patch(
-            "src.api.v1.endpoints.import_export.ActivityRepository"
-        ) as MockRepo:
+        with patch("src.api.v1.endpoints.import_export.ActivityRepository") as MockRepo:
             MockRepo.return_value.get_by_program = AsyncMock(return_value=[])
-            await _write_activities_csv(
-                writer, uuid4(), mock_db, include_header_label=True
-            )
+            await _write_activities_csv(writer, uuid4(), mock_db, include_header_label=True)
 
         rows = parse_csv_output(output)
         assert rows[0][0] == "## Activities"
@@ -212,12 +192,8 @@ class TestWriteResourcesCSV:
         writer = csv.writer(output)
         mock_db = AsyncMock()
 
-        with patch(
-            "src.api.v1.endpoints.import_export.ResourceRepository"
-        ) as MockRepo:
-            MockRepo.return_value.get_by_program = AsyncMock(
-                return_value=([], 0)
-            )
+        with patch("src.api.v1.endpoints.import_export.ResourceRepository") as MockRepo:
+            MockRepo.return_value.get_by_program = AsyncMock(return_value=([], 0))
             await _write_resources_csv(writer, uuid4(), mock_db)
 
         rows = parse_csv_output(output)
@@ -234,12 +210,8 @@ class TestWriteResourcesCSV:
         mock_db = AsyncMock()
         resource = make_mock_resource()
 
-        with patch(
-            "src.api.v1.endpoints.import_export.ResourceRepository"
-        ) as MockRepo:
-            MockRepo.return_value.get_by_program = AsyncMock(
-                return_value=([resource], 1)
-            )
+        with patch("src.api.v1.endpoints.import_export.ResourceRepository") as MockRepo:
+            MockRepo.return_value.get_by_program = AsyncMock(return_value=([resource], 1))
             await _write_resources_csv(writer, uuid4(), mock_db)
 
         rows = parse_csv_output(output)
@@ -256,12 +228,8 @@ class TestWriteResourcesCSV:
         mock_db = AsyncMock()
         resource = make_mock_resource(cost_rate=None, effective_date=None)
 
-        with patch(
-            "src.api.v1.endpoints.import_export.ResourceRepository"
-        ) as MockRepo:
-            MockRepo.return_value.get_by_program = AsyncMock(
-                return_value=([resource], 1)
-            )
+        with patch("src.api.v1.endpoints.import_export.ResourceRepository") as MockRepo:
+            MockRepo.return_value.get_by_program = AsyncMock(return_value=([resource], 1))
             await _write_resources_csv(writer, uuid4(), mock_db)
 
         rows = parse_csv_output(output)
@@ -275,15 +243,9 @@ class TestWriteResourcesCSV:
         writer = csv.writer(output)
         mock_db = AsyncMock()
 
-        with patch(
-            "src.api.v1.endpoints.import_export.ResourceRepository"
-        ) as MockRepo:
-            MockRepo.return_value.get_by_program = AsyncMock(
-                return_value=([], 0)
-            )
-            await _write_resources_csv(
-                writer, uuid4(), mock_db, include_header_label=True
-            )
+        with patch("src.api.v1.endpoints.import_export.ResourceRepository") as MockRepo:
+            MockRepo.return_value.get_by_program = AsyncMock(return_value=([], 0))
+            await _write_resources_csv(writer, uuid4(), mock_db, include_header_label=True)
 
         rows = parse_csv_output(output)
         assert rows[0][0] == "## Resources"
@@ -299,9 +261,7 @@ class TestWriteWBSCSV:
         writer = csv.writer(output)
         mock_db = AsyncMock()
 
-        with patch(
-            "src.api.v1.endpoints.import_export.WBSElementRepository"
-        ) as MockRepo:
+        with patch("src.api.v1.endpoints.import_export.WBSElementRepository") as MockRepo:
             MockRepo.return_value.get_by_program = AsyncMock(return_value=[])
             await _write_wbs_csv(writer, uuid4(), mock_db)
 
@@ -318,12 +278,8 @@ class TestWriteWBSCSV:
         mock_db = AsyncMock()
         wbs = make_mock_wbs()
 
-        with patch(
-            "src.api.v1.endpoints.import_export.WBSElementRepository"
-        ) as MockRepo:
-            MockRepo.return_value.get_by_program = AsyncMock(
-                return_value=[wbs]
-            )
+        with patch("src.api.v1.endpoints.import_export.WBSElementRepository") as MockRepo:
+            MockRepo.return_value.get_by_program = AsyncMock(return_value=[wbs])
             await _write_wbs_csv(writer, uuid4(), mock_db)
 
         rows = parse_csv_output(output)
@@ -340,12 +296,8 @@ class TestWriteWBSCSV:
         mock_db = AsyncMock()
         wbs = make_mock_wbs(budget_at_completion=None, description=None)
 
-        with patch(
-            "src.api.v1.endpoints.import_export.WBSElementRepository"
-        ) as MockRepo:
-            MockRepo.return_value.get_by_program = AsyncMock(
-                return_value=[wbs]
-            )
+        with patch("src.api.v1.endpoints.import_export.WBSElementRepository") as MockRepo:
+            MockRepo.return_value.get_by_program = AsyncMock(return_value=[wbs])
             await _write_wbs_csv(writer, uuid4(), mock_db)
 
         rows = parse_csv_output(output)
@@ -360,12 +312,8 @@ class TestWriteWBSCSV:
         mock_db = AsyncMock()
         wbs = make_mock_wbs(is_control_account=True)
 
-        with patch(
-            "src.api.v1.endpoints.import_export.WBSElementRepository"
-        ) as MockRepo:
-            MockRepo.return_value.get_by_program = AsyncMock(
-                return_value=[wbs]
-            )
+        with patch("src.api.v1.endpoints.import_export.WBSElementRepository") as MockRepo:
+            MockRepo.return_value.get_by_program = AsyncMock(return_value=[wbs])
             await _write_wbs_csv(writer, uuid4(), mock_db)
 
         rows = parse_csv_output(output)
@@ -378,13 +326,9 @@ class TestWriteWBSCSV:
         writer = csv.writer(output)
         mock_db = AsyncMock()
 
-        with patch(
-            "src.api.v1.endpoints.import_export.WBSElementRepository"
-        ) as MockRepo:
+        with patch("src.api.v1.endpoints.import_export.WBSElementRepository") as MockRepo:
             MockRepo.return_value.get_by_program = AsyncMock(return_value=[])
-            await _write_wbs_csv(
-                writer, uuid4(), mock_db, include_header_label=True
-            )
+            await _write_wbs_csv(writer, uuid4(), mock_db, include_header_label=True)
 
         rows = parse_csv_output(output)
         assert rows[0][0] == "## WBS Elements"

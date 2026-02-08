@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import hmac
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
@@ -163,8 +164,8 @@ class APIKeyService:
             logger.warning("api_key_not_found", prefix=prefix)
             return None
 
-        # Verify hash (constant-time comparison would be better for production)
-        if api_key.key_hash != key_hash:
+        # Verify hash using constant-time comparison to prevent timing attacks
+        if not hmac.compare_digest(api_key.key_hash, key_hash):
             logger.warning("api_key_invalid_hash", prefix=prefix)
             return None
 

@@ -166,7 +166,9 @@ class TestListAPIKeys:
             with patch("src.api.v1.endpoints.api_keys.APIKeyResponse") as mock_api_key_response:
                 mock_api_key_response.model_validate.side_effect = [mock_response1, mock_response2]
 
-                with patch("src.api.v1.endpoints.api_keys.APIKeyListResponse") as mock_list_response:
+                with patch(
+                    "src.api.v1.endpoints.api_keys.APIKeyListResponse"
+                ) as mock_list_response:
                     mock_result = MagicMock()
                     mock_result.total = 2
                     mock_result.items = [mock_response1, mock_response2]

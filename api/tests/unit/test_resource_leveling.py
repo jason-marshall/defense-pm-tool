@@ -840,9 +840,7 @@ class TestIsOverallocatedOnDates:
             return_value=[mock_assignment]
         )
 
-        working_dates = {
-            activity_id: (date(2024, 1, 15), date(2024, 1, 19))
-        }
+        working_dates = {activity_id: (date(2024, 1, 15), date(2024, 1, 19))}
 
         result = await service._is_overallocated_on_dates(
             resource_id,
@@ -1121,16 +1119,12 @@ class TestCountRemainingOverallocations:
         resource2.id = resource2_id
 
         service._resource_repo = MagicMock()
-        service._resource_repo.get_by_program = AsyncMock(
-            return_value=([resource1, resource2], 2)
-        )
+        service._resource_repo.get_by_program = AsyncMock(return_value=([resource1, resource2], 2))
 
         # Only check resource1
         service._is_overallocated_on_dates = AsyncMock(return_value=True)
 
-        working_dates = {
-            uuid4(): (date(2024, 1, 15), date(2024, 1, 19))
-        }
+        working_dates = {uuid4(): (date(2024, 1, 15), date(2024, 1, 19))}
 
         count = await service._count_remaining_overallocations(
             uuid4(),
@@ -1345,7 +1339,10 @@ class TestRecalculateSuccessorsExtended:
 
         working_dates = {
             predecessor_id: (date(2024, 1, 20), date(2024, 1, 25)),
-            successor_id: (date(2024, 1, 10), date(2024, 1, 15)),  # 5 days, finishes before pred starts
+            successor_id: (
+                date(2024, 1, 10),
+                date(2024, 1, 15),
+            ),  # 5 days, finishes before pred starts
         }
         activity_lookup = {
             predecessor_id: MagicMock(id=predecessor_id),

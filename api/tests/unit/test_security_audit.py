@@ -1,6 +1,5 @@
 """Unit tests for security audit module."""
 
-
 from src.core.security_audit import (
     FindingStatus,
     OWASPCategory,

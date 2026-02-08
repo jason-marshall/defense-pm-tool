@@ -505,9 +505,7 @@ class TestParallelLevelingServiceSelectActivityToDelay:
 
         options = LevelingOptions()
 
-        result = service._select_activity_to_delay(
-            conflict, priority_map, activity_dates, options
-        )
+        result = service._select_activity_to_delay(conflict, priority_map, activity_dates, options)
 
         # Should select activity2 (later start, more float)
         assert result == activity2_id
@@ -555,9 +553,7 @@ class TestParallelLevelingServiceSelectActivityToDelay:
 
         options = LevelingOptions(preserve_critical_path=True)
 
-        result = service._select_activity_to_delay(
-            conflict, priority_map, activity_dates, options
-        )
+        result = service._select_activity_to_delay(conflict, priority_map, activity_dates, options)
 
         # Should select non-critical even though critical has later start
         assert result == non_critical_id
@@ -605,9 +601,7 @@ class TestParallelLevelingServiceSelectActivityToDelay:
 
         options = LevelingOptions(preserve_critical_path=True)
 
-        result = service._select_activity_to_delay(
-            conflict, priority_map, activity_dates, options
-        )
+        result = service._select_activity_to_delay(conflict, priority_map, activity_dates, options)
 
         assert result is None
 
@@ -656,9 +650,7 @@ class TestParallelLevelingServiceSelectActivityToDelay:
 
         options = LevelingOptions(level_within_float=True)
 
-        result = service._select_activity_to_delay(
-            conflict, priority_map, activity_dates, options
-        )
+        result = service._select_activity_to_delay(conflict, priority_map, activity_dates, options)
 
         # Should select activity2 because activity1 has used all float
         assert result == activity2_id

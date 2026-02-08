@@ -254,7 +254,7 @@ async def _generate_wbs_code(
         code = sibling.wbs_code
         # Extract the last segment of the code
         if parent_code:
-            suffix = code[len(parent_code) + 1:] if code.startswith(parent_code + ".") else code
+            suffix = code[len(parent_code) + 1 :] if code.startswith(parent_code + ".") else code
         else:
             suffix = code
 

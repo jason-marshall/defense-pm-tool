@@ -2,6 +2,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ToastProvider } from "./components/Toast";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { LoginPage } from "./pages/LoginPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,18 +21,30 @@ export function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <ToastProvider>
-            <div className="min-h-screen bg-gray-50">
-              <Navigation />
-              <main className="container mx-auto px-4 py-8">
+          <AuthProvider>
+            <ToastProvider>
+              <div className="min-h-screen bg-gray-50">
                 <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/programs" element={<ProgramsPlaceholder />} />
-                  <Route path="/programs/:id" element={<ProgramDetailPlaceholder />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route
+                    path="/*"
+                    element={
+                      <ProtectedRoute>
+                        <Navigation />
+                        <main className="container mx-auto px-4 py-8">
+                          <Routes>
+                            <Route path="/" element={<Home />} />
+                            <Route path="/programs" element={<ProgramsPlaceholder />} />
+                            <Route path="/programs/:id" element={<ProgramDetailPlaceholder />} />
+                          </Routes>
+                        </main>
+                      </ProtectedRoute>
+                    }
+                  />
                 </Routes>
-              </main>
-            </div>
-          </ToastProvider>
+              </div>
+            </ToastProvider>
+          </AuthProvider>
         </BrowserRouter>
       </QueryClientProvider>
     </ErrorBoundary>
@@ -37,6 +52,8 @@ export function App() {
 }
 
 function Navigation() {
+  const { user, logout } = useAuth();
+
   return (
     <nav className="bg-white shadow-xs border-b">
       <div className="container mx-auto px-4">
@@ -55,6 +72,15 @@ function Navigation() {
             </div>
           </div>
           <div className="flex items-center gap-4">
+            {user && (
+              <span className="text-sm text-gray-600">{user.full_name}</span>
+            )}
+            <button
+              onClick={logout}
+              className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              Logout
+            </button>
             <span className="text-sm text-gray-500">v1.0.0</span>
           </div>
         </div>

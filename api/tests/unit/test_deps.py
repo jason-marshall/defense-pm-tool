@@ -34,9 +34,10 @@ class TestGetCurrentUser:
 
         mock_db = AsyncMock()
 
-        with patch("src.core.deps.decode_token") as mock_decode, patch(
-            "src.core.deps.UserRepository"
-        ) as mock_repo_class:
+        with (
+            patch("src.core.deps.decode_token") as mock_decode,
+            patch("src.core.deps.UserRepository") as mock_repo_class,
+        ):
             mock_decode.return_value = mock_payload
             mock_repo = MagicMock()
             mock_repo.get_by_id = AsyncMock(return_value=mock_user)
@@ -104,9 +105,10 @@ class TestGetCurrentUser:
 
         mock_db = AsyncMock()
 
-        with patch("src.core.deps.decode_token") as mock_decode, patch(
-            "src.core.deps.UserRepository"
-        ) as mock_repo_class:
+        with (
+            patch("src.core.deps.decode_token") as mock_decode,
+            patch("src.core.deps.UserRepository") as mock_repo_class,
+        ):
             mock_decode.return_value = mock_payload
             mock_repo = MagicMock()
             mock_repo.get_by_id = AsyncMock(return_value=None)
@@ -132,9 +134,10 @@ class TestGetCurrentUser:
 
         mock_db = AsyncMock()
 
-        with patch("src.core.deps.decode_token") as mock_decode, patch(
-            "src.core.deps.UserRepository"
-        ) as mock_repo_class:
+        with (
+            patch("src.core.deps.decode_token") as mock_decode,
+            patch("src.core.deps.UserRepository") as mock_repo_class,
+        ):
             mock_decode.return_value = mock_payload
             mock_repo = MagicMock()
             mock_repo.get_by_id = AsyncMock(return_value=mock_user)
@@ -173,9 +176,10 @@ class TestGetCurrentUserOptional:
 
         mock_db = AsyncMock()
 
-        with patch("src.core.deps.decode_token") as mock_decode, patch(
-            "src.core.deps.UserRepository"
-        ) as mock_repo_class:
+        with (
+            patch("src.core.deps.decode_token") as mock_decode,
+            patch("src.core.deps.UserRepository") as mock_repo_class,
+        ):
             mock_decode.return_value = mock_payload
             mock_repo = MagicMock()
             mock_repo.get_by_id = AsyncMock(return_value=mock_user)
@@ -294,11 +298,10 @@ class TestGetCurrentUserOrApiKey:
 
         mock_db = AsyncMock()
 
-        with patch(
-            "src.services.api_key_service.APIKeyService"
-        ) as mock_service_class, patch(
-            "src.core.deps.UserRepository"
-        ) as mock_repo_class:
+        with (
+            patch("src.services.api_key_service.APIKeyService") as mock_service_class,
+            patch("src.core.deps.UserRepository") as mock_repo_class,
+        ):
             mock_service = MagicMock()
             mock_service.verify_key = AsyncMock(return_value=mock_api_key)
             mock_service_class.return_value = mock_service
@@ -319,9 +322,7 @@ class TestGetCurrentUserOrApiKey:
 
         mock_db = AsyncMock()
 
-        with patch(
-            "src.services.api_key_service.APIKeyService"
-        ) as mock_service_class:
+        with patch("src.services.api_key_service.APIKeyService") as mock_service_class:
             mock_service = MagicMock()
             mock_service.verify_key = AsyncMock(return_value=None)
             mock_service_class.return_value = mock_service
@@ -349,11 +350,10 @@ class TestGetCurrentUserOrApiKey:
 
         mock_db = AsyncMock()
 
-        with patch(
-            "src.services.api_key_service.APIKeyService"
-        ) as mock_service_class, patch(
-            "src.core.deps.UserRepository"
-        ) as mock_repo_class:
+        with (
+            patch("src.services.api_key_service.APIKeyService") as mock_service_class,
+            patch("src.core.deps.UserRepository") as mock_repo_class,
+        ):
             mock_service = MagicMock()
             mock_service.verify_key = AsyncMock(return_value=mock_api_key)
             mock_service_class.return_value = mock_service
@@ -384,17 +384,16 @@ class TestGetCurrentUserOrApiKey:
 
         mock_db = AsyncMock()
 
-        with patch("src.core.deps.decode_token") as mock_decode, patch(
-            "src.core.deps.UserRepository"
-        ) as mock_repo_class:
+        with (
+            patch("src.core.deps.decode_token") as mock_decode,
+            patch("src.core.deps.UserRepository") as mock_repo_class,
+        ):
             mock_decode.return_value = mock_payload
             mock_repo = MagicMock()
             mock_repo.get_by_id = AsyncMock(return_value=mock_user)
             mock_repo_class.return_value = mock_repo
 
-            result = await get_current_user_or_api_key(
-                mock_request, mock_db, "valid_jwt_token"
-            )
+            result = await get_current_user_or_api_key(mock_request, mock_db, "valid_jwt_token")
 
             assert result == mock_user
 
@@ -426,11 +425,10 @@ class TestGetCurrentUserOrApiKey:
 
         mock_db = AsyncMock()
 
-        with patch(
-            "src.services.api_key_service.APIKeyService"
-        ) as mock_service_class, patch(
-            "src.core.deps.UserRepository"
-        ) as mock_repo_class:
+        with (
+            patch("src.services.api_key_service.APIKeyService") as mock_service_class,
+            patch("src.core.deps.UserRepository") as mock_repo_class,
+        ):
             mock_service = MagicMock()
             mock_service.verify_key = AsyncMock(return_value=mock_api_key)
             mock_service_class.return_value = mock_service

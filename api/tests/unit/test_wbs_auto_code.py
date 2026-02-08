@@ -37,9 +37,7 @@ class TestGenerateWBSCodeRoot:
     async def test_second_root_element(self):
         """Should generate '2' when one root element exists with code '1'."""
         repo = MagicMock()
-        repo.get_root_elements = AsyncMock(
-            return_value=[make_mock_wbs("1")]
-        )
+        repo.get_root_elements = AsyncMock(return_value=[make_mock_wbs("1")])
 
         code = await _generate_wbs_code(repo, uuid4(), None)
 
@@ -116,9 +114,7 @@ class TestGenerateWBSCodeChild:
         parent_id = uuid4()
         parent = make_mock_wbs("1", path="1", level=1)
         repo.get_by_id = AsyncMock(return_value=parent)
-        repo.get_children = AsyncMock(
-            return_value=[make_mock_wbs("1.1", path="1.1", level=2)]
-        )
+        repo.get_children = AsyncMock(return_value=[make_mock_wbs("1.1", path="1.1", level=2)])
 
         code = await _generate_wbs_code(repo, uuid4(), parent_id)
 

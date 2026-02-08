@@ -372,9 +372,7 @@ class TestResourceAssignmentRepositoryGetByResource:
         assignment = MagicMock()
 
         mock_result = MagicMock()
-        mock_result.unique.return_value.scalars.return_value.all.return_value = [
-            assignment
-        ]
+        mock_result.unique.return_value.scalars.return_value.all.return_value = [assignment]
         mock_session.execute.return_value = mock_result
 
         result = await repo.get_by_resource(uuid4())
@@ -387,9 +385,7 @@ class TestResourceAssignmentRepositoryGetByResource:
         assignment = MagicMock()
 
         mock_result = MagicMock()
-        mock_result.unique.return_value.scalars.return_value.all.return_value = [
-            assignment
-        ]
+        mock_result.unique.return_value.scalars.return_value.all.return_value = [assignment]
         mock_session.execute.return_value = mock_result
 
         result = await repo.get_by_resource(
@@ -472,9 +468,7 @@ class TestResourceAssignmentRepositoryGetAssignmentsWithActivities:
         assignment.activity = MagicMock()
 
         mock_result = MagicMock()
-        mock_result.unique.return_value.scalars.return_value.all.return_value = [
-            assignment
-        ]
+        mock_result.unique.return_value.scalars.return_value.all.return_value = [assignment]
         mock_session.execute.return_value = mock_result
 
         result = await repo.get_assignments_with_activities(uuid4())

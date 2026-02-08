@@ -131,6 +131,11 @@ class RequestTracingMiddleware(BaseHTTPMiddleware):
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Add security headers to all responses."""
 
+    def __init__(self, app: ASGIApp, csp_enabled: bool = True, hsts_enabled: bool = False) -> None:
+        super().__init__(app)
+        self.csp_enabled = csp_enabled
+        self.hsts_enabled = hsts_enabled
+
     async def dispatch(
         self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
@@ -142,6 +147,24 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+
+        # Content Security Policy
+        if self.csp_enabled:
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; "
+                "script-src 'self'; "
+                "style-src 'self' 'unsafe-inline'; "
+                "img-src 'self' data:; "
+                "font-src 'self'; "
+                "connect-src 'self'; "
+                "frame-ancestors 'none'; "
+                "base-uri 'self'; "
+                "form-action 'self'"
+            )
+
+        # HTTP Strict Transport Security
+        if self.hsts_enabled:
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
 
         # Remove server header if present
         if "server" in response.headers:

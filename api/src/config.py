@@ -63,7 +63,10 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def validate_encryption_salt(self) -> "Settings":
         """Require a custom ENCRYPTION_SALT in production."""
-        if self.ENVIRONMENT == "production" and self.ENCRYPTION_SALT == "defense-pm-tool-encryption-salt":
+        if (
+            self.ENVIRONMENT == "production"
+            and self.ENCRYPTION_SALT == "defense-pm-tool-encryption-salt"
+        ):
             raise ValueError(
                 "ENCRYPTION_SALT must be overridden in production. "
                 'Generate one with: python -c "import secrets; print(secrets.token_urlsafe(16))"'
@@ -80,6 +83,10 @@ class Settings(BaseSettings):
 
     # Logging
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
+
+    # Security Headers
+    CSP_ENABLED: bool = True
+    HSTS_ENABLED: bool = False
 
     # Rate Limiting
     RATE_LIMIT_ENABLED: bool = True

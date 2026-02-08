@@ -269,6 +269,7 @@ class TestCalculateAssignmentCostAsync:
     def service(self):
         """Create service with mocked db."""
         from unittest.mock import AsyncMock
+
         db = AsyncMock()
         return ResourceCostService(db)
 
@@ -276,6 +277,7 @@ class TestCalculateAssignmentCostAsync:
     async def test_assignment_not_found_returns_zeros(self, service):
         """Should return zeros when assignment not found."""
         from unittest.mock import AsyncMock
+
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = None
         service.db.execute = AsyncMock(return_value=mock_result)
@@ -393,6 +395,7 @@ class TestCalculateActivityCostAsync:
     def service(self):
         """Create service with mocked db."""
         from unittest.mock import AsyncMock
+
         db = AsyncMock()
         return ResourceCostService(db)
 
@@ -400,6 +403,7 @@ class TestCalculateActivityCostAsync:
     async def test_activity_not_found_raises_error(self, service):
         """Should raise ValueError when activity not found."""
         from unittest.mock import AsyncMock
+
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = None
         service.db.execute = AsyncMock(return_value=mock_result)
@@ -508,6 +512,7 @@ class TestCalculateWBSCostAsync:
     def service(self):
         """Create service with mocked db."""
         from unittest.mock import AsyncMock
+
         db = AsyncMock()
         return ResourceCostService(db)
 
@@ -515,6 +520,7 @@ class TestCalculateWBSCostAsync:
     async def test_wbs_not_found_raises_error(self, service):
         """Should raise ValueError when WBS not found."""
         from unittest.mock import AsyncMock
+
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = None
         service.db.execute = AsyncMock(return_value=mock_result)
@@ -531,6 +537,7 @@ class TestGetResourceCostSummaryAsync:
     def service(self):
         """Create service with mocked db."""
         from unittest.mock import AsyncMock
+
         db = AsyncMock()
         return ResourceCostService(db)
 
@@ -538,6 +545,7 @@ class TestGetResourceCostSummaryAsync:
     async def test_no_assignments_returns_zeros(self, service):
         """Should return zeros for resource with no assignments."""
         from unittest.mock import AsyncMock
+
         mock_result = MagicMock()
         mock_result.scalars.return_value.all.return_value = []
         service.db.execute = AsyncMock(return_value=mock_result)
@@ -589,6 +597,7 @@ class TestRecordCostEntryAsync:
     def service(self):
         """Create service with mocked db."""
         from unittest.mock import AsyncMock
+
         db = AsyncMock()
         db.commit = AsyncMock()
         db.refresh = AsyncMock()
@@ -621,6 +630,7 @@ class TestGetAssignmentCostEntriesAsync:
     def service(self):
         """Create service with mocked db."""
         from unittest.mock import AsyncMock
+
         db = AsyncMock()
         return ResourceCostService(db)
 
@@ -648,6 +658,7 @@ class TestCalculateProgramCostAsync:
     def service(self):
         """Create service with mocked db."""
         from unittest.mock import AsyncMock
+
         db = AsyncMock()
         return ResourceCostService(db)
 
@@ -743,6 +754,7 @@ class TestSyncEvmsAcwpAsync:
     def service(self):
         """Create service with mocked db."""
         from unittest.mock import AsyncMock
+
         db = AsyncMock()
         db.commit = AsyncMock()
         db.add = MagicMock()
@@ -794,9 +806,7 @@ class TestSyncEvmsAcwpAsync:
         wbs_mock = MagicMock()
         wbs_mock.scalars.return_value.all.return_value = [mock_wbs]
 
-        service.db.execute = AsyncMock(
-            side_effect=[period_result, period_data_mock, wbs_mock]
-        )
+        service.db.execute = AsyncMock(side_effect=[period_result, period_data_mock, wbs_mock])
 
         # Mock WBS cost
         wbs_cost = WBSCostSummary(
@@ -844,9 +854,7 @@ class TestSyncEvmsAcwpAsync:
         wbs_mock = MagicMock()
         wbs_mock.scalars.return_value.all.return_value = [mock_wbs]
 
-        service.db.execute = AsyncMock(
-            side_effect=[period_result, period_data_mock, wbs_mock]
-        )
+        service.db.execute = AsyncMock(side_effect=[period_result, period_data_mock, wbs_mock])
 
         # Mock WBS cost
         wbs_cost = WBSCostSummary(
@@ -875,6 +883,7 @@ class TestCalculateWbsCostWithActivities:
     def service(self):
         """Create service with mocked db."""
         from unittest.mock import AsyncMock
+
         db = AsyncMock()
         return ResourceCostService(db)
 
