@@ -81,7 +81,7 @@ function Navigation() {
             >
               Logout
             </button>
-            <span className="text-sm text-gray-500">v1.0.0</span>
+            <span className="text-sm text-gray-500">v1.2.0</span>
           </div>
         </div>
       </div>

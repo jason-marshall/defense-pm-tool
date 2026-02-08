@@ -359,7 +359,7 @@ class TestProductionReadiness:
 
         # Verify version is 1.0.0
         info = data.get("info", {})
-        assert info.get("version") == "1.0.0"
+        assert info.get("version") == "1.2.0"
 
     @pytest.mark.asyncio
     async def test_error_format_consistent(

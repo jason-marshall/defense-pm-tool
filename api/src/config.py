@@ -30,7 +30,7 @@ class Settings(BaseSettings):
 
     # Application
     APP_NAME: str = "Defense PM Tool"
-    APP_VERSION: str = "0.1.0"
+    APP_VERSION: str = "1.2.0"
     ENVIRONMENT: Literal["development", "staging", "production"] = "development"
     DEBUG: bool = False
     API_V1_PREFIX: str = "/api/v1"

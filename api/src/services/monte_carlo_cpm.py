@@ -331,10 +331,8 @@ class NetworkMonteCarloEngine:
         required parameters are not None.
         """
         if params.distribution == DistributionType.TRIANGULAR:
-            # validate() ensures these are not None for TRIANGULAR
-            assert params.min_value is not None
-            assert params.mode is not None
-            assert params.max_value is not None
+            if params.min_value is None or params.mode is None or params.max_value is None:
+                raise ValueError("TRIANGULAR requires min_value, mode, and max_value")
             # Handle edge case where min == max (constant value)
             if params.min_value == params.max_value:
                 return np.full(n, params.min_value)
@@ -346,9 +344,8 @@ class NetworkMonteCarloEngine:
             )
 
         elif params.distribution == DistributionType.NORMAL:
-            # validate() ensures these are not None for NORMAL
-            assert params.mean is not None
-            assert params.std is not None
+            if params.mean is None or params.std is None:
+                raise ValueError("NORMAL requires mean and std")
             return self.rng.normal(
                 loc=params.mean,
                 scale=params.std,
@@ -356,9 +353,8 @@ class NetworkMonteCarloEngine:
             )
 
         elif params.distribution == DistributionType.UNIFORM:
-            # validate() ensures these are not None for UNIFORM
-            assert params.min_value is not None
-            assert params.max_value is not None
+            if params.min_value is None or params.max_value is None:
+                raise ValueError("UNIFORM requires min_value and max_value")
             return self.rng.uniform(
                 low=params.min_value,
                 high=params.max_value,
@@ -366,10 +362,8 @@ class NetworkMonteCarloEngine:
             )
 
         elif params.distribution == DistributionType.PERT:
-            # validate() ensures these are not None for PERT
-            assert params.min_value is not None
-            assert params.mode is not None
-            assert params.max_value is not None
+            if params.min_value is None or params.mode is None or params.max_value is None:
+                raise ValueError("PERT requires min_value, mode, and max_value")
             return self._sample_pert(
                 params.min_value,
                 params.mode,

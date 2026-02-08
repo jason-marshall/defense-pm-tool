@@ -196,7 +196,7 @@ OPENAPI_TAGS = [
 
 app = FastAPI(
     title="Defense PM Tool API",
-    version="1.0.0",
+    version=settings.APP_VERSION,
     description=API_DESCRIPTION,
     openapi_url="/openapi.json",
     docs_url="/docs",
@@ -296,7 +296,7 @@ async def root() -> dict[str, str]:
     """Root endpoint with API information."""
     return {
         "name": "Defense PM Tool API",
-        "version": "0.1.0",
+        "version": settings.APP_VERSION,
         "docs": "/docs",
         "health": "/health",
     }
