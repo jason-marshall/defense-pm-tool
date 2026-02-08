@@ -42,6 +42,7 @@ out/
 # OS
 .DS_Store
 Thumbs.db
+nul
 
 # Docker
 docker-compose.override.yml
@@ -56,6 +57,7 @@ alembic/versions/*.pyc
 # Coverage reports
 coverage.xml
 .coverage.*
+web/coverage/
 
 # Ruff cache
 .ruff_cache/
