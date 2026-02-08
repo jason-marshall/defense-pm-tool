@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from src.models.jira_mapping import JiraMapping
     from src.models.program import Program
     from src.models.resource import ResourceAssignment
+    from src.models.skill import SkillRequirement
     from src.models.wbs import WBSElement
 
 
@@ -292,6 +293,13 @@ class Activity(Base):
     # Week 14: Resource assignments
     resource_assignments: Mapped[list["ResourceAssignment"]] = relationship(
         "ResourceAssignment",
+        back_populates="activity",
+        cascade="all, delete-orphan",
+    )
+
+    # v1.3.0: Skill requirements
+    skill_requirements: Mapped[list["SkillRequirement"]] = relationship(
+        "SkillRequirement",
         back_populates="activity",
         cascade="all, delete-orphan",
     )

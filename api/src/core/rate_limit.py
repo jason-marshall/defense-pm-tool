@@ -46,12 +46,28 @@ def get_client_ip(request: Request) -> str:
     return get_remote_address(request)
 
 
+# Determine rate limit storage backend
+# Use Redis in production for multi-instance safety; in-memory for dev/test
+def _get_rate_limit_storage() -> str:
+    """Get the appropriate storage URI for rate limiting."""
+    try:
+        from src.config import settings  # noqa: PLC0415
+
+        if settings.ENVIRONMENT == "production":
+            return str(settings.REDIS_URL)
+    except Exception:
+        pass
+    return "memory://"
+
+
+RATE_LIMIT_STORAGE = _get_rate_limit_storage()
+
 # Create limiter instance
 # When RATE_LIMIT_ENABLED=false, the limiter is disabled and passes all requests
 limiter = Limiter(
     key_func=get_client_ip,
     default_limits=["100/minute"],
-    storage_uri="memory://",  # Use Redis in production: "redis://localhost:6379"
+    storage_uri=RATE_LIMIT_STORAGE,
     enabled=RATE_LIMIT_ENABLED,
 )
 

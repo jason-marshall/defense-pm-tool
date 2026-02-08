@@ -57,6 +57,9 @@ from src.models.resource_pool import (
     ResourcePoolMember,
 )
 
+# v1.3.0: Resource skills and certification tracking
+from src.models.skill import ResourceSkill, Skill, SkillRequirement
+
 # Import models
 from src.models.user import User
 from src.models.variance_explanation import VarianceExplanation
@@ -99,6 +102,10 @@ __all__ = [
     "ResourcePoolAccess",
     "ResourcePoolMember",
     "PoolAccessLevel",
+    # v1.3.0: Resource skills
+    "Skill",
+    "ResourceSkill",
+    "SkillRequirement",
     "SoftDeleteMixin",
     "SyncDirection",
     "SyncStatus",

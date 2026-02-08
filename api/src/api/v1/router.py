@@ -26,6 +26,7 @@ from src.api.v1.endpoints import (
     scenarios,
     schedule,
     simulations,
+    skills,
     variance_explanations,
     wbs,
 )
@@ -157,6 +158,11 @@ api_router.include_router(calendar_import.router)
 
 # Week 19: Parallel resource leveling
 api_router.include_router(parallel_leveling.router)
+
+# v1.3.0: Resource skills and certification tracking
+api_router.include_router(skills.router)
+api_router.include_router(skills.resource_skills_router)
+api_router.include_router(skills.skill_requirements_router)
 
 # Week 20: Resource pools for cross-program sharing
 api_router.include_router(resource_pools.router)

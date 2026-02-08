@@ -201,7 +201,7 @@ async def quick_simulation(
     Useful for one-off analysis or testing distribution parameters.
     Limited to 10000 iterations.
     """
-    from datetime import datetime
+    from datetime import UTC, datetime
     from uuid import uuid4
 
     # Verify program access
@@ -277,8 +277,8 @@ async def quick_simulation(
             id=uuid4(),  # Temporary ID
             config_id=uuid4(),  # No config
             status=SimulationStatus.COMPLETED,
-            started_at=datetime.utcnow(),
-            completed_at=datetime.utcnow(),
+            started_at=datetime.now(UTC),
+            completed_at=datetime.now(UTC),
             iterations_completed=output.iterations,
             duration_results=duration_results,
             cost_results=cost_results,

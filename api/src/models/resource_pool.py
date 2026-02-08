@@ -1,6 +1,6 @@
 """Resource pool models for cross-program resource sharing."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from enum import Enum
 from typing import TYPE_CHECKING
@@ -277,7 +277,7 @@ class ResourcePoolAccess(Base):
     granted_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
-        default=datetime.utcnow,
+        default=lambda: datetime.now(UTC),
         comment="When access was granted",
     )
 

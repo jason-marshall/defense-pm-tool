@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from src.models.calendar_template import CalendarTemplate
     from src.models.program import Program
     from src.models.resource_cost import ResourceCostEntry
+    from src.models.skill import ResourceSkill
 
 
 class Resource(Base):
@@ -165,6 +166,13 @@ class Resource(Base):
         "CalendarTemplate",
         back_populates="resources",
         foreign_keys=[calendar_template_id],
+    )
+
+    # v1.3.0: Resource skills
+    skills: Mapped[list["ResourceSkill"]] = relationship(
+        "ResourceSkill",
+        back_populates="resource",
+        cascade="all, delete-orphan",
     )
 
     # Table-level configuration
