@@ -214,12 +214,16 @@ async def export_csv(
     writer = csv.writer(output)
 
     if export_type in ("activities", "all"):
-        await _write_activities_csv(writer, program_id, db, include_header_label=export_type == "all")
+        await _write_activities_csv(
+            writer, program_id, db, include_header_label=export_type == "all"
+        )
 
     if export_type in ("resources", "all"):
         if export_type == "all":
             writer.writerow([])  # Blank separator
-        await _write_resources_csv(writer, program_id, db, include_header_label=export_type == "all")
+        await _write_resources_csv(
+            writer, program_id, db, include_header_label=export_type == "all"
+        )
 
     if export_type in ("wbs", "all"):
         if export_type == "all":
@@ -239,7 +243,7 @@ async def export_csv(
 
 
 async def _write_activities_csv(
-    writer: csv.writer,  # type: ignore[type-arg]
+    writer: Any,
     program_id: UUID,
     db: Any,
     include_header_label: bool = False,
@@ -248,44 +252,61 @@ async def _write_activities_csv(
     if include_header_label:
         writer.writerow(["## Activities"])
 
-    writer.writerow([
-        "Code", "Name", "Duration (days)", "Percent Complete",
-        "Planned Start", "Planned Finish",
-        "Early Start", "Early Finish", "Late Start", "Late Finish",
-        "Total Float", "Free Float", "Is Critical", "Is Milestone",
-        "Constraint Type", "Constraint Date",
-        "Budgeted Cost", "Actual Cost", "EV Method",
-    ])
+    writer.writerow(
+        [
+            "Code",
+            "Name",
+            "Duration (days)",
+            "Percent Complete",
+            "Planned Start",
+            "Planned Finish",
+            "Early Start",
+            "Early Finish",
+            "Late Start",
+            "Late Finish",
+            "Total Float",
+            "Free Float",
+            "Is Critical",
+            "Is Milestone",
+            "Constraint Type",
+            "Constraint Date",
+            "Budgeted Cost",
+            "Actual Cost",
+            "EV Method",
+        ]
+    )
 
     activity_repo = ActivityRepository(db)
     activities = await activity_repo.get_by_program(program_id, limit=10000)
 
     for act in activities:
-        writer.writerow([
-            act.code,
-            act.name,
-            act.duration,
-            str(act.percent_complete) if act.percent_complete is not None else "",
-            act.planned_start.isoformat() if act.planned_start else "",
-            act.planned_finish.isoformat() if act.planned_finish else "",
-            act.early_start.isoformat() if act.early_start else "",
-            act.early_finish.isoformat() if act.early_finish else "",
-            act.late_start.isoformat() if act.late_start else "",
-            act.late_finish.isoformat() if act.late_finish else "",
-            act.total_float if act.total_float is not None else "",
-            act.free_float if act.free_float is not None else "",
-            act.is_critical,
-            act.is_milestone,
-            act.constraint_type.value if act.constraint_type else "",
-            act.constraint_date.isoformat() if act.constraint_date else "",
-            str(act.budgeted_cost) if act.budgeted_cost is not None else "",
-            str(act.actual_cost) if act.actual_cost is not None else "",
-            act.ev_method or "",
-        ])
+        writer.writerow(
+            [
+                act.code,
+                act.name,
+                act.duration,
+                str(act.percent_complete) if act.percent_complete is not None else "",
+                act.planned_start.isoformat() if act.planned_start else "",
+                act.planned_finish.isoformat() if act.planned_finish else "",
+                act.early_start.isoformat() if act.early_start else "",
+                act.early_finish.isoformat() if act.early_finish else "",
+                act.late_start.isoformat() if act.late_start else "",
+                act.late_finish.isoformat() if act.late_finish else "",
+                act.total_float if act.total_float is not None else "",
+                act.free_float if act.free_float is not None else "",
+                act.is_critical,
+                act.is_milestone,
+                act.constraint_type.value if act.constraint_type else "",
+                act.constraint_date.isoformat() if act.constraint_date else "",
+                str(act.budgeted_cost) if act.budgeted_cost is not None else "",
+                str(act.actual_cost) if act.actual_cost is not None else "",
+                act.ev_method or "",
+            ]
+        )
 
 
 async def _write_resources_csv(
-    writer: csv.writer,  # type: ignore[type-arg]
+    writer: Any,
     program_id: UUID,
     db: Any,
     include_header_label: bool = False,
@@ -294,28 +315,37 @@ async def _write_resources_csv(
     if include_header_label:
         writer.writerow(["## Resources"])
 
-    writer.writerow([
-        "Code", "Name", "Type", "Capacity (hrs/day)",
-        "Cost Rate", "Is Active", "Effective Date",
-    ])
+    writer.writerow(
+        [
+            "Code",
+            "Name",
+            "Type",
+            "Capacity (hrs/day)",
+            "Cost Rate",
+            "Is Active",
+            "Effective Date",
+        ]
+    )
 
     resource_repo = ResourceRepository(db)
     resources, _total = await resource_repo.get_by_program(program_id, limit=10000)
 
     for res in resources:
-        writer.writerow([
-            res.code,
-            res.name,
-            res.resource_type.value if res.resource_type else "",
-            str(res.capacity_per_day) if res.capacity_per_day is not None else "",
-            str(res.cost_rate) if res.cost_rate is not None else "",
-            res.is_active,
-            res.effective_date.isoformat() if res.effective_date else "",
-        ])
+        writer.writerow(
+            [
+                res.code,
+                res.name,
+                res.resource_type.value if res.resource_type else "",
+                str(res.capacity_per_day) if res.capacity_per_day is not None else "",
+                str(res.cost_rate) if res.cost_rate is not None else "",
+                res.is_active,
+                res.effective_date.isoformat() if res.effective_date else "",
+            ]
+        )
 
 
 async def _write_wbs_csv(
-    writer: csv.writer,  # type: ignore[type-arg]
+    writer: Any,
     program_id: UUID,
     db: Any,
     include_header_label: bool = False,
@@ -324,21 +354,30 @@ async def _write_wbs_csv(
     if include_header_label:
         writer.writerow(["## WBS Elements"])
 
-    writer.writerow([
-        "WBS Code", "Name", "Level", "Path",
-        "Is Control Account", "Budget at Completion", "Description",
-    ])
+    writer.writerow(
+        [
+            "WBS Code",
+            "Name",
+            "Level",
+            "Path",
+            "Is Control Account",
+            "Budget at Completion",
+            "Description",
+        ]
+    )
 
     wbs_repo = WBSElementRepository(db)
     elements = await wbs_repo.get_by_program(program_id, limit=10000)
 
     for elem in elements:
-        writer.writerow([
-            elem.wbs_code,
-            elem.name,
-            elem.level,
-            elem.path,
-            elem.is_control_account,
-            str(elem.budget_at_completion) if elem.budget_at_completion is not None else "",
-            elem.description or "",
-        ])
+        writer.writerow(
+            [
+                elem.wbs_code,
+                elem.name,
+                elem.level,
+                elem.path,
+                elem.is_control_account,
+                str(elem.budget_at_completion) if elem.budget_at_completion is not None else "",
+                elem.description or "",
+            ]
+        )
