@@ -1,17 +1,20 @@
 /**
- * Resource tab container with sub-tabs for Resources, Histogram, Leveling, Skills.
+ * Resource tab container with sub-tabs for Resources, Histogram, Leveling, Skills, Cost, Materials, Pools.
  */
 
 import { useState } from "react";
 import { ResourceList } from "./ResourceList";
 import { LevelingPanel } from "./LevelingPanel";
 import { SkillsPanel } from "@/components/Settings/SkillsPanel";
+import { CostSummaryPanel } from "@/components/ResourceCost/CostSummaryPanel";
+import { MaterialSummaryPanel } from "@/components/Materials/MaterialSummaryPanel";
+import { ResourcePoolList } from "@/components/ResourcePools/ResourcePoolList";
 
 interface ResourceTabProps {
   programId: string;
 }
 
-type SubTab = "resources" | "histogram" | "leveling" | "skills";
+type SubTab = "resources" | "histogram" | "leveling" | "skills" | "cost" | "materials" | "pools";
 
 export function ResourceTab({ programId }: ResourceTabProps) {
   const [activeTab, setActiveTab] = useState<SubTab>("resources");
@@ -21,6 +24,9 @@ export function ResourceTab({ programId }: ResourceTabProps) {
     { key: "histogram", label: "Histogram" },
     { key: "leveling", label: "Leveling" },
     { key: "skills", label: "Skills" },
+    { key: "cost", label: "Cost" },
+    { key: "materials", label: "Materials" },
+    { key: "pools", label: "Pools" },
   ];
 
   return (
@@ -52,6 +58,9 @@ export function ResourceTab({ programId }: ResourceTabProps) {
       )}
       {activeTab === "leveling" && <LevelingPanel programId={programId} />}
       {activeTab === "skills" && <SkillsPanel programId={programId} />}
+      {activeTab === "cost" && <CostSummaryPanel programId={programId} />}
+      {activeTab === "materials" && <MaterialSummaryPanel programId={programId} />}
+      {activeTab === "pools" && <ResourcePoolList programId={programId} />}
     </div>
   );
 }

@@ -185,7 +185,7 @@ async def create_scenario(
         await db.flush()
 
     await db.commit()
-    await db.refresh(scenario)
+    scenario = await repo.get_with_changes(scenario.id)
 
     return _build_scenario_response(scenario)
 
@@ -271,7 +271,7 @@ async def update_scenario(
                 setattr(scenario, key, value)
 
     await db.commit()
-    await db.refresh(scenario)
+    scenario = await repo.get_with_changes(scenario.id)
 
     return _build_scenario_response(scenario)
 
@@ -470,7 +470,7 @@ async def archive_scenario(
         raise NotFoundError(f"Scenario {scenario_id} not found", "SCENARIO_NOT_FOUND")
 
     await db.commit()
-    await db.refresh(scenario)
+    scenario = await repo.get_with_changes(scenario.id)
 
     return _build_scenario_response(scenario)
 
@@ -511,7 +511,7 @@ async def activate_scenario(
 
     scenario.status = "active"
     await db.commit()
-    await db.refresh(scenario)
+    scenario = await repo.get_with_changes(scenario.id)
 
     return _build_scenario_response(scenario)
 

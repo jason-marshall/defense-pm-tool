@@ -15,6 +15,9 @@ import {
   previewLeveling,
   runLeveling,
   applyLeveling,
+  runParallelLeveling,
+  previewParallelLeveling,
+  compareLevelingAlgorithms,
   levelingApi,
 } from "../levelingApi";
 
@@ -355,6 +358,116 @@ describe("levelingApi", () => {
     });
   });
 
+  describe("runParallelLeveling", () => {
+    it("should post parallel leveling options to correct URL", async () => {
+      const parallelResult = {
+        ...mockLevelingResult,
+        algorithm: "parallel",
+        threads_used: 4,
+        metrics: {
+          algorithm: "parallel",
+          execution_time_ms: 150,
+          activities_shifted: 3,
+          schedule_extension_days: 10,
+          remaining_overallocations: 0,
+        },
+      };
+      mockedPost.mockResolvedValue({ data: parallelResult });
+
+      const options = { preserve_critical_path: true, max_iterations: 50 };
+      const result = await runParallelLeveling("prog-001", options);
+
+      expect(mockedPost).toHaveBeenCalledWith(
+        "/programs/prog-001/level/parallel",
+        options
+      );
+      expect(result.algorithm).toBe("parallel");
+      expect(result.threads_used).toBe(4);
+    });
+
+    it("should propagate errors", async () => {
+      mockedPost.mockRejectedValue(new Error("Parallel failed"));
+
+      await expect(
+        runParallelLeveling("prog-001", {})
+      ).rejects.toThrow("Parallel failed");
+    });
+  });
+
+  describe("previewParallelLeveling", () => {
+    it("should fetch parallel preview with no options", async () => {
+      mockedGet.mockResolvedValue({ data: mockLevelingResult });
+
+      await previewParallelLeveling("prog-001");
+
+      expect(mockedGet).toHaveBeenCalledWith(
+        "/programs/prog-001/level/parallel/preview"
+      );
+    });
+
+    it("should append options as query params", async () => {
+      mockedGet.mockResolvedValue({ data: mockLevelingResult });
+
+      await previewParallelLeveling("prog-001", {
+        preserve_critical_path: true,
+        max_iterations: 50,
+      });
+
+      expect(mockedGet).toHaveBeenCalledWith(
+        "/programs/prog-001/level/parallel/preview?preserve_critical_path=true&max_iterations=50"
+      );
+    });
+
+    it("should propagate errors", async () => {
+      mockedGet.mockRejectedValue(new Error("Preview failed"));
+
+      await expect(
+        previewParallelLeveling("prog-001")
+      ).rejects.toThrow("Preview failed");
+    });
+  });
+
+  describe("compareLevelingAlgorithms", () => {
+    it("should post compare request to correct URL", async () => {
+      const mockComparison = {
+        program_id: "prog-001",
+        serial: {
+          algorithm: "serial",
+          execution_time_ms: 200,
+          activities_shifted: 3,
+          schedule_extension_days: 10,
+          remaining_overallocations: 0,
+        },
+        parallel: {
+          algorithm: "parallel",
+          execution_time_ms: 100,
+          activities_shifted: 3,
+          schedule_extension_days: 8,
+          remaining_overallocations: 0,
+        },
+        recommendation: "Parallel algorithm is faster with equivalent results",
+      };
+      mockedPost.mockResolvedValue({ data: mockComparison });
+
+      const options = { preserve_critical_path: true };
+      const result = await compareLevelingAlgorithms("prog-001", options);
+
+      expect(mockedPost).toHaveBeenCalledWith(
+        "/programs/prog-001/level/compare",
+        options
+      );
+      expect(result.recommendation).toContain("Parallel");
+    });
+
+    it("should propagate errors", async () => {
+      mockedPost.mockRejectedValue(new Error("Compare failed"));
+
+      await expect(
+        compareLevelingAlgorithms("prog-001", {})
+      ).rejects.toThrow("Compare failed");
+    });
+  });
+
   describe("levelingApi object", () => {
     it("should export preview as previewLeveling", () => {
       expect(levelingApi.preview).toBe(previewLeveling);
@@ -368,8 +481,20 @@ describe("levelingApi", () => {
       expect(levelingApi.apply).toBe(applyLeveling);
     });
 
-    it("should have exactly three methods", () => {
-      expect(Object.keys(levelingApi)).toHaveLength(3);
+    it("should export runParallel as runParallelLeveling", () => {
+      expect(levelingApi.runParallel).toBe(runParallelLeveling);
+    });
+
+    it("should export previewParallel as previewParallelLeveling", () => {
+      expect(levelingApi.previewParallel).toBe(previewParallelLeveling);
+    });
+
+    it("should export compare as compareLevelingAlgorithms", () => {
+      expect(levelingApi.compare).toBe(compareLevelingAlgorithms);
+    });
+
+    it("should have exactly six methods", () => {
+      expect(Object.keys(levelingApi)).toHaveLength(6);
     });
   });
 });

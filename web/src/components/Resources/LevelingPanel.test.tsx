@@ -8,6 +8,9 @@ vi.mock("@/services/levelingApi", () => ({
   runLeveling: vi.fn(),
   previewLeveling: vi.fn(),
   applyLeveling: vi.fn(),
+  runParallelLeveling: vi.fn(),
+  previewParallelLeveling: vi.fn(),
+  compareLevelingAlgorithms: vi.fn(),
 }));
 
 import { runLeveling, applyLeveling } from "@/services/levelingApi";
@@ -70,7 +73,7 @@ describe("LevelingPanel", () => {
     expect(screen.getByText("Resource Leveling")).toBeInTheDocument();
     expect(screen.getByLabelText("Preserve Critical Path")).toBeChecked();
     expect(screen.getByLabelText("Level Within Float Only")).toBeChecked();
-    expect(screen.getByText("Run Leveling")).toBeInTheDocument();
+    expect(screen.getByText("Run Serial Leveling")).toBeInTheDocument();
   });
 
   it("has max iterations input", () => {
@@ -86,7 +89,7 @@ describe("LevelingPanel", () => {
 
     render(<LevelingPanel programId="prog-1" />, { wrapper: Wrapper });
 
-    fireEvent.click(screen.getByText("Run Leveling"));
+    fireEvent.click(screen.getByText("Run Serial Leveling"));
 
     await waitFor(() => {
       expect(screen.getByText("Leveling Results")).toBeInTheDocument();
@@ -103,7 +106,7 @@ describe("LevelingPanel", () => {
 
     render(<LevelingPanel programId="prog-1" />, { wrapper: Wrapper });
 
-    fireEvent.click(screen.getByText("Run Leveling"));
+    fireEvent.click(screen.getByText("Run Serial Leveling"));
 
     await waitFor(() => {
       expect(screen.getByText("ACT-001")).toBeInTheDocument();
@@ -118,7 +121,7 @@ describe("LevelingPanel", () => {
 
     render(<LevelingPanel programId="prog-1" />, { wrapper: Wrapper });
 
-    fireEvent.click(screen.getByText("Run Leveling"));
+    fireEvent.click(screen.getByText("Run Serial Leveling"));
 
     await waitFor(() => {
       expect(screen.getByText("2 of 2 shifts selected")).toBeInTheDocument();
@@ -130,7 +133,7 @@ describe("LevelingPanel", () => {
 
     render(<LevelingPanel programId="prog-1" />, { wrapper: Wrapper });
 
-    fireEvent.click(screen.getByText("Run Leveling"));
+    fireEvent.click(screen.getByText("Run Serial Leveling"));
 
     await waitFor(() => {
       expect(screen.getByText("2 of 2 shifts selected")).toBeInTheDocument();
@@ -154,7 +157,7 @@ describe("LevelingPanel", () => {
       { wrapper: Wrapper }
     );
 
-    fireEvent.click(screen.getByText("Run Leveling"));
+    fireEvent.click(screen.getByText("Run Serial Leveling"));
 
     await waitFor(() => {
       expect(screen.getByText("Leveling Results")).toBeInTheDocument();
@@ -172,7 +175,7 @@ describe("LevelingPanel", () => {
 
     render(<LevelingPanel programId="prog-1" />, { wrapper: Wrapper });
 
-    fireEvent.click(screen.getByText("Run Leveling"));
+    fireEvent.click(screen.getByText("Run Serial Leveling"));
 
     await waitFor(() => {
       expect(screen.getByText("Leveling Results")).toBeInTheDocument();
@@ -180,7 +183,7 @@ describe("LevelingPanel", () => {
 
     fireEvent.click(screen.getByText("Reset"));
 
-    expect(screen.getByText("Run Leveling")).toBeInTheDocument();
+    expect(screen.getByText("Run Serial Leveling")).toBeInTheDocument();
     expect(screen.queryByText("Leveling Results")).not.toBeInTheDocument();
   });
 
@@ -193,7 +196,7 @@ describe("LevelingPanel", () => {
 
     render(<LevelingPanel programId="prog-1" />, { wrapper: Wrapper });
 
-    fireEvent.click(screen.getByText("Run Leveling"));
+    fireEvent.click(screen.getByText("Run Serial Leveling"));
 
     await waitFor(() => {
       expect(screen.getByText("No changes needed")).toBeInTheDocument();
@@ -209,7 +212,7 @@ describe("LevelingPanel", () => {
 
     render(<LevelingPanel programId="prog-1" />, { wrapper: Wrapper });
 
-    fireEvent.click(screen.getByText("Run Leveling"));
+    fireEvent.click(screen.getByText("Run Serial Leveling"));
 
     await waitFor(() => {
       expect(screen.getByText("Warnings")).toBeInTheDocument();
@@ -224,7 +227,7 @@ describe("LevelingPanel", () => {
 
     render(<LevelingPanel programId="prog-1" />, { wrapper: Wrapper });
 
-    fireEvent.click(screen.getByText("Run Leveling"));
+    fireEvent.click(screen.getByText("Run Serial Leveling"));
 
     await waitFor(() => {
       expect(screen.getByText("Failed to run leveling")).toBeInTheDocument();

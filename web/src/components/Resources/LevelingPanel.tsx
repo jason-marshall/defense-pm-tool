@@ -4,10 +4,19 @@
  */
 
 import { useState } from "react";
-import { useRunLeveling, useApplyLeveling } from "@/hooks/useLeveling";
-import type { LevelingResult, LevelingOptions } from "@/types/leveling";
+import {
+  useRunLeveling,
+  useApplyLeveling,
+  useRunParallelLeveling,
+  useCompareLevelingAlgorithms,
+} from "@/hooks/useLeveling";
+import type {
+  LevelingResult,
+  LevelingOptions,
+  LevelingComparisonResponse,
+} from "@/types/leveling";
 import { useToast } from "@/components/Toast";
-import { Play, Check, AlertTriangle, RotateCcw } from "lucide-react";
+import { Play, Check, AlertTriangle, RotateCcw, GitCompare } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
 interface LevelingPanelProps {
@@ -22,26 +31,45 @@ export function LevelingPanel({ programId, onComplete }: LevelingPanelProps) {
     target_resources: null,
     level_within_float: true,
   });
+  const [algorithm, setAlgorithm] = useState<"serial" | "parallel">("serial");
   const [result, setResult] = useState<LevelingResult | null>(null);
   const [selectedShifts, setSelectedShifts] = useState<Set<string>>(new Set());
+  const [comparison, setComparison] =
+    useState<LevelingComparisonResponse | null>(null);
 
   const runLeveling = useRunLeveling();
+  const runParallel = useRunParallelLeveling();
+  const compareMutation = useCompareLevelingAlgorithms();
   const applyLeveling = useApplyLeveling();
   const { success, error: showError, warning } = useToast();
 
   const handleRun = async () => {
     try {
-      const data = await runLeveling.mutateAsync({ programId, options });
+      const mutation =
+        algorithm === "parallel" ? runParallel : runLeveling;
+      const data = await mutation.mutateAsync({ programId, options });
       setResult(data);
       // Select all shifts by default
       setSelectedShifts(new Set(data.shifts.map((s) => s.activity_id)));
       if (data.success) {
-        success(`Leveling complete: ${data.activities_shifted} activities shifted`);
+        success(
+          `Leveling complete (${algorithm}): ${data.activities_shifted} activities shifted`
+        );
       } else {
         warning("Leveling completed with warnings");
       }
     } catch {
       showError("Failed to run leveling");
+    }
+  };
+
+  const handleCompare = async () => {
+    try {
+      const data = await compareMutation.mutateAsync({ programId, options });
+      setComparison(data);
+      success("Algorithm comparison complete");
+    } catch {
+      showError("Failed to compare algorithms");
     }
   };
 
@@ -67,6 +95,7 @@ export function LevelingPanel({ programId, onComplete }: LevelingPanelProps) {
   const handleReset = () => {
     setResult(null);
     setSelectedShifts(new Set());
+    setComparison(null);
   };
 
   const toggleShift = (activityId: string) => {
@@ -149,20 +178,87 @@ export function LevelingPanel({ programId, onComplete }: LevelingPanelProps) {
             </div>
           </div>
 
-          {/* Run Button */}
-          <button
-            onClick={handleRun}
-            disabled={runLeveling.isPending}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
-          >
-            <Play size={16} />
-            {runLeveling.isPending ? "Running..." : "Run Leveling"}
-          </button>
+          {/* Algorithm Toggle */}
+          <div className="mb-4">
+            <label className="text-sm text-gray-600 block mb-1">Algorithm</label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setAlgorithm("serial")}
+                className={`px-3 py-1.5 rounded text-sm transition-colors ${
+                  algorithm === "serial"
+                    ? "bg-blue-100 text-blue-700 border border-blue-300"
+                    : "bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200"
+                }`}
+              >
+                Serial
+              </button>
+              <button
+                type="button"
+                onClick={() => setAlgorithm("parallel")}
+                className={`px-3 py-1.5 rounded text-sm transition-colors ${
+                  algorithm === "parallel"
+                    ? "bg-blue-100 text-blue-700 border border-blue-300"
+                    : "bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200"
+                }`}
+              >
+                Parallel
+              </button>
+            </div>
+          </div>
+
+          {/* Run & Compare Buttons */}
+          <div className="flex gap-2">
+            <button
+              onClick={handleRun}
+              disabled={runLeveling.isPending || runParallel.isPending}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+            >
+              <Play size={16} />
+              {runLeveling.isPending || runParallel.isPending
+                ? "Running..."
+                : `Run ${algorithm === "parallel" ? "Parallel" : "Serial"} Leveling`}
+            </button>
+            <button
+              onClick={handleCompare}
+              disabled={compareMutation.isPending}
+              className="border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+            >
+              <GitCompare size={16} />
+              {compareMutation.isPending ? "Comparing..." : "Compare"}
+            </button>
+          </div>
 
           <p className="text-xs text-gray-500 mt-2">
             Leveling will delay non-critical activities to resolve resource
             overallocations.
           </p>
+
+          {/* Comparison Results */}
+          {comparison && (
+            <div className="mt-4 border rounded p-4 bg-gray-50">
+              <h4 className="font-medium mb-3">Algorithm Comparison</h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <div className="font-medium text-gray-700 mb-1">Serial</div>
+                  <div>Shifted: {comparison.serial.activities_shifted}</div>
+                  <div>Extension: {comparison.serial.schedule_extension_days}d</div>
+                  <div>Time: {comparison.serial.execution_time_ms}ms</div>
+                  <div>Remaining: {comparison.serial.remaining_overallocations}</div>
+                </div>
+                <div>
+                  <div className="font-medium text-gray-700 mb-1">Parallel</div>
+                  <div>Shifted: {comparison.parallel.activities_shifted}</div>
+                  <div>Extension: {comparison.parallel.schedule_extension_days}d</div>
+                  <div>Time: {comparison.parallel.execution_time_ms}ms</div>
+                  <div>Remaining: {comparison.parallel.remaining_overallocations}</div>
+                </div>
+              </div>
+              <p className="mt-2 text-sm text-blue-600 font-medium">
+                {comparison.recommendation}
+              </p>
+            </div>
+          )}
         </>
       )}
 

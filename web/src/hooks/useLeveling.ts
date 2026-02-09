@@ -7,6 +7,8 @@ import {
   previewLeveling,
   runLeveling,
   applyLeveling,
+  runParallelLeveling,
+  compareLevelingAlgorithms,
 } from "@/services/levelingApi";
 import type { LevelingOptions } from "@/types/leveling";
 
@@ -60,5 +62,35 @@ export function useApplyLeveling() {
       queryClient.invalidateQueries({ queryKey: ["assignments"] });
       queryClient.invalidateQueries({ queryKey: ["resources"] });
     },
+  });
+}
+
+/**
+ * Hook to run parallel leveling algorithm.
+ */
+export function useRunParallelLeveling() {
+  return useMutation({
+    mutationFn: ({
+      programId,
+      options,
+    }: {
+      programId: string;
+      options: Partial<LevelingOptions>;
+    }) => runParallelLeveling(programId, options),
+  });
+}
+
+/**
+ * Hook to compare serial and parallel leveling algorithms.
+ */
+export function useCompareLevelingAlgorithms() {
+  return useMutation({
+    mutationFn: ({
+      programId,
+      options,
+    }: {
+      programId: string;
+      options: Partial<LevelingOptions>;
+    }) => compareLevelingAlgorithms(programId, options),
   });
 }

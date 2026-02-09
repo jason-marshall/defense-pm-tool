@@ -28,3 +28,24 @@ export interface LevelingResult {
   schedule_extension_days: number;
   warnings: string[];
 }
+
+export interface AlgorithmMetrics {
+  algorithm: string;
+  execution_time_ms: number;
+  activities_shifted: number;
+  schedule_extension_days: number;
+  remaining_overallocations: number;
+}
+
+export interface ParallelLevelingResult extends LevelingResult {
+  algorithm: "parallel";
+  threads_used: number;
+  metrics: AlgorithmMetrics;
+}
+
+export interface LevelingComparisonResponse {
+  program_id: string;
+  serial: AlgorithmMetrics;
+  parallel: AlgorithmMetrics;
+  recommendation: string;
+}
