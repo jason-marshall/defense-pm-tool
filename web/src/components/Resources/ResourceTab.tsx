@@ -1,16 +1,17 @@
 /**
- * Resource tab container with sub-tabs for Resources, Histogram, Leveling.
+ * Resource tab container with sub-tabs for Resources, Histogram, Leveling, Skills.
  */
 
 import { useState } from "react";
 import { ResourceList } from "./ResourceList";
 import { LevelingPanel } from "./LevelingPanel";
+import { SkillsPanel } from "@/components/Settings/SkillsPanel";
 
 interface ResourceTabProps {
   programId: string;
 }
 
-type SubTab = "resources" | "histogram" | "leveling";
+type SubTab = "resources" | "histogram" | "leveling" | "skills";
 
 export function ResourceTab({ programId }: ResourceTabProps) {
   const [activeTab, setActiveTab] = useState<SubTab>("resources");
@@ -19,6 +20,7 @@ export function ResourceTab({ programId }: ResourceTabProps) {
     { key: "resources", label: "Resources" },
     { key: "histogram", label: "Histogram" },
     { key: "leveling", label: "Leveling" },
+    { key: "skills", label: "Skills" },
   ];
 
   return (
@@ -49,6 +51,7 @@ export function ResourceTab({ programId }: ResourceTabProps) {
         </div>
       )}
       {activeTab === "leveling" && <LevelingPanel programId={programId} />}
+      {activeTab === "skills" && <SkillsPanel programId={programId} />}
     </div>
   );
 }

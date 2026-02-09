@@ -8,8 +8,9 @@ import { useResources, useDeleteResource } from "@/hooks/useResources";
 import { ResourceForm } from "./ResourceForm";
 import type { Resource } from "@/types/resource";
 import { ResourceType } from "@/types/resource";
-import { Plus, Edit2, Trash2, Users, Wrench, Package } from "lucide-react";
+import { Plus, Edit2, Trash2, Users, Wrench, Package, Award } from "lucide-react";
 import { useToast } from "@/components/Toast";
+import { ResourceSkillsModal } from "./ResourceSkillsModal";
 
 interface ResourceListProps {
   programId: string;
@@ -19,6 +20,7 @@ export function ResourceList({ programId }: ResourceListProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
   const [typeFilter, setTypeFilter] = useState<string>("");
+  const [skillsResource, setSkillsResource] = useState<Resource | null>(null);
 
   const { data, isLoading, error } = useResources(programId, {
     resource_type: typeFilter || undefined,
@@ -147,6 +149,13 @@ export function ResourceList({ programId }: ResourceListProps) {
                 </td>
                 <td className="border p-2 text-center">
                   <button
+                    onClick={() => setSkillsResource(resource)}
+                    className="text-purple-500 hover:text-purple-700 mr-2"
+                    title="Manage skills"
+                  >
+                    <Award size={16} />
+                  </button>
+                  <button
                     onClick={() => handleEdit(resource)}
                     className="text-blue-500 hover:text-blue-700 mr-2"
                     title="Edit resource"
@@ -179,6 +188,15 @@ export function ResourceList({ programId }: ResourceListProps) {
           programId={programId}
           resource={editingResource}
           onClose={handleCloseForm}
+        />
+      )}
+
+      {skillsResource && (
+        <ResourceSkillsModal
+          resourceId={skillsResource.id}
+          resourceName={skillsResource.name}
+          programId={programId}
+          onClose={() => setSkillsResource(null)}
         />
       )}
     </div>

@@ -5,6 +5,23 @@ import { MonteCarloPanel } from "../MonteCarloPanel";
 import { ToastProvider } from "@/components/Toast";
 import type { MonteCarloResult } from "@/types/simulation";
 
+// Mock recharts
+vi.mock("recharts", () => ({
+  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div data-testid="responsive-container">{children}</div>,
+  BarChart: ({ children }: { children: React.ReactNode }) => <div data-testid="bar-chart">{children}</div>,
+  Bar: ({ children }: { children?: React.ReactNode }) => <div data-testid="bar">{children}</div>,
+  Cell: ({ fill }: { fill: string }) => <div data-testid="cell" data-fill={fill} />,
+  LineChart: ({ children }: { children: React.ReactNode }) => <div data-testid="line-chart">{children}</div>,
+  Line: ({ name }: { name?: string }) => <div data-testid="line" data-name={name} />,
+  Area: ({ name }: { name?: string }) => <div data-testid="area" data-name={name} />,
+  XAxis: () => <div data-testid="x-axis" />,
+  YAxis: () => <div data-testid="y-axis" />,
+  CartesianGrid: () => <div data-testid="cartesian-grid" />,
+  Tooltip: () => <div data-testid="tooltip" />,
+  Legend: () => <div data-testid="legend" />,
+  ReferenceLine: ({ label }: { label?: { value: string } }) => <div data-testid="reference-line" data-label={label?.value} />,
+}));
+
 // Mock the hooks
 const mockUseSimulationResults = vi.fn();
 const mockRunMutateAsync = vi.fn();
@@ -241,5 +258,57 @@ describe("MonteCarloPanel", () => {
     expect(screen.getByText("P80")).toBeInTheDocument();
     expect(screen.getByText("P90")).toBeInTheDocument();
     expect(screen.getByText("P95")).toBeInTheDocument();
+  });
+
+  it("renders distribution histogram chart when histogram data exists", () => {
+    mockUseSimulationResults.mockReturnValue({
+      data: [mockResult],
+      isLoading: false,
+    });
+
+    render(<MonteCarloPanel programId="prog-1" />, { wrapper: Wrapper });
+
+    expect(screen.getByText("Duration Distribution")).toBeInTheDocument();
+  });
+
+  it("renders tornado chart when sensitivity data exists", () => {
+    mockUseSimulationResults.mockReturnValue({
+      data: [mockResult],
+      isLoading: false,
+    });
+
+    render(<MonteCarloPanel programId="prog-1" />, { wrapper: Wrapper });
+
+    expect(screen.getByText("Sensitivity Analysis (Tornado)")).toBeInTheDocument();
+  });
+
+  it("renders s-curve chart when s_curve_data exists", () => {
+    const resultWithSCurve: MonteCarloResult = {
+      ...mockResult,
+      s_curve_data: [
+        { period: "2026-01", bcws: "10000", bcwp: "9500", acwp: "10200" },
+        { period: "2026-02", bcws: "25000", bcwp: "22000", acwp: "24000" },
+      ],
+    };
+
+    mockUseSimulationResults.mockReturnValue({
+      data: [resultWithSCurve],
+      isLoading: false,
+    });
+
+    render(<MonteCarloPanel programId="prog-1" />, { wrapper: Wrapper });
+
+    expect(screen.getByText("S-Curve")).toBeInTheDocument();
+  });
+
+  it("does not render s-curve chart when s_curve_data is empty", () => {
+    mockUseSimulationResults.mockReturnValue({
+      data: [mockResult],
+      isLoading: false,
+    });
+
+    render(<MonteCarloPanel programId="prog-1" />, { wrapper: Wrapper });
+
+    expect(screen.queryByText("S-Curve")).not.toBeInTheDocument();
   });
 });

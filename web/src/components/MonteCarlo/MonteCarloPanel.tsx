@@ -6,6 +6,9 @@ import { useState } from "react";
 import { Zap } from "lucide-react";
 import { useRunSimulation, useSimulationResults } from "@/hooks/useSimulations";
 import { useToast } from "@/components/Toast";
+import { DistributionHistogram } from "./DistributionHistogram";
+import { TornadoChart } from "./TornadoChart";
+import { SCurveChart } from "./SCurveChart";
 import type { MonteCarloConfig, MonteCarloResult } from "@/types/simulation";
 
 interface MonteCarloPanelProps {
@@ -169,6 +172,24 @@ function ResultDisplay({ result }: { result: MonteCarloResult }) {
             ))}
           </div>
         </div>
+      )}
+
+      {dr.histogram.length > 0 && (
+        <DistributionHistogram
+          histogram={dr.histogram}
+          mean={dr.mean}
+          p50={dr.p50}
+          p80={dr.p80}
+          p90={dr.p90}
+        />
+      )}
+
+      {result.sensitivity.length > 0 && (
+        <TornadoChart sensitivity={result.sensitivity} />
+      )}
+
+      {result.s_curve_data.length > 0 && (
+        <SCurveChart data={result.s_curve_data} />
       )}
     </div>
   );
