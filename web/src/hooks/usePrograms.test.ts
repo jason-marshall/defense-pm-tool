@@ -34,9 +34,9 @@ const mockProgram = {
   id: "prog-1",
   name: "Test Program",
   code: "TP-001",
-  status: "active",
-  start_date: "2026-01-01",
-  end_date: "2026-12-31",
+  status: "ACTIVE",
+  planned_start_date: "2026-01-01",
+  planned_end_date: "2026-12-31",
   owner_id: "user-1",
 };
 
@@ -51,7 +51,10 @@ describe("usePrograms", () => {
       data: { items: [mockProgram], total: 1 },
     });
 
-    const { result } = renderHook(() => usePrograms(1, 20), { wrapper });
+    const { result } = renderHook(
+      () => usePrograms({ page: 1, page_size: 20 }),
+      { wrapper }
+    );
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -91,9 +94,9 @@ describe("useCreateProgram", () => {
     result.current.mutate({
       name: "Test Program",
       code: "TP-001",
-      start_date: "2026-01-01",
-      end_date: "2026-12-31",
-    } as any);
+      planned_start_date: "2026-01-01",
+      planned_end_date: "2026-12-31",
+    });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -110,11 +113,12 @@ describe("useUpdateProgram", () => {
   it("updates a program", async () => {
     vi.mocked(apiClient.patch).mockResolvedValue({ data: mockProgram });
 
-    const { result } = renderHook(() => useUpdateProgram("prog-1"), {
-      wrapper,
-    });
+    const { result } = renderHook(() => useUpdateProgram(), { wrapper });
 
-    result.current.mutate({ name: "Updated Program" });
+    result.current.mutate({
+      id: "prog-1",
+      data: { name: "Updated Program" },
+    });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 

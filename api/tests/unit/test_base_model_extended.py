@@ -242,20 +242,20 @@ class TestSoftDeleteMixin:
         """Test active_filter returns correct filter."""
         from src.models.base import SoftDeleteMixin
 
-        class TestModel(SoftDeleteMixin):
+        class _SoftDeleteFixture(SoftDeleteMixin):
             deleted_at = None
 
         # This would require a real SQLAlchemy setup to test properly
         # For now, just verify the method exists
-        assert hasattr(TestModel, "active_filter")
-        assert callable(TestModel.active_filter)
+        assert hasattr(_SoftDeleteFixture, "active_filter")
+        assert callable(_SoftDeleteFixture.active_filter)
 
     def test_deleted_filter(self):
         """Test deleted_filter returns correct filter."""
         from src.models.base import SoftDeleteMixin
 
-        class TestModel(SoftDeleteMixin):
+        class _SoftDeleteFixture(SoftDeleteMixin):
             deleted_at = None
 
-        assert hasattr(TestModel, "deleted_filter")
-        assert callable(TestModel.deleted_filter)
+        assert hasattr(_SoftDeleteFixture, "deleted_filter")
+        assert callable(_SoftDeleteFixture.deleted_filter)

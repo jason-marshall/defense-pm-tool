@@ -30,11 +30,14 @@ const wrapper = ({ children }: { children: React.ReactNode }) =>
   React.createElement(QueryClientProvider, { client: queryClient }, children);
 
 const mockResult = {
+  program_id: "prog-1",
   success: true,
   activities_shifted: 3,
   iterations_used: 42,
   schedule_extension_days: 5,
   remaining_overallocations: 0,
+  new_project_finish: "2026-02-19",
+  original_project_finish: "2026-02-14",
   shifts: [
     {
       activity_id: "act-1",

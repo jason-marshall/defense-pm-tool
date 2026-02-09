@@ -37,10 +37,11 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 
 const mockHistogramData = {
   resource_id: "res-1",
+  resource_code: "ENG-001",
   resource_name: "Senior Engineer",
+  resource_type: "LABOR",
   start_date: "2026-02-01",
   end_date: "2026-02-28",
-  granularity: "daily",
   data_points: [
     {
       date: "2026-02-01",
@@ -61,6 +62,7 @@ const mockHistogramData = {
   peak_date: "2026-02-02",
   average_utilization: 100,
   total_available_hours: 160,
+  total_assigned_hours: 16,
   overallocated_days: 1,
 };
 

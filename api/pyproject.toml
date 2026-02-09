@@ -73,6 +73,7 @@ markers = [
     "slow: Tests that take > 1 second",
     "cpm: CPM engine tests",
     "evms: EVMS calculation tests",
+    "benchmark: Performance benchmark tests",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning:slowapi.*:",

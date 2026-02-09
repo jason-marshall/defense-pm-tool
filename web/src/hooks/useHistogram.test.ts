@@ -25,10 +25,11 @@ const wrapper = ({ children }: { children: React.ReactNode }) =>
 
 const mockResourceHistogram = {
   resource_id: "res-1",
+  resource_code: "ENG-001",
   resource_name: "Senior Engineer",
+  resource_type: "LABOR",
   start_date: "2026-02-01",
   end_date: "2026-02-28",
-  granularity: "daily",
   data_points: [
     {
       date: "2026-02-01",
@@ -42,20 +43,20 @@ const mockResourceHistogram = {
   peak_date: "2026-02-01",
   average_utilization: 75,
   total_available_hours: 160,
+  total_assigned_hours: 6,
   overallocated_days: 0,
 };
 
 const mockProgramHistogram = {
-  program_id: "prog-1",
-  summary: [
-    {
-      resource_id: "res-1",
-      resource_name: "Senior Engineer",
-      peak_utilization: 75,
-      average_utilization: 60,
-      overallocated_days: 0,
-    },
-  ],
+  summary: {
+    program_id: "prog-1",
+    start_date: "2026-02-01",
+    end_date: "2026-02-28",
+    resource_count: 1,
+    total_overallocated_days: 0,
+    resources_with_overallocation: 0,
+  },
+  histograms: [],
 };
 
 describe("useResourceHistogram", () => {

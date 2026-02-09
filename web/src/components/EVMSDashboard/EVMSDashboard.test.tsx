@@ -43,10 +43,22 @@ const mockSummary = {
   percentComplete: "45.0",
   percentSpent: "48.0",
   latestPeriod: {
+    id: "period-1",
+    programId: "prog-1",
     periodName: "Jan 2026",
     periodStart: "2026-01-01",
     periodEnd: "2026-01-31",
-    status: "approved",
+    status: "approved" as const,
+    notes: null,
+    cumulativeBcws: "500000.00",
+    cumulativeBcwp: "450000.00",
+    cumulativeAcwp: "480000.00",
+    costVariance: "-30000.00",
+    scheduleVariance: "-50000.00",
+    cpi: "0.94",
+    spi: "0.90",
+    createdAt: "2026-01-31T00:00:00Z",
+    updatedAt: "2026-01-31T00:00:00Z",
   },
 };
 

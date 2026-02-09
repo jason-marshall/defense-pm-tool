@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { ResourceType } from "@/types/resource";
 
 vi.mock("@/api/client", () => ({
   apiClient: {
@@ -29,7 +30,7 @@ const mockResource = {
   program_id: "prog-001",
   name: "Senior Engineer",
   code: "SE-001",
-  resource_type: "LABOR" as const,
+  resource_type: ResourceType.LABOR,
   capacity_per_day: 8,
   cost_rate: 150.0,
   effective_date: "2026-01-01",
@@ -139,7 +140,7 @@ describe("resourceApi", () => {
         program_id: "prog-001",
         name: "Senior Engineer",
         code: "SE-001",
-        resource_type: "LABOR" as const,
+        resource_type: ResourceType.LABOR,
         capacity_per_day: 8,
         cost_rate: 150.0,
         effective_date: "2026-01-01",
@@ -168,7 +169,7 @@ describe("resourceApi", () => {
         program_id: "prog-001",
         name: "Crane",
         code: "CR-001",
-        resource_type: "EQUIPMENT" as const,
+        resource_type: ResourceType.EQUIPMENT,
       };
 
       await createResource(createData);
@@ -193,7 +194,7 @@ describe("resourceApi", () => {
           program_id: "prog-001",
           name: "",
           code: "",
-          resource_type: "LABOR" as const,
+          resource_type: ResourceType.LABOR,
         })
       ).rejects.toThrow("Validation error");
     });
@@ -240,7 +241,7 @@ describe("resourceApi", () => {
       await updateResource("res-001", {
         name: "Updated",
         code: "UPD-001",
-        resource_type: "MATERIAL",
+        resource_type: ResourceType.MATERIAL,
         capacity_per_day: 100,
         cost_rate: 25.0,
         effective_date: "2026-06-01",
@@ -250,7 +251,7 @@ describe("resourceApi", () => {
       expect(mockedPut).toHaveBeenCalledWith("/resources/res-001", {
         name: "Updated",
         code: "UPD-001",
-        resource_type: "MATERIAL",
+        resource_type: ResourceType.MATERIAL,
         capacity_per_day: 100,
         cost_rate: 25.0,
         effective_date: "2026-06-01",

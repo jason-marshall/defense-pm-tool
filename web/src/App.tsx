@@ -2,9 +2,25 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ToastProvider } from "./components/Toast";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AppLayout } from "./components/Layout/AppLayout";
 import { LoginPage } from "./pages/LoginPage";
+import { ProgramsPage } from "./pages/ProgramsPage";
+import { ProgramDetailPage } from "./pages/ProgramDetailPage";
+
+// Lazy sub-tab components
+import { ActivityList } from "./components/Activities/ActivityList";
+import { DependencyList } from "./components/Dependencies/DependencyList";
+import { ScheduleView } from "./components/Schedule/ScheduleView";
+import { WBSTree } from "./components/WBSTree/WBSTree";
+import { EVMSDashboard } from "./components/EVMSDashboard/EVMSDashboard";
+import { ResourceTab } from "./components/Resources/ResourceTab";
+import { ReportViewer } from "./components/Reports/ReportViewer";
+import { ScenarioList } from "./components/Scenarios/ScenarioList";
+import { BaselineList } from "./components/Baselines/BaselineList";
+import { MonteCarloPanel } from "./components/MonteCarlo/MonteCarloPanel";
+import { ProgramSettings } from "./components/Programs/ProgramSettings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -16,6 +32,69 @@ const queryClient = new QueryClient({
   },
 });
 
+// Wrapper components that extract programId from the route
+function ProgramActivityTab() {
+  const id = useProgramId();
+  return <ActivityList programId={id} />;
+}
+
+function ProgramDependencyTab() {
+  const id = useProgramId();
+  return <DependencyList programId={id} />;
+}
+
+function ProgramScheduleTab() {
+  const id = useProgramId();
+  return <ScheduleView programId={id} />;
+}
+
+function ProgramWBSTab() {
+  const id = useProgramId();
+  return <WBSTree programId={id} />;
+}
+
+function ProgramEVMSTab() {
+  const id = useProgramId();
+  return <EVMSDashboard programId={id} />;
+}
+
+function ProgramResourceTab() {
+  const id = useProgramId();
+  return <ResourceTab programId={id} />;
+}
+
+function ProgramReportTab() {
+  const id = useProgramId();
+  return <ReportViewer programId={id} />;
+}
+
+function ProgramScenarioTab() {
+  const id = useProgramId();
+  return <ScenarioList programId={id} />;
+}
+
+function ProgramBaselineTab() {
+  const id = useProgramId();
+  return <BaselineList programId={id} />;
+}
+
+function ProgramMonteCarloTab() {
+  const id = useProgramId();
+  return <MonteCarloPanel programId={id} />;
+}
+
+function ProgramSettingsTab() {
+  const id = useProgramId();
+  return <ProgramSettings programId={id} />;
+}
+
+import { useParams } from "react-router-dom";
+
+function useProgramId(): string {
+  const { id } = useParams<{ id: string }>();
+  return id || "";
+}
+
 export function App() {
   return (
     <ErrorBoundary>
@@ -23,69 +102,37 @@ export function App() {
         <BrowserRouter>
           <AuthProvider>
             <ToastProvider>
-              <div className="min-h-screen bg-gray-50">
-                <Routes>
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route
-                    path="/*"
-                    element={
-                      <ProtectedRoute>
-                        <Navigation />
-                        <main className="container mx-auto px-4 py-8">
-                          <Routes>
-                            <Route path="/" element={<Home />} />
-                            <Route path="/programs" element={<ProgramsPlaceholder />} />
-                            <Route path="/programs/:id" element={<ProgramDetailPlaceholder />} />
-                          </Routes>
-                        </main>
-                      </ProtectedRoute>
-                    }
-                  />
-                </Routes>
-              </div>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route
+                  element={
+                    <ProtectedRoute>
+                      <AppLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route path="/" element={<Home />} />
+                  <Route path="/programs" element={<ProgramsPage />} />
+                  <Route path="/programs/:id" element={<ProgramDetailPage />}>
+                    <Route path="activities" element={<ProgramActivityTab />} />
+                    <Route path="dependencies" element={<ProgramDependencyTab />} />
+                    <Route path="schedule" element={<ProgramScheduleTab />} />
+                    <Route path="wbs" element={<ProgramWBSTab />} />
+                    <Route path="evms" element={<ProgramEVMSTab />} />
+                    <Route path="resources" element={<ProgramResourceTab />} />
+                    <Route path="reports" element={<ProgramReportTab />} />
+                    <Route path="scenarios" element={<ProgramScenarioTab />} />
+                    <Route path="baselines" element={<ProgramBaselineTab />} />
+                    <Route path="monte-carlo" element={<ProgramMonteCarloTab />} />
+                    <Route path="settings" element={<ProgramSettingsTab />} />
+                  </Route>
+                </Route>
+              </Routes>
             </ToastProvider>
           </AuthProvider>
         </BrowserRouter>
       </QueryClientProvider>
     </ErrorBoundary>
-  );
-}
-
-function Navigation() {
-  const { user, logout } = useAuth();
-
-  return (
-    <nav className="bg-white shadow-xs border-b">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center gap-8">
-            <Link to="/" className="text-xl font-bold text-gray-900">
-              Defense PM Tool
-            </Link>
-            <div className="hidden md:flex items-center gap-6">
-              <Link
-                to="/programs"
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Programs
-              </Link>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            {user && (
-              <span className="text-sm text-gray-600">{user.full_name}</span>
-            )}
-            <button
-              onClick={logout}
-              className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
-            >
-              Logout
-            </button>
-            <span className="text-sm text-gray-500">v1.2.0</span>
-          </div>
-        </div>
-      </div>
-    </nav>
   );
 }
 
@@ -132,35 +179,6 @@ function FeatureCard({ title, description }: { title: string; description: strin
     <div className="p-6 bg-white rounded-lg shadow-xs border hover:shadow-md transition-shadow">
       <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
       <p className="text-gray-600">{description}</p>
-    </div>
-  );
-}
-
-function ProgramsPlaceholder() {
-  return (
-    <div className="max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Programs</h1>
-        <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-          New Program
-        </button>
-      </div>
-      <div className="bg-white rounded-lg shadow-xs border p-8 text-center">
-        <p className="text-gray-600">Program list will be implemented here.</p>
-      </div>
-    </div>
-  );
-}
-
-function ProgramDetailPlaceholder() {
-  return (
-    <div className="max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Program Details</h1>
-      <div className="bg-white rounded-lg shadow-xs border p-8 text-center">
-        <p className="text-gray-600">
-          Program details, activities, and Gantt chart will be implemented here.
-        </p>
-      </div>
     </div>
   );
 }

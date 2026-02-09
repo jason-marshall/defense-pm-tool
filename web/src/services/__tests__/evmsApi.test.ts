@@ -401,7 +401,7 @@ describe("evmsApi", () => {
         notes: null,
       });
 
-      const payload = mockedPost.mock.calls[0][1];
+      const payload = mockedPost.mock.calls[0][1] as Record<string, unknown>;
       expect(payload.notes).toBeNull();
     });
 
@@ -416,7 +416,7 @@ describe("evmsApi", () => {
         notes: "Quarterly review period",
       });
 
-      const payload = mockedPost.mock.calls[0][1];
+      const payload = mockedPost.mock.calls[0][1] as Record<string, unknown>;
       expect(payload.notes).toBe("Quarterly review period");
     });
 
@@ -503,7 +503,7 @@ describe("evmsApi", () => {
         acwp: "0.00",
       });
 
-      const payload = mockedPost.mock.calls[0][1];
+      const payload = mockedPost.mock.calls[0][1] as Record<string, unknown>;
       expect(payload.bcws).toBe("0.00");
       expect(payload.bcwp).toBe("0.00");
       expect(payload.acwp).toBe("0.00");
@@ -519,7 +519,7 @@ describe("evmsApi", () => {
         acwp: "7777777.77",
       });
 
-      const payload = mockedPost.mock.calls[0][1];
+      const payload = mockedPost.mock.calls[0][1] as Record<string, unknown>;
       expect(payload.bcws).toBe("9999999.99");
       expect(payload.bcwp).toBe("8888888.88");
       expect(payload.acwp).toBe("7777777.77");

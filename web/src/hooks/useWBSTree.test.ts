@@ -42,11 +42,15 @@ const mockTree = [
   {
     id: "wbs-1",
     programId: "prog-1",
+    parentId: null,
     code: "1.0",
     name: "Project Root",
     description: null,
+    path: "1",
     level: 0,
     budgetedCost: "100000",
+    createdAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z",
     children: [],
   },
 ];
@@ -54,11 +58,15 @@ const mockTree = [
 const mockElement = {
   id: "wbs-1",
   programId: "prog-1",
+  parentId: null,
   code: "1.0",
   name: "Project Root",
   description: null,
+  path: "1",
   level: 0,
   budgetedCost: "100000",
+  createdAt: "2026-01-01T00:00:00Z",
+  updatedAt: "2026-01-01T00:00:00Z",
 };
 
 describe("useWBSTree", () => {
@@ -92,13 +100,13 @@ describe("useWBSElements", () => {
   });
 
   it("fetches flat list of WBS elements", async () => {
-    vi.mocked(getWBSElements).mockResolvedValue([mockElement]);
+    vi.mocked(getWBSElements).mockResolvedValue({ items: [mockElement], total: 1 });
 
     const { result } = renderHook(() => useWBSElements("prog-1"), { wrapper });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(result.current.data).toHaveLength(1);
+    expect(result.current.data?.items).toHaveLength(1);
     expect(getWBSElements).toHaveBeenCalledWith("prog-1");
   });
 });

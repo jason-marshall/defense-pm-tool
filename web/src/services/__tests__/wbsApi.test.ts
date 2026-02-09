@@ -274,7 +274,7 @@ describe("wbsApi", () => {
         name: "Root Element",
       });
 
-      const payload = mockedPost.mock.calls[0][1];
+      const payload = mockedPost.mock.calls[0][1] as Record<string, unknown>;
       expect(payload.parent_id).toBeNull();
     });
 
@@ -288,7 +288,7 @@ describe("wbsApi", () => {
         name: "Child Element",
       });
 
-      const payload = mockedPost.mock.calls[0][1];
+      const payload = mockedPost.mock.calls[0][1] as Record<string, unknown>;
       expect(payload.parent_id).toBe("wbs-001");
     });
 

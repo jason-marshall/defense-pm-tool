@@ -3,30 +3,28 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "@/api/client";
-import type { Program, ProgramCreate, PaginatedResponse } from "@/types";
+import {
+  getPrograms,
+  getProgram,
+  createProgram,
+  updateProgram,
+  deleteProgram,
+} from "@/services/programApi";
+import type { ProgramCreate, ProgramUpdate } from "@/types/program";
 
 const PROGRAMS_KEY = "programs";
 
-export function usePrograms(page = 1, pageSize = 20) {
+export function usePrograms(params?: { page?: number; page_size?: number; status?: string }) {
   return useQuery({
-    queryKey: [PROGRAMS_KEY, page, pageSize],
-    queryFn: async () => {
-      const response = await apiClient.get<PaginatedResponse<Program>>(
-        `/programs?page=${page}&page_size=${pageSize}`
-      );
-      return response.data;
-    },
+    queryKey: [PROGRAMS_KEY, params],
+    queryFn: () => getPrograms(params),
   });
 }
 
 export function useProgram(id: string) {
   return useQuery({
     queryKey: [PROGRAMS_KEY, id],
-    queryFn: async () => {
-      const response = await apiClient.get<Program>(`/programs/${id}`);
-      return response.data;
-    },
+    queryFn: () => getProgram(id),
     enabled: !!id,
   });
 }
@@ -35,27 +33,22 @@ export function useCreateProgram() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: ProgramCreate) => {
-      const response = await apiClient.post<Program>("/programs", data);
-      return response.data;
-    },
+    mutationFn: (data: ProgramCreate) => createProgram(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [PROGRAMS_KEY] });
     },
   });
 }
 
-export function useUpdateProgram(id: string) {
+export function useUpdateProgram() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Partial<ProgramCreate>) => {
-      const response = await apiClient.patch<Program>(`/programs/${id}`, data);
-      return response.data;
-    },
-    onSuccess: () => {
+    mutationFn: ({ id, data }: { id: string; data: ProgramUpdate }) =>
+      updateProgram(id, data),
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [PROGRAMS_KEY] });
-      queryClient.invalidateQueries({ queryKey: [PROGRAMS_KEY, id] });
+      queryClient.invalidateQueries({ queryKey: [PROGRAMS_KEY, variables.id] });
     },
   });
 }
@@ -64,9 +57,7 @@ export function useDeleteProgram() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      await apiClient.delete(`/programs/${id}`);
-    },
+    mutationFn: (id: string) => deleteProgram(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [PROGRAMS_KEY] });
     },

@@ -25,22 +25,26 @@ import { getErrorMessage as reExportedGetErrorMessage } from "../importApi";
 const mockedPost = vi.mocked(apiClient.post);
 
 const mockPreviewResponse = {
-  task_count: 25,
-  project_name: "Test Project",
-  project_start: "2026-01-01",
-  project_finish: "2026-06-30",
-  sample_tasks: [
-    { name: "Task A", duration: 5, start: "2026-01-01", finish: "2026-01-07" },
-    { name: "Task B", duration: 3, start: "2026-01-08", finish: "2026-01-10" },
+  preview: true as const,
+  projectName: "Test Project",
+  startDate: "2026-01-01",
+  finishDate: "2026-06-30",
+  taskCount: 25,
+  tasks: [
+    { name: "Task A", wbs: "1.0", durationHours: 40, isMilestone: false, predecessors: 0 },
+    { name: "Task B", wbs: "1.1", durationHours: 24, isMilestone: false, predecessors: 1 },
   ],
   warnings: [],
 };
 
 const mockImportResult = {
-  activities_created: 25,
-  dependencies_created: 18,
-  wbs_elements_created: 8,
+  success: true,
+  programId: "prog-001",
+  tasksImported: 25,
+  dependenciesImported: 18,
+  wbsElementsCreated: 8,
   warnings: ["Some task had no duration, defaulted to 1 day"],
+  errors: [],
 };
 
 describe("importApi", () => {
@@ -86,8 +90,8 @@ describe("importApi", () => {
       const result = await previewMSProjectImport("prog-001", file);
 
       expect(result).toEqual(mockPreviewResponse);
-      expect(result.task_count).toBe(25);
-      expect(result.project_name).toBe("Test Project");
+      expect(result.taskCount).toBe(25);
+      expect(result.projectName).toBe("Test Project");
     });
 
     it("should pass multipart/form-data content type header", async () => {
@@ -162,8 +166,8 @@ describe("importApi", () => {
       const result = await importMSProject("prog-001", file);
 
       expect(result).toEqual(mockImportResult);
-      expect(result.activities_created).toBe(25);
-      expect(result.dependencies_created).toBe(18);
+      expect(result.tasksImported).toBe(25);
+      expect(result.dependenciesImported).toBe(18);
     });
 
     it("should pass multipart/form-data content type header", async () => {

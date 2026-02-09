@@ -87,6 +87,7 @@ const mockAssignments = [
       id: "res-1",
       code: "ENG-001",
       name: "Senior Engineer",
+      resource_type: "LABOR",
     },
   },
 ];

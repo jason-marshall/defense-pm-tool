@@ -25,20 +25,26 @@ import {
 const mockedPost = vi.mocked(apiClient.post);
 
 const mockPreviewResponse = {
-  calendars_found: 3,
-  calendar_names: ["Standard", "Night Shift", "24 Hours"],
-  resource_mappings: [
-    { resource_name: "Engineer A", calendar_name: "Standard" },
-    { resource_name: "Engineer B", calendar_name: "Night Shift" },
+  calendars: [
+    { uid: 1, name: "Standard", is_base: true, working_days: [1, 2, 3, 4, 5], hours_per_day: 8, holidays: 10 },
+    { uid: 2, name: "Night Shift", is_base: false, working_days: [1, 2, 3, 4, 5], hours_per_day: 8, holidays: 10 },
+    { uid: 3, name: "24 Hours", is_base: false, working_days: [0, 1, 2, 3, 4, 5, 6], hours_per_day: 24, holidays: 0 },
   ],
-  working_days_count: 130,
+  resource_mappings: [
+    { ms_project_resource: "Engineer A", matched_resource_id: null, matched_resource_name: null, calendar_name: "Standard" },
+    { ms_project_resource: "Engineer B", matched_resource_id: null, matched_resource_name: null, calendar_name: "Night Shift" },
+  ],
+  total_holidays: 20,
+  date_range_start: "2026-01-01",
+  date_range_end: "2026-06-30",
   warnings: [],
 };
 
 const mockImportResponse = {
-  calendars_created: 3,
-  entries_generated: 390,
+  success: true,
   resources_updated: 2,
+  calendar_entries_created: 390,
+  templates_created: 3,
   warnings: ["Calendar '24 Hours' has no matching resources"],
 };
 
@@ -88,8 +94,8 @@ describe("calendarImportApi", () => {
       );
 
       expect(result).toEqual(mockPreviewResponse);
-      expect(result.calendars_found).toBe(3);
-      expect(result.calendar_names).toHaveLength(3);
+      expect(result.calendars).toHaveLength(3);
+      expect(result.resource_mappings).toHaveLength(2);
     });
 
     it("should pass multipart/form-data content type header", async () => {
@@ -184,8 +190,8 @@ describe("calendarImportApi", () => {
       );
 
       expect(result).toEqual(mockImportResponse);
-      expect(result.calendars_created).toBe(3);
-      expect(result.entries_generated).toBe(390);
+      expect(result.templates_created).toBe(3);
+      expect(result.calendar_entries_created).toBe(390);
     });
 
     it("should pass multipart/form-data content type header", async () => {

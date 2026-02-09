@@ -95,7 +95,7 @@ describe("ErrorBoundary", () => {
   });
 
   it("shows generic message when error has no message", () => {
-    function ThrowEmpty() {
+    function ThrowEmpty(): React.ReactElement {
       throw new Error();
     }
 
