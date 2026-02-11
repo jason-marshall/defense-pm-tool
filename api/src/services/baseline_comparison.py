@@ -5,7 +5,7 @@ identifying schedule, cost, and scope variances per EIA-748 guidelines.
 """
 
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
@@ -152,7 +152,7 @@ class BaselineComparisonService:
             baseline_id=baseline.id,
             baseline_name=baseline.name,
             baseline_version=baseline.version,
-            comparison_date=datetime.now(),
+            comparison_date=datetime.now(UTC),
         )
 
         # Get current activities

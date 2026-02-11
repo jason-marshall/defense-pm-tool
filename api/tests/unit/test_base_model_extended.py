@@ -1,6 +1,6 @@
 """Extended unit tests for base model functionality."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from src.models.activity import Activity
@@ -67,7 +67,7 @@ class TestBaseModelToDict:
 
     def test_to_dict_datetime_conversion(self):
         """Test that datetimes are converted to ISO format."""
-        now = datetime.now()
+        now = datetime.now(UTC)
         activity = Activity(
             id=uuid4(),
             program_id=uuid4(),
@@ -149,9 +149,9 @@ class TestSoftDeleteFunctionality:
             duration=5,
         )
 
-        before_delete = datetime.now()
+        before_delete = datetime.now(UTC)
         activity.soft_delete()
-        after_delete = datetime.now()
+        after_delete = datetime.now(UTC)
 
         assert activity.deleted_at is not None
         assert before_delete <= activity.deleted_at <= after_delete
@@ -164,7 +164,7 @@ class TestSoftDeleteFunctionality:
             code="ACT-001",
             name="Test",
             duration=5,
-            deleted_at=datetime.now(),
+            deleted_at=datetime.now(UTC),
         )
 
         activity.restore()

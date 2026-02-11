@@ -25,9 +25,7 @@ class TestResourcesAuth:
 
     async def test_get_resource_requires_auth(self, client: AsyncClient):
         """Should return 401 when getting resource without auth."""
-        response = await client.get(
-            "/api/v1/resources/00000000-0000-0000-0000-000000000000"
-        )
+        response = await client.get("/api/v1/resources/00000000-0000-0000-0000-000000000000")
         assert response.status_code == 401
 
 

@@ -115,7 +115,7 @@ class TestScheduleCalculation:
         )
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, list) or isinstance(data, dict)
+        assert isinstance(data, (list, dict))
 
 
 class TestCriticalPath:

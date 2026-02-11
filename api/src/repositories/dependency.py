@@ -81,17 +81,10 @@ class DependencyRepository(BaseRepository[Dependency]):
         Returns:
             List of dependencies where predecessor activity belongs to the program
         """
-        # Get all activity IDs for the program
-        activity_result = await self.session.execute(
-            select(Activity.id).where(Activity.program_id == program_id)
+        activity_ids_subquery = (
+            select(Activity.id).where(Activity.program_id == program_id).scalar_subquery()
         )
-        activity_ids = [row[0] for row in activity_result.all()]
-
-        if not activity_ids:
-            return []
-
-        # Get dependencies where predecessor is in the program
         result = await self.session.execute(
-            select(Dependency).where(Dependency.predecessor_id.in_(activity_ids))
+            select(Dependency).where(Dependency.predecessor_id.in_(activity_ids_subquery))
         )
         return list(result.scalars().all())

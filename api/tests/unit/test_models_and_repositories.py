@@ -453,15 +453,10 @@ class TestDependencyRepositoryMethods:
             lag=0,
         )
 
-        # First call returns activity IDs
-        mock_activity_result = MagicMock()
-        mock_activity_result.all.return_value = [(activity_id,)]
-
-        # Second call returns dependencies
-        mock_dep_result = MagicMock()
-        mock_dep_result.scalars.return_value.all.return_value = [dep]
-
-        mock_session.execute.side_effect = [mock_activity_result, mock_dep_result]
+        # Single subquery call returns dependencies
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = [dep]
+        mock_session.execute.return_value = mock_result
 
         result = await repo.get_by_program(program_id)
 
@@ -472,9 +467,9 @@ class TestDependencyRepositoryMethods:
         """Should return empty list when program has no activities."""
         program_id = uuid4()
 
-        # Returns no activity IDs
+        # Subquery returns no matching dependencies
         mock_result = MagicMock()
-        mock_result.all.return_value = []
+        mock_result.scalars.return_value.all.return_value = []
         mock_session.execute.return_value = mock_result
 
         result = await repo.get_by_program(program_id)

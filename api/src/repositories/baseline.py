@@ -1,6 +1,6 @@
 """Repository for Baseline model with snapshot creation."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
@@ -181,7 +181,7 @@ class BaselineRepository(BaseRepository[Baseline]):
 
         # Approve this baseline
         baseline.is_approved = True
-        baseline.approved_at = datetime.now()
+        baseline.approved_at = datetime.now(UTC)
         baseline.approved_by_id = approved_by_id
 
         await self.session.flush()

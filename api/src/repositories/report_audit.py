@@ -1,6 +1,6 @@
 """Repository for ReportAudit model."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -103,7 +103,7 @@ class ReportAuditRepository(BaseRepository[ReportAudit]):
             "report_type": report_type,
             "program_id": program_id,
             "generated_by": generated_by,
-            "generated_at": datetime.now(),
+            "generated_at": datetime.now(UTC),
             "parameters": parameters,
             "file_path": file_path,
             "file_format": file_format,

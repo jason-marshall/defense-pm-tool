@@ -105,8 +105,11 @@ class CacheManager:
         if not self.is_available:
             return None
 
+        redis = self._redis
+        assert redis is not None  # guarded by is_available above
+
         try:
-            data = await self._redis.get(key)  # type: ignore
+            data = await redis.get(key)
             if data:
                 logger.debug("cache_hit", key=key)
                 return json.loads(data)
@@ -139,12 +142,15 @@ class CacheManager:
         if not self.is_available:
             return False
 
+        redis = self._redis
+        assert redis is not None  # guarded by is_available above
+
         try:
             serialized = json.dumps(value, default=str)
             if ttl:
-                await self._redis.setex(key, ttl, serialized)  # type: ignore
+                await redis.setex(key, ttl, serialized)
             else:
-                await self._redis.set(key, serialized)  # type: ignore
+                await redis.set(key, serialized)
             logger.debug("cache_set", key=key, ttl=ttl)
             return True
         except (aioredis.RedisError, TypeError, ValueError) as e:
@@ -164,8 +170,11 @@ class CacheManager:
         if not self.is_available:
             return False
 
+        redis = self._redis
+        assert redis is not None  # guarded by is_available above
+
         try:
-            await self._redis.delete(key)  # type: ignore
+            await redis.delete(key)
             logger.debug("cache_delete", key=key)
             return True
         except aioredis.RedisError as e:
@@ -185,13 +194,16 @@ class CacheManager:
         if not self.is_available:
             return 0
 
+        redis = self._redis
+        assert redis is not None  # guarded by is_available above
+
         try:
             keys = []
-            async for key in self._redis.scan_iter(match=pattern):  # type: ignore
+            async for key in redis.scan_iter(match=pattern):
                 keys.append(key)
 
             if keys:
-                deleted = await self._redis.delete(*keys)  # type: ignore
+                deleted = await redis.delete(*keys)
                 logger.debug("cache_delete_pattern", pattern=pattern, count=deleted)
                 return deleted
             return 0

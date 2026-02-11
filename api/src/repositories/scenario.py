@@ -1,6 +1,6 @@
 """Repository for Scenario model."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -185,7 +185,7 @@ class ScenarioRepository(BaseRepository[Scenario]):
         scenario = await self.get(scenario_id)
         if scenario:
             scenario.status = "promoted"
-            scenario.promoted_at = datetime.now()
+            scenario.promoted_at = datetime.now(UTC)
             scenario.promoted_baseline_id = baseline_id
             scenario.is_active = False
             await self.session.flush()

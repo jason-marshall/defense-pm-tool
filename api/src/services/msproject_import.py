@@ -20,7 +20,7 @@ Not supported (logged as warnings):
 import contextlib
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, ClassVar
@@ -135,7 +135,7 @@ class MSProjectImporter:
         finish_date = self._parse_date(self._get_text(root, "FinishDate", ns))
 
         if not start_date:
-            start_date = datetime.now()
+            start_date = datetime.now(UTC)
             self.warnings.append("No project start date found, using today")
 
         if not finish_date:

@@ -315,7 +315,6 @@ jobs:
 
       - name: Run pip-audit
         run: pip-audit
-        continue-on-error: true
 
       - name: Run Bandit (high severity only)
         run: |

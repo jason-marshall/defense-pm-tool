@@ -13,16 +13,12 @@ class TestReportsAuth:
 
     async def test_cpr_report_requires_auth(self, client: AsyncClient):
         """Should return 401 or 404 when not authenticated."""
-        response = await client.get(
-            "/api/v1/reports/cpr/00000000-0000-0000-0000-000000000000"
-        )
+        response = await client.get("/api/v1/reports/cpr/00000000-0000-0000-0000-000000000000")
         assert response.status_code in (401, 404)
 
     async def test_audit_requires_auth(self, client: AsyncClient):
         """Should return 401 when listing audit trail without auth."""
-        response = await client.get(
-            "/api/v1/reports/audit/00000000-0000-0000-0000-000000000000"
-        )
+        response = await client.get("/api/v1/reports/audit/00000000-0000-0000-0000-000000000000")
         assert response.status_code == 401
 
 

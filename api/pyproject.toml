@@ -132,7 +132,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["ARG", "PLR2004", "RUF001", "PLC0415", "PLR0915", "F841", "B017", "C416", "SIM105", "PTH108"]
+"tests/*" = ["ARG", "PLR2004", "RUF001", "PLC0415", "PLR0915", "F841", "B017", "C416", "SIM105", "PTH108", "TCH002"]
 "alembic/*" = ["ERA001"]
 "src/api/v1/endpoints/*" = ["ARG001", "PLC0415", "TC001", "TC003"]  # current_user for auth, in-func imports, runtime Depends types
 "src/models/base.py" = ["ARG001"]  # event listener requires signature

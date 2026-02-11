@@ -13,9 +13,7 @@ class TestEVMSAuth:
 
     async def test_evms_summary_requires_auth(self, client: AsyncClient):
         """Should return 401 when not authenticated."""
-        response = await client.get(
-            "/api/v1/evms/summary/00000000-0000-0000-0000-000000000000"
-        )
+        response = await client.get("/api/v1/evms/summary/00000000-0000-0000-0000-000000000000")
         assert response.status_code == 401
 
     async def test_evms_periods_requires_auth(self, client: AsyncClient):

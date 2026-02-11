@@ -7,7 +7,7 @@ generating audit reports, and verifying OWASP Top 10 2021 compliance.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -135,7 +135,7 @@ class SecurityAuditReport:
     findings: list[SecurityFinding] = field(default_factory=list)
     controls: list[SecurityControl] = field(default_factory=list)
     passed_checks: list[str] = field(default_factory=list)
-    audit_date: str = field(default_factory=lambda: datetime.now().isoformat())
+    audit_date: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     auditor: str = "Automated"
     version: str = "1.0.0"
 

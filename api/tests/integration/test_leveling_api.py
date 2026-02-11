@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from httpx import AsyncClient  # noqa: TC002
+from httpx import AsyncClient
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession

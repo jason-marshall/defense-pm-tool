@@ -1,6 +1,6 @@
 """Base SQLAlchemy model with common fields and utilities."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, ClassVar
 from uuid import UUID, uuid4
 
@@ -100,7 +100,7 @@ class Base(DeclarativeBase):
 
     def soft_delete(self) -> None:
         """Mark the record as deleted without removing from database."""
-        self.deleted_at = datetime.now()
+        self.deleted_at = datetime.now(UTC)
 
     def restore(self) -> None:
         """Restore a soft-deleted record."""
@@ -185,4 +185,4 @@ class SoftDeleteMixin:
 @event.listens_for(Base, "before_update", propagate=True)
 def receive_before_update(_mapper: Any, _connection: Any, target: Base) -> None:
     """Automatically update the updated_at timestamp before any update."""
-    target.updated_at = datetime.now()
+    target.updated_at = datetime.now(UTC)
