@@ -70,13 +70,17 @@ export function ProgramFormModal({
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="program-form-title"
+      onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}
     >
       <div
         className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b">
-          <h2 className="text-lg font-semibold">
+          <h2 id="program-form-title" className="text-lg font-semibold">
             {program ? "Edit Program" : "Create Program"}
           </h2>
           <button

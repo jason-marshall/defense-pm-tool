@@ -167,4 +167,135 @@ describe("SkillsPanel", () => {
 
     expect(screen.getByText("Add Skill")).toBeInTheDocument();
   });
+
+  it("opens edit form with pre-filled data", () => {
+    mockUseSkills.mockReturnValue({ data: mockSkillsData, isLoading: false });
+
+    render(<SkillsPanel programId="prog-1" />, { wrapper: Wrapper });
+
+    const editButtons = screen.getAllByTitle("Edit");
+    fireEvent.click(editButtons[0]);
+
+    expect(screen.getByText("Edit Skill")).toBeInTheDocument();
+    expect(screen.getByLabelText("Name")).toHaveValue("Systems Engineering");
+    expect(screen.getByLabelText("Code")).toHaveValue("SE");
+  });
+
+  it("submits edit form", async () => {
+    mockUseSkills.mockReturnValue({ data: mockSkillsData, isLoading: false });
+    mockUpdateMutateAsync.mockResolvedValue({});
+
+    render(<SkillsPanel programId="prog-1" />, { wrapper: Wrapper });
+
+    const editButtons = screen.getAllByTitle("Edit");
+    fireEvent.click(editButtons[0]);
+
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Updated Name" } });
+    fireEvent.click(screen.getByText("Update"));
+
+    await waitFor(() => {
+      expect(mockUpdateMutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: "skill-1",
+          data: expect.objectContaining({ name: "Updated Name" }),
+        })
+      );
+    });
+  });
+
+  it("deletes skill with confirmation", async () => {
+    mockUseSkills.mockReturnValue({ data: mockSkillsData, isLoading: false });
+    mockDeleteMutateAsync.mockResolvedValue({});
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    render(<SkillsPanel programId="prog-1" />, { wrapper: Wrapper });
+
+    const deleteButtons = screen.getAllByTitle("Delete");
+    fireEvent.click(deleteButtons[0]);
+
+    await waitFor(() => {
+      expect(mockDeleteMutateAsync).toHaveBeenCalledWith("skill-1");
+    });
+
+    vi.restoreAllMocks();
+  });
+
+  it("cancels delete when confirm declined", () => {
+    mockUseSkills.mockReturnValue({ data: mockSkillsData, isLoading: false });
+    vi.spyOn(window, "confirm").mockReturnValue(false);
+
+    render(<SkillsPanel programId="prog-1" />, { wrapper: Wrapper });
+
+    const deleteButtons = screen.getAllByTitle("Delete");
+    fireEvent.click(deleteButtons[0]);
+
+    expect(mockDeleteMutateAsync).not.toHaveBeenCalled();
+
+    vi.restoreAllMocks();
+  });
+
+  it("shows error toast on save failure", async () => {
+    mockUseSkills.mockReturnValue({ data: mockSkillsData, isLoading: false });
+    mockCreateMutateAsync.mockRejectedValue(new Error("Server error"));
+
+    render(<SkillsPanel programId="prog-1" />, { wrapper: Wrapper });
+
+    fireEvent.click(screen.getByText("Add Skill"));
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Fail Skill" } });
+    fireEvent.change(screen.getByLabelText("Code"), { target: { value: "FAIL" } });
+    fireEvent.click(screen.getByText("Create"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Failed to save skill")).toBeInTheDocument();
+    });
+  });
+
+  it("shows error toast on delete failure", async () => {
+    mockUseSkills.mockReturnValue({ data: mockSkillsData, isLoading: false });
+    mockDeleteMutateAsync.mockRejectedValue(new Error("Server error"));
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    render(<SkillsPanel programId="prog-1" />, { wrapper: Wrapper });
+
+    const deleteButtons = screen.getAllByTitle("Delete");
+    fireEvent.click(deleteButtons[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText("Failed to delete skill")).toBeInTheDocument();
+    });
+
+    vi.restoreAllMocks();
+  });
+
+  it("validates required fields", async () => {
+    mockUseSkills.mockReturnValue({ data: mockSkillsData, isLoading: false });
+
+    render(<SkillsPanel programId="prog-1" />, { wrapper: Wrapper });
+
+    fireEvent.click(screen.getByText("Add Skill"));
+    // Leave name and code empty
+    fireEvent.click(screen.getByText("Create"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Name and code are required")).toBeInTheDocument();
+    });
+  });
+
+  it("uppercases code on submit", async () => {
+    mockUseSkills.mockReturnValue({ data: mockSkillsData, isLoading: false });
+    mockCreateMutateAsync.mockResolvedValue({});
+
+    render(<SkillsPanel programId="prog-1" />, { wrapper: Wrapper });
+
+    fireEvent.click(screen.getByText("Add Skill"));
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Test" } });
+    fireEvent.change(screen.getByLabelText("Code"), { target: { value: "abc" } });
+    fireEvent.click(screen.getByText("Create"));
+
+    await waitFor(() => {
+      expect(mockCreateMutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ code: "ABC" })
+      );
+    });
+  });
 });

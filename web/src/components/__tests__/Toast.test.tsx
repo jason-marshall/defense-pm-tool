@@ -143,4 +143,27 @@ describe("Toast", () => {
     expect(screen.getByText("Error message")).toBeInTheDocument();
     expect(screen.getByText("Info message")).toBeInTheDocument();
   });
+
+  it("has aria-live and role on toast container", () => {
+    render(
+      <ToastProvider>
+        <TestConsumer />
+      </ToastProvider>
+    );
+
+    fireEvent.click(screen.getByText("Success"));
+    const container = screen.getByRole("status");
+    expect(container).toHaveAttribute("aria-live", "polite");
+  });
+
+  it("has dismiss label on close button", () => {
+    render(
+      <ToastProvider>
+        <TestConsumer />
+      </ToastProvider>
+    );
+
+    fireEvent.click(screen.getByText("Success"));
+    expect(screen.getByLabelText("Dismiss notification")).toBeInTheDocument();
+  });
 });

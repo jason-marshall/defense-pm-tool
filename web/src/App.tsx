@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -5,22 +6,53 @@ import { ToastProvider } from "./components/Toast";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppLayout } from "./components/Layout/AppLayout";
-import { LoginPage } from "./pages/LoginPage";
-import { ProgramsPage } from "./pages/ProgramsPage";
-import { ProgramDetailPage } from "./pages/ProgramDetailPage";
+import { DashboardSkeleton } from "./components/Skeleton";
 
-// Lazy sub-tab components
-import { ActivityList } from "./components/Activities/ActivityList";
-import { DependencyList } from "./components/Dependencies/DependencyList";
-import { ScheduleView } from "./components/Schedule/ScheduleView";
-import { WBSTree } from "./components/WBSTree/WBSTree";
-import { EVMSDashboard } from "./components/EVMSDashboard/EVMSDashboard";
-import { ResourceTab } from "./components/Resources/ResourceTab";
-import { ReportViewer } from "./components/Reports/ReportViewer";
-import { ScenarioList } from "./components/Scenarios/ScenarioList";
-import { BaselineList } from "./components/Baselines/BaselineList";
-import { MonteCarloPanel } from "./components/MonteCarlo/MonteCarloPanel";
-import { ProgramSettings } from "./components/Programs/ProgramSettings";
+// Lazy-loaded page components
+const LoginPage = lazy(() =>
+  import("./pages/LoginPage").then((m) => ({ default: m.LoginPage }))
+);
+const ProgramsPage = lazy(() =>
+  import("./pages/ProgramsPage").then((m) => ({ default: m.ProgramsPage }))
+);
+const ProgramDetailPage = lazy(() =>
+  import("./pages/ProgramDetailPage").then((m) => ({ default: m.ProgramDetailPage }))
+);
+
+// Lazy-loaded sub-tab components
+const ActivityList = lazy(() =>
+  import("./components/Activities/ActivityList").then((m) => ({ default: m.ActivityList }))
+);
+const DependencyList = lazy(() =>
+  import("./components/Dependencies/DependencyList").then((m) => ({ default: m.DependencyList }))
+);
+const ScheduleView = lazy(() =>
+  import("./components/Schedule/ScheduleView").then((m) => ({ default: m.ScheduleView }))
+);
+const WBSTree = lazy(() =>
+  import("./components/WBSTree/WBSTree").then((m) => ({ default: m.WBSTree }))
+);
+const EVMSDashboard = lazy(() =>
+  import("./components/EVMSDashboard/EVMSDashboard").then((m) => ({ default: m.EVMSDashboard }))
+);
+const ResourceTab = lazy(() =>
+  import("./components/Resources/ResourceTab").then((m) => ({ default: m.ResourceTab }))
+);
+const ReportViewer = lazy(() =>
+  import("./components/Reports/ReportViewer").then((m) => ({ default: m.ReportViewer }))
+);
+const ScenarioList = lazy(() =>
+  import("./components/Scenarios/ScenarioList").then((m) => ({ default: m.ScenarioList }))
+);
+const BaselineList = lazy(() =>
+  import("./components/Baselines/BaselineList").then((m) => ({ default: m.BaselineList }))
+);
+const MonteCarloPanel = lazy(() =>
+  import("./components/MonteCarlo/MonteCarloPanel").then((m) => ({ default: m.MonteCarloPanel }))
+);
+const ProgramSettings = lazy(() =>
+  import("./components/Programs/ProgramSettings").then((m) => ({ default: m.ProgramSettings }))
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -102,32 +134,34 @@ export function App() {
         <BrowserRouter>
           <AuthProvider>
             <ToastProvider>
-              <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route
-                  element={
-                    <ProtectedRoute>
-                      <AppLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route path="/" element={<Home />} />
-                  <Route path="/programs" element={<ProgramsPage />} />
-                  <Route path="/programs/:id" element={<ProgramDetailPage />}>
-                    <Route path="activities" element={<ProgramActivityTab />} />
-                    <Route path="dependencies" element={<ProgramDependencyTab />} />
-                    <Route path="schedule" element={<ProgramScheduleTab />} />
-                    <Route path="wbs" element={<ProgramWBSTab />} />
-                    <Route path="evms" element={<ProgramEVMSTab />} />
-                    <Route path="resources" element={<ProgramResourceTab />} />
-                    <Route path="reports" element={<ProgramReportTab />} />
-                    <Route path="scenarios" element={<ProgramScenarioTab />} />
-                    <Route path="baselines" element={<ProgramBaselineTab />} />
-                    <Route path="monte-carlo" element={<ProgramMonteCarloTab />} />
-                    <Route path="settings" element={<ProgramSettingsTab />} />
+              <Suspense fallback={<DashboardSkeleton />}>
+                <Routes>
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route
+                    element={
+                      <ProtectedRoute>
+                        <AppLayout />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route path="/" element={<Home />} />
+                    <Route path="/programs" element={<ProgramsPage />} />
+                    <Route path="/programs/:id" element={<ProgramDetailPage />}>
+                      <Route path="activities" element={<ProgramActivityTab />} />
+                      <Route path="dependencies" element={<ProgramDependencyTab />} />
+                      <Route path="schedule" element={<ProgramScheduleTab />} />
+                      <Route path="wbs" element={<ProgramWBSTab />} />
+                      <Route path="evms" element={<ProgramEVMSTab />} />
+                      <Route path="resources" element={<ProgramResourceTab />} />
+                      <Route path="reports" element={<ProgramReportTab />} />
+                      <Route path="scenarios" element={<ProgramScenarioTab />} />
+                      <Route path="baselines" element={<ProgramBaselineTab />} />
+                      <Route path="monte-carlo" element={<ProgramMonteCarloTab />} />
+                      <Route path="settings" element={<ProgramSettingsTab />} />
+                    </Route>
                   </Route>
-                </Route>
-              </Routes>
+                </Routes>
+              </Suspense>
             </ToastProvider>
           </AuthProvider>
         </BrowserRouter>

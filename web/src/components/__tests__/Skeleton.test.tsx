@@ -41,6 +41,13 @@ describe("Skeleton", () => {
     const el = container.firstChild as HTMLElement;
     expect(el.className).toContain("custom-class");
   });
+
+  it("has status role and loading aria-label", () => {
+    const { container } = render(<Skeleton />);
+    const el = container.firstChild as HTMLElement;
+    expect(el).toHaveAttribute("role", "status");
+    expect(el).toHaveAttribute("aria-label", "Loading...");
+  });
 });
 
 describe("TableSkeleton", () => {

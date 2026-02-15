@@ -39,6 +39,17 @@ describe("ErrorBoundary", () => {
     consoleSpy.mockRestore();
   });
 
+  it("has alert role on error container", () => {
+    render(
+      <ErrorBoundary>
+        <ThrowingChild shouldThrow={true} />
+      </ErrorBoundary>
+    );
+
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+    consoleSpy.mockRestore();
+  });
+
   it("renders custom fallback when provided", () => {
     render(
       <ErrorBoundary fallback={<div>Custom fallback</div>}>

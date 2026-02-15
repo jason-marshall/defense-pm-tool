@@ -172,10 +172,10 @@ export function ImportModal({
   if (!isOpen) return null;
 
   return (
-    <div className="import-modal-overlay" onClick={handleClose}>
+    <div className="import-modal-overlay" onClick={handleClose} role="dialog" aria-modal="true" aria-labelledby="import-modal-title" onKeyDown={(e) => { if (e.key === "Escape") handleClose(); }}>
       <div className="import-modal" onClick={(e) => e.stopPropagation()}>
         <div className="import-modal-header">
-          <h2>Import MS Project File</h2>
+          <h2 id="import-modal-title">Import MS Project File</h2>
           <button className="import-modal-close" onClick={handleClose} aria-label="Close">
             &times;
           </button>

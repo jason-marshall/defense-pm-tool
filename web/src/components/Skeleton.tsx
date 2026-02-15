@@ -30,6 +30,8 @@ export const Skeleton = ({
     <div
       className={`${baseStyles} ${variantStyles[variant]} ${className}`}
       style={style}
+      role="status"
+      aria-label="Loading..."
     />
   );
 };

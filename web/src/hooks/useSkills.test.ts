@@ -1,13 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import React from "react";
+import { createElement } from "react";
 import {
   useSkills,
   useCreateSkill,
+  useUpdateSkill,
   useDeleteSkill,
   useResourceSkills,
   useAddResourceSkill,
+  useUpdateResourceSkill,
   useRemoveResourceSkill,
   useSkillRequirements,
   useAddSkillRequirement,
@@ -15,215 +17,113 @@ import {
 } from "./useSkills";
 
 vi.mock("@/services/skillApi", () => ({
-  getSkills: vi.fn(),
-  createSkill: vi.fn(),
-  updateSkill: vi.fn(),
-  deleteSkill: vi.fn(),
-  getResourceSkills: vi.fn(),
-  addResourceSkill: vi.fn(),
-  updateResourceSkill: vi.fn(),
-  removeResourceSkill: vi.fn(),
-  getSkillRequirements: vi.fn(),
-  addSkillRequirement: vi.fn(),
-  removeSkillRequirement: vi.fn(),
+  getSkills: vi.fn().mockResolvedValue({ items: [], total: 0 }),
+  createSkill: vi.fn().mockResolvedValue({ id: "new-1" }),
+  updateSkill: vi.fn().mockResolvedValue({ id: "skill-1" }),
+  deleteSkill: vi.fn().mockResolvedValue(undefined),
+  getResourceSkills: vi.fn().mockResolvedValue([]),
+  addResourceSkill: vi.fn().mockResolvedValue({ id: "rs-1" }),
+  updateResourceSkill: vi.fn().mockResolvedValue({ id: "rs-1" }),
+  removeResourceSkill: vi.fn().mockResolvedValue(undefined),
+  getSkillRequirements: vi.fn().mockResolvedValue([]),
+  addSkillRequirement: vi.fn().mockResolvedValue({ id: "sr-1" }),
+  removeSkillRequirement: vi.fn().mockResolvedValue(undefined),
 }));
 
-import {
-  getSkills,
-  createSkill,
-  deleteSkill,
-  getResourceSkills,
-  addResourceSkill,
-  removeResourceSkill,
-  getSkillRequirements,
-  addSkillRequirement,
-  removeSkillRequirement,
-} from "@/services/skillApi";
+import * as api from "@/services/skillApi";
 
-const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: false } },
-});
+let queryClient: QueryClient;
 
-const wrapper = ({ children }: { children: React.ReactNode }) =>
-  React.createElement(QueryClientProvider, { client: queryClient }, children);
+function wrapper({ children }: { children: React.ReactNode }) {
+  return createElement(QueryClientProvider, { client: queryClient }, children);
+}
 
-describe("useSkills", () => {
+describe("useSkills hooks", () => {
   beforeEach(() => {
-    queryClient.clear();
     vi.clearAllMocks();
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
   });
 
-  it("fetches skills", async () => {
-    vi.mocked(getSkills).mockResolvedValue({ items: [], total: 0 });
-
-    const { result } = renderHook(() => useSkills(), { wrapper });
-
+  it("useSkills fetches with params", async () => {
+    const { result } = renderHook(() => useSkills({ program_id: "p1" }), { wrapper });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-    expect(getSkills).toHaveBeenCalledWith(undefined);
-  });
-});
-
-describe("useCreateSkill", () => {
-  beforeEach(() => {
-    queryClient.clear();
-    vi.clearAllMocks();
+    expect(api.getSkills).toHaveBeenCalledWith({ program_id: "p1" });
   });
 
-  it("creates a skill", async () => {
-    vi.mocked(createSkill).mockResolvedValue({ id: "skill-1", name: "Python" });
-
+  it("useCreateSkill calls createSkill", async () => {
     const { result } = renderHook(() => useCreateSkill(), { wrapper });
-
-    result.current.mutate({ name: "Python", category: "Engineering" });
-
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-    expect(createSkill).toHaveBeenCalled();
-  });
-});
-
-describe("useDeleteSkill", () => {
-  beforeEach(() => {
-    queryClient.clear();
-    vi.clearAllMocks();
+    await result.current.mutateAsync({ name: "X", code: "X", program_id: "p1", category: "Technical" });
+    expect(api.createSkill).toHaveBeenCalled();
   });
 
-  it("deletes a skill", async () => {
-    vi.mocked(deleteSkill).mockResolvedValue(undefined);
+  it("useUpdateSkill calls updateSkill", async () => {
+    const { result } = renderHook(() => useUpdateSkill(), { wrapper });
+    await result.current.mutateAsync({ id: "s1", data: { name: "Updated" } });
+    expect(api.updateSkill).toHaveBeenCalledWith("s1", { name: "Updated" });
+  });
 
+  it("useDeleteSkill calls deleteSkill", async () => {
     const { result } = renderHook(() => useDeleteSkill(), { wrapper });
+    await result.current.mutateAsync("s1");
+    expect(api.deleteSkill).toHaveBeenCalledWith("s1");
+  });
 
-    result.current.mutate("skill-1");
-
+  it("useResourceSkills fetches when resourceId truthy", async () => {
+    const { result } = renderHook(() => useResourceSkills("r1"), { wrapper });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-    expect(deleteSkill).toHaveBeenCalledWith("skill-1");
-  });
-});
-
-describe("useResourceSkills", () => {
-  beforeEach(() => {
-    queryClient.clear();
-    vi.clearAllMocks();
+    expect(api.getResourceSkills).toHaveBeenCalledWith("r1");
   });
 
-  it("fetches resource skills", async () => {
-    vi.mocked(getResourceSkills).mockResolvedValue([]);
-
-    const { result } = renderHook(() => useResourceSkills("res-1"), { wrapper });
-
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-    expect(getResourceSkills).toHaveBeenCalledWith("res-1");
+  it("useResourceSkills disabled when resourceId empty", () => {
+    const { result } = renderHook(() => useResourceSkills(""), { wrapper });
+    expect(result.current.fetchStatus).toBe("idle");
   });
 
-  it("does not fetch when resourceId is empty", () => {
-    renderHook(() => useResourceSkills(""), { wrapper });
-    expect(getResourceSkills).not.toHaveBeenCalled();
-  });
-});
-
-describe("useAddResourceSkill", () => {
-  beforeEach(() => {
-    queryClient.clear();
-    vi.clearAllMocks();
-  });
-
-  it("adds a skill to a resource", async () => {
-    vi.mocked(addResourceSkill).mockResolvedValue({ id: "rs-1" });
-
+  it("useAddResourceSkill calls addResourceSkill", async () => {
     const { result } = renderHook(() => useAddResourceSkill(), { wrapper });
-
-    result.current.mutate({
-      resourceId: "res-1",
-      data: { skill_id: "skill-1", proficiency_level: 3 },
+    await result.current.mutateAsync({
+      resourceId: "r1",
+      data: { skill_id: "s1", proficiency_level: 3, is_certified: false },
     });
-
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-    expect(addResourceSkill).toHaveBeenCalled();
-  });
-});
-
-describe("useRemoveResourceSkill", () => {
-  beforeEach(() => {
-    queryClient.clear();
-    vi.clearAllMocks();
+    expect(api.addResourceSkill).toHaveBeenCalledWith("r1", { skill_id: "s1", proficiency_level: 3, is_certified: false });
   });
 
-  it("removes a skill from a resource", async () => {
-    vi.mocked(removeResourceSkill).mockResolvedValue(undefined);
+  it("useUpdateResourceSkill calls updateResourceSkill", async () => {
+    const { result } = renderHook(() => useUpdateResourceSkill(), { wrapper });
+    await result.current.mutateAsync({
+      resourceId: "r1",
+      skillId: "s1",
+      data: { proficiency_level: 5 },
+    });
+    expect(api.updateResourceSkill).toHaveBeenCalledWith("r1", "s1", { proficiency_level: 5 });
+  });
 
+  it("useRemoveResourceSkill calls removeResourceSkill", async () => {
     const { result } = renderHook(() => useRemoveResourceSkill(), { wrapper });
+    await result.current.mutateAsync({ resourceId: "r1", skillId: "s1" });
+    expect(api.removeResourceSkill).toHaveBeenCalledWith("r1", "s1");
+  });
 
-    result.current.mutate({ resourceId: "res-1", skillId: "skill-1" });
-
+  it("useSkillRequirements fetches when activityId truthy", async () => {
+    const { result } = renderHook(() => useSkillRequirements("a1"), { wrapper });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-    expect(removeResourceSkill).toHaveBeenCalledWith("res-1", "skill-1");
-  });
-});
-
-describe("useSkillRequirements", () => {
-  beforeEach(() => {
-    queryClient.clear();
-    vi.clearAllMocks();
+    expect(api.getSkillRequirements).toHaveBeenCalledWith("a1");
   });
 
-  it("fetches skill requirements for an activity", async () => {
-    vi.mocked(getSkillRequirements).mockResolvedValue([]);
-
-    const { result } = renderHook(() => useSkillRequirements("act-1"), { wrapper });
-
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-    expect(getSkillRequirements).toHaveBeenCalledWith("act-1");
-  });
-
-  it("does not fetch when activityId is empty", () => {
-    renderHook(() => useSkillRequirements(""), { wrapper });
-    expect(getSkillRequirements).not.toHaveBeenCalled();
-  });
-});
-
-describe("useAddSkillRequirement", () => {
-  beforeEach(() => {
-    queryClient.clear();
-    vi.clearAllMocks();
-  });
-
-  it("adds a skill requirement", async () => {
-    vi.mocked(addSkillRequirement).mockResolvedValue({ id: "req-1" });
-
+  it("useAddSkillRequirement calls addSkillRequirement", async () => {
     const { result } = renderHook(() => useAddSkillRequirement(), { wrapper });
-
-    result.current.mutate({
-      activityId: "act-1",
-      data: { skill_id: "skill-1", min_proficiency: 2 },
+    await result.current.mutateAsync({
+      activityId: "a1",
+      data: { skill_id: "s1", min_proficiency: 3 },
     });
-
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-    expect(addSkillRequirement).toHaveBeenCalled();
-  });
-});
-
-describe("useRemoveSkillRequirement", () => {
-  beforeEach(() => {
-    queryClient.clear();
-    vi.clearAllMocks();
+    expect(api.addSkillRequirement).toHaveBeenCalledWith("a1", { skill_id: "s1", min_proficiency: 3 });
   });
 
-  it("removes a skill requirement", async () => {
-    vi.mocked(removeSkillRequirement).mockResolvedValue(undefined);
-
+  it("useRemoveSkillRequirement calls removeSkillRequirement", async () => {
     const { result } = renderHook(() => useRemoveSkillRequirement(), { wrapper });
-
-    result.current.mutate({ activityId: "act-1", skillId: "skill-1" });
-
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-    expect(removeSkillRequirement).toHaveBeenCalledWith("act-1", "skill-1");
+    await result.current.mutateAsync({ activityId: "a1", skillId: "s1" });
+    expect(api.removeSkillRequirement).toHaveBeenCalledWith("a1", "s1");
   });
 });

@@ -2,7 +2,7 @@
  * Reusable tab bar component.
  */
 
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 
 export interface TabItem {
@@ -17,6 +17,15 @@ interface TabBarProps {
 }
 
 export function TabBar({ tabs }: TabBarProps) {
+  const location = useLocation();
+
+  const isTabActive = (tab: TabItem) => {
+    if (tab.end) {
+      return location.pathname === tab.to;
+    }
+    return location.pathname.startsWith(tab.to);
+  };
+
   return (
     <div className="border-b border-gray-200 mb-6">
       <nav className="flex gap-0 -mb-px overflow-x-auto" role="tablist">
@@ -26,6 +35,7 @@ export function TabBar({ tabs }: TabBarProps) {
             to={tab.to}
             end={tab.end}
             role="tab"
+            aria-selected={isTabActive(tab)}
             className={({ isActive }) =>
               `flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
                 isActive

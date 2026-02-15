@@ -141,13 +141,13 @@ export function CalendarImportModal({
   if (!isOpen) return null;
 
   return (
-    <div className="calendar-import-modal-overlay" onClick={handleClose}>
+    <div className="calendar-import-modal-overlay" onClick={handleClose} role="dialog" aria-modal="true" aria-labelledby="calendar-import-title" onKeyDown={(e) => { if (e.key === "Escape") handleClose(); }}>
       <div
         className="calendar-import-modal"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="calendar-import-modal-header">
-          <h2>
+          <h2 id="calendar-import-title">
             <Calendar className="calendar-import-header-icon" />
             Import Resource Calendars
           </h2>

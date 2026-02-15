@@ -80,11 +80,15 @@ export function AssignmentModal({
     <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       onClick={handleBackdropClick}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="assignment-modal-title"
+      onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}
     >
       <div className="bg-white rounded-lg p-6 w-full max-w-lg shadow-xl">
         <div className="flex justify-between items-center mb-4">
           <div>
-            <h3 className="text-lg font-semibold">Assign Resources</h3>
+            <h3 id="assignment-modal-title" className="text-lg font-semibold">Assign Resources</h3>
             <p className="text-sm text-gray-500">{activityName}</p>
           </div>
           <button

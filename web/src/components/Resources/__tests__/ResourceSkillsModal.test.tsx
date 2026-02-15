@@ -212,4 +212,213 @@ describe("ResourceSkillsModal", () => {
     expect(screen.getByLabelText("Skill")).toBeInTheDocument();
     expect(screen.getByLabelText("Level")).toBeInTheDocument();
   });
+
+  it("shows loading state", () => {
+    mockUseResourceSkills.mockReturnValue({ data: undefined, isLoading: true });
+    mockUseSkills.mockReturnValue({ data: mockSkillsList });
+
+    render(
+      <ResourceSkillsModal
+        resourceId="res-1"
+        resourceName="John Smith"
+        programId="prog-1"
+        onClose={onClose}
+      />,
+      { wrapper: Wrapper }
+    );
+
+    expect(screen.getByText("Loading skills...")).toBeInTheDocument();
+  });
+
+  it("only shows unassigned skills in dropdown", () => {
+    mockUseResourceSkills.mockReturnValue({ data: mockResourceSkills, isLoading: false });
+    mockUseSkills.mockReturnValue({ data: mockSkillsList });
+
+    render(
+      <ResourceSkillsModal
+        resourceId="res-1"
+        resourceName="John Smith"
+        programId="prog-1"
+        onClose={onClose}
+      />,
+      { wrapper: Wrapper }
+    );
+
+    const skillSelect = screen.getByLabelText("Skill");
+    const options = Array.from((skillSelect as HTMLSelectElement).options);
+    const optionTexts = options.map((o) => o.text);
+    expect(optionTexts).toContain("PMP (PMP)");
+    expect(optionTexts).not.toContain("Systems Engineering (SE)");
+  });
+
+  it("updates proficiency when select changes", async () => {
+    mockUseResourceSkills.mockReturnValue({ data: mockResourceSkills, isLoading: false });
+    mockUseSkills.mockReturnValue({ data: mockSkillsList });
+    mockUpdateMutateAsync.mockResolvedValue({});
+
+    render(
+      <ResourceSkillsModal
+        resourceId="res-1"
+        resourceName="John Smith"
+        programId="prog-1"
+        onClose={onClose}
+      />,
+      { wrapper: Wrapper }
+    );
+
+    // Find the proficiency select in the table (value=3 initially)
+    const profSelects = screen.getAllByRole("combobox");
+    const tableSelect = profSelects.find(
+      (s) => (s as HTMLSelectElement).value === "3"
+    );
+    expect(tableSelect).toBeTruthy();
+    fireEvent.change(tableSelect!, { target: { value: "5" } });
+
+    await waitFor(() => {
+      expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
+        resourceId: "res-1",
+        skillId: "skill-1",
+        data: { proficiency_level: 5 },
+      });
+    });
+  });
+
+  it("removes skill when remove button clicked", async () => {
+    mockUseResourceSkills.mockReturnValue({ data: mockResourceSkills, isLoading: false });
+    mockUseSkills.mockReturnValue({ data: mockSkillsList });
+    mockRemoveMutateAsync.mockResolvedValue({});
+
+    render(
+      <ResourceSkillsModal
+        resourceId="res-1"
+        resourceName="John Smith"
+        programId="prog-1"
+        onClose={onClose}
+      />,
+      { wrapper: Wrapper }
+    );
+
+    fireEvent.click(screen.getByLabelText("Remove skill"));
+
+    await waitFor(() => {
+      expect(mockRemoveMutateAsync).toHaveBeenCalledWith({
+        resourceId: "res-1",
+        skillId: "skill-1",
+      });
+    });
+  });
+
+  it("shows certified status", () => {
+    const certifiedSkills = [
+      { ...mockResourceSkills[0], is_certified: true },
+    ];
+    mockUseResourceSkills.mockReturnValue({ data: certifiedSkills, isLoading: false });
+    mockUseSkills.mockReturnValue({ data: mockSkillsList });
+
+    render(
+      <ResourceSkillsModal
+        resourceId="res-1"
+        resourceName="John Smith"
+        programId="prog-1"
+        onClose={onClose}
+      />,
+      { wrapper: Wrapper }
+    );
+
+    const certifiedElements = screen.getAllByText("Certified");
+    const certifiedSpan = certifiedElements.find(
+      (el) => el.tagName === "SPAN" && el.classList.contains("text-green-600")
+    );
+    expect(certifiedSpan).toBeInTheDocument();
+  });
+
+  it("resets form after adding skill", async () => {
+    mockUseResourceSkills.mockReturnValue({ data: [], isLoading: false });
+    mockUseSkills.mockReturnValue({ data: mockSkillsList });
+    mockAddMutateAsync.mockResolvedValue({});
+
+    render(
+      <ResourceSkillsModal
+        resourceId="res-1"
+        resourceName="John Smith"
+        programId="prog-1"
+        onClose={onClose}
+      />,
+      { wrapper: Wrapper }
+    );
+
+    fireEvent.change(screen.getByLabelText("Skill"), { target: { value: "skill-1" } });
+    fireEvent.click(screen.getByText("Add"));
+
+    await waitFor(() => {
+      expect(mockAddMutateAsync).toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
+      expect((screen.getByLabelText("Skill") as HTMLSelectElement).value).toBe("");
+    });
+  });
+
+  it("shows error toast on add failure", async () => {
+    mockUseResourceSkills.mockReturnValue({ data: [], isLoading: false });
+    mockUseSkills.mockReturnValue({ data: mockSkillsList });
+    mockAddMutateAsync.mockRejectedValue(new Error("Server error"));
+
+    render(
+      <ResourceSkillsModal
+        resourceId="res-1"
+        resourceName="John Smith"
+        programId="prog-1"
+        onClose={onClose}
+      />,
+      { wrapper: Wrapper }
+    );
+
+    fireEvent.change(screen.getByLabelText("Skill"), { target: { value: "skill-1" } });
+    fireEvent.click(screen.getByText("Add"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Failed to add skill")).toBeInTheDocument();
+    });
+  });
+
+  it("shows error toast on remove failure", async () => {
+    mockUseResourceSkills.mockReturnValue({ data: mockResourceSkills, isLoading: false });
+    mockUseSkills.mockReturnValue({ data: mockSkillsList });
+    mockRemoveMutateAsync.mockRejectedValue(new Error("Server error"));
+
+    render(
+      <ResourceSkillsModal
+        resourceId="res-1"
+        resourceName="John Smith"
+        programId="prog-1"
+        onClose={onClose}
+      />,
+      { wrapper: Wrapper }
+    );
+
+    fireEvent.click(screen.getByLabelText("Remove skill"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Failed to remove skill")).toBeInTheDocument();
+    });
+  });
+
+  it("disables Add button when no skill selected", () => {
+    mockUseResourceSkills.mockReturnValue({ data: [], isLoading: false });
+    mockUseSkills.mockReturnValue({ data: mockSkillsList });
+
+    render(
+      <ResourceSkillsModal
+        resourceId="res-1"
+        resourceName="John Smith"
+        programId="prog-1"
+        onClose={onClose}
+      />,
+      { wrapper: Wrapper }
+    );
+
+    const addBtn = screen.getByText("Add").closest("button");
+    expect(addBtn).toBeDisabled();
+  });
 });
