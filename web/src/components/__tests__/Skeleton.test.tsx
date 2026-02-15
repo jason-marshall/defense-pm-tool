@@ -7,7 +7,7 @@ import {
   DashboardSkeleton,
   MetricCardSkeleton,
   ChartSkeleton,
-} from "./Skeleton";
+} from "../Skeleton";
 
 describe("Skeleton", () => {
   it("renders with default rectangular variant", () => {

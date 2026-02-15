@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useResourceFilter } from "../useResourceFilter";
+import { useResourceFilter } from "./useResourceFilter";
 import type { ResourceLane } from "@/types/ganttResource";
 
 describe("useResourceFilter", () => {

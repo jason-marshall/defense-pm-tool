@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ResourceForm } from "./ResourceForm";
+import { ResourceForm } from "../ResourceForm";
 import { ToastProvider } from "@/components/Toast";
 import { ResourceType } from "@/types/resource";
 import type { Resource } from "@/types/resource";

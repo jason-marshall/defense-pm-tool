@@ -1,59 +1,7 @@
-# Defense PM Tool API - Requirements
-# Install with: pip install -r requirements.txt
-
-# Web framework
-fastapi>=0.109.0
-uvicorn[standard]>=0.27.0
-python-multipart>=0.0.6
-
-# Data validation
-pydantic>=2.5.0
-pydantic-settings>=2.1.0
-email-validator>=2.1.0
-
-# Database
-sqlalchemy[asyncio]>=2.0.25
-asyncpg>=0.29.0
-alembic>=1.13.0
-
-# Caching
-redis>=5.0.0
-
-# Graph algorithms (CPM)
-networkx>=3.2.0
-
-# Authentication
-bcrypt>=4.1.0
-pyjwt>=2.8.0
-
-# HTTP client
-httpx>=0.26.0
-
-# Logging
-structlog>=24.1.0
-
-# Month 2 - Monte Carlo and Analysis
-numpy>=1.26.0
-scipy>=1.12.0
-
-# Visualization and Export
-matplotlib>=3.8.0
-
-# PDF Generation (Month 3)
-reportlab>=4.0.0
-
-# Jira Integration (Week 10)
-jira>=3.5.0
-cryptography>=42.0.0
-
-# Rate Limiting (Week 11)
-slowapi>=0.1.9
-
-# Security - Input Sanitization (Week 11)
-bleach>=6.0.0
-
-# Monitoring (Week 13)
-prometheus-client>=0.19.0
-
-# Load Testing (Week 13)
-locust>=2.20.0
+# Defense PM Tool API - All Dependencies
+# For production only, use: pip install -r requirements/base.txt
+# For testing only, use: pip install -r requirements/test.txt
+# For development, use: pip install -r requirements/dev.txt
+# This file installs everything (backward compatible):
+-r requirements/dev.txt
+-r requirements/test.txt

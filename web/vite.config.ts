@@ -30,7 +30,7 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
     coverage: {
-      provider: "istanbul",
+      provider: "v8",
       thresholds: {
         statements: 80,
         branches: 70,

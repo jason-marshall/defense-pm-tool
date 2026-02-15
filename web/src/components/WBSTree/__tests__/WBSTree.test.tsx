@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { WBSTree } from "./WBSTree";
+import { WBSTree } from "../WBSTree";
 
 vi.mock("@/services/wbsApi", () => ({
   getWBSTree: vi.fn(),

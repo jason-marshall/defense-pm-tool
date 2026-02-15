@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ResourceHistogram } from "./ResourceHistogram";
+import { ResourceHistogram } from "../ResourceHistogram";
 
 // Mock recharts to avoid rendering issues in tests
 vi.mock("recharts", () => ({
