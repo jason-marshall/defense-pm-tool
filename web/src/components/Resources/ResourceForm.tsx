@@ -87,6 +87,7 @@ export function ResourceForm({ programId, resource, onClose }: ResourceFormProps
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700"
             type="button"
+            aria-label="Close"
           >
             <X size={20} />
           </button>

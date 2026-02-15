@@ -99,11 +99,11 @@ export function BaselineList({ programId }: BaselineListProps) {
                   </td>
                   <td className="px-4 py-2 text-center">
                     {baseline.status === "draft" && (
-                      <button onClick={() => handleApprove(baseline.id)} className="text-green-600 hover:text-green-800 mr-2" title="Approve">
+                      <button onClick={() => handleApprove(baseline.id)} className="text-green-600 hover:text-green-800 mr-2" title="Approve" aria-label={`Approve baseline ${baseline.name}`}>
                         <CheckCircle size={14} />
                       </button>
                     )}
-                    <button onClick={() => handleDelete(baseline.id)} className="text-red-500 hover:text-red-700" title="Delete">
+                    <button onClick={() => handleDelete(baseline.id)} className="text-red-500 hover:text-red-700" title="Delete" aria-label={`Delete baseline ${baseline.name}`}>
                       <Trash2 size={14} />
                     </button>
                   </td>

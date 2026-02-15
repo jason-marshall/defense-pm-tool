@@ -83,7 +83,7 @@ export function DependencyList({ programId }: DependencyListProps) {
                   <td className="px-4 py-2">{dep.successor_name || dep.successor_id.slice(0, 8)}</td>
                   <td className="px-4 py-2 text-right">{dep.lag}d</td>
                   <td className="px-4 py-2 text-center">
-                    <button onClick={() => handleDelete(dep.id)} className="text-red-500 hover:text-red-700" title="Delete">
+                    <button onClick={() => handleDelete(dep.id)} className="text-red-500 hover:text-red-700" title="Delete" aria-label="Delete dependency">
                       <Trash2 size={14} />
                     </button>
                   </td>

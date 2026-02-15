@@ -166,6 +166,7 @@ export function PoolMembersPanel({
                         onClick={() => handleRemove(member.id)}
                         className="p-1 text-gray-400 hover:text-red-600"
                         title="Remove"
+                        aria-label="Remove member"
                       >
                         <Trash2 size={14} />
                       </button>

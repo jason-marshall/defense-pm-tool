@@ -125,13 +125,13 @@ export function WBSTreeItem({
 
         {/* Actions */}
         <div className="wbs-tree-actions">
-          <button onClick={handleAddChild} title="Add child element">
+          <button onClick={handleAddChild} title="Add child element" aria-label={`Add child to ${element.name}`}>
             +
           </button>
-          <button onClick={handleEdit} title="Edit element">
+          <button onClick={handleEdit} title="Edit element" aria-label={`Edit ${element.name}`}>
             ✎
           </button>
-          <button className="delete" onClick={handleDelete} title="Delete element">
+          <button className="delete" onClick={handleDelete} title="Delete element" aria-label={`Delete ${element.name}`}>
             ×
           </button>
         </div>

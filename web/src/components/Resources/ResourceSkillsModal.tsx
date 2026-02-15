@@ -89,7 +89,7 @@ export function ResourceSkillsModal({
       <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl max-h-[80vh] overflow-auto">
         <div className="flex justify-between items-center p-4 border-b">
           <h2 className="text-lg font-semibold">Skills - {resourceName}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label="Close">
             <X size={20} />
           </button>
         </div>
@@ -194,6 +194,7 @@ export function ResourceSkillsModal({
                         onClick={() => handleRemove(rs.skill_id)}
                         className="text-red-500 hover:text-red-700"
                         title="Remove skill"
+                        aria-label="Remove skill"
                       >
                         <Trash2 size={14} />
                       </button>

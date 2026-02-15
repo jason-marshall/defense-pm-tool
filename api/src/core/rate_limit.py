@@ -55,7 +55,7 @@ def _get_rate_limit_storage() -> str:
 
         if settings.ENVIRONMENT == "production":
             return str(settings.REDIS_URL)
-    except Exception:
+    except (ImportError, AttributeError):
         pass
     return "memory://"
 

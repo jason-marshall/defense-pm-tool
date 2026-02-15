@@ -9,6 +9,7 @@ import structlog
 from fastapi import APIRouter, Request, Response
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 from src.core.database import get_session_maker
 from src.core.metrics import db_connections_active
@@ -147,7 +148,7 @@ async def prometheus_metrics() -> Response:
             )
             active_connections = result.scalar() or 0
             db_connections_active.set(active_connections)
-    except Exception:
+    except SQLAlchemyError:
         pass  # Don't fail metrics endpoint if DB query fails
 
     return Response(

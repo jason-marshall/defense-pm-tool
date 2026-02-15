@@ -152,6 +152,7 @@ export function ResourceList({ programId }: ResourceListProps) {
                     onClick={() => setSkillsResource(resource)}
                     className="text-purple-500 hover:text-purple-700 mr-2"
                     title="Manage skills"
+                    aria-label={`Manage skills for ${resource.name}`}
                   >
                     <Award size={16} />
                   </button>
@@ -159,6 +160,7 @@ export function ResourceList({ programId }: ResourceListProps) {
                     onClick={() => handleEdit(resource)}
                     className="text-blue-500 hover:text-blue-700 mr-2"
                     title="Edit resource"
+                    aria-label={`Edit resource ${resource.name}`}
                   >
                     <Edit2 size={16} />
                   </button>
@@ -166,6 +168,7 @@ export function ResourceList({ programId }: ResourceListProps) {
                     onClick={() => handleDelete(resource.id)}
                     className="text-red-500 hover:text-red-700"
                     title="Delete resource"
+                    aria-label={`Delete resource ${resource.name}`}
                     disabled={deleteResource.isPending}
                   >
                     <Trash2 size={16} />

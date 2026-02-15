@@ -29,5 +29,14 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
+    coverage: {
+      provider: "istanbul",
+      thresholds: {
+        statements: 80,
+        branches: 70,
+        functions: 75,
+        lines: 80,
+      },
+    },
   },
 });

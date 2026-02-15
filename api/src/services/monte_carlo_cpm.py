@@ -225,7 +225,7 @@ class NetworkMonteCarloEngine:
                         if result.is_critical:
                             critical_counts[j] += 1
 
-            except Exception:
+            except (ValueError, KeyError, ZeroDivisionError):
                 # If CPM fails, use sum of durations as fallback
                 project_durations[i] = np.sum(iter_durations)
                 activity_finishes[i, :] = iter_durations

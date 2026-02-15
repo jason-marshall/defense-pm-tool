@@ -106,6 +106,7 @@ export function ScenarioList({ programId }: ScenarioListProps) {
                     onClick={() => handleDelete(scenario.id)}
                     className="text-red-500 hover:text-red-700"
                     title="Delete"
+                    aria-label={`Delete scenario ${scenario.name}`}
                   >
                     <Trash2 size={14} />
                   </button>

@@ -151,7 +151,7 @@ export function CalendarImportModal({
             <Calendar className="calendar-import-header-icon" />
             Import Resource Calendars
           </h2>
-          <button className="calendar-import-modal-close" onClick={handleClose}>
+          <button className="calendar-import-modal-close" onClick={handleClose} aria-label="Close">
             <X size={20} />
           </button>
         </div>

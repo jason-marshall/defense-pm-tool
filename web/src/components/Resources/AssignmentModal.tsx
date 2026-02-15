@@ -90,6 +90,7 @@ export function AssignmentModal({
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700"
+            aria-label="Close"
           >
             <X size={20} />
           </button>
@@ -142,6 +143,7 @@ export function AssignmentModal({
                         onClick={() => handleRemove(assignment.id)}
                         className="text-red-500 hover:text-red-700"
                         title="Remove assignment"
+                        aria-label="Remove assignment"
                         disabled={deleteAssignment.isPending}
                       >
                         <Trash2 size={16} />

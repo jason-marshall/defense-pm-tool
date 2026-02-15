@@ -88,7 +88,7 @@ export function ActivityFormModal({
           <h2 className="text-lg font-semibold">
             {activity ? "Edit Activity" : "Create Activity"}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label="Close">
             <X size={20} />
           </button>
         </div>

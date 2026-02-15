@@ -92,12 +92,8 @@ describe("ResourceForm", () => {
       { wrapper: Wrapper }
     );
 
-    // Find the X close button (the one near the title)
-    const buttons = screen.getAllByRole("button", { name: "" });
-    const closeBtn = buttons.find(
-      (btn) => btn.getAttribute("type") === "button"
-    );
-    if (closeBtn) fireEvent.click(closeBtn);
+    // Find the X close button by its aria-label
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
 
     expect(onClose).toHaveBeenCalled();
   });

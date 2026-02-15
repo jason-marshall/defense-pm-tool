@@ -176,7 +176,7 @@ export function ImportModal({
       <div className="import-modal" onClick={(e) => e.stopPropagation()}>
         <div className="import-modal-header">
           <h2>Import MS Project File</h2>
-          <button className="import-modal-close" onClick={handleClose}>
+          <button className="import-modal-close" onClick={handleClose} aria-label="Close">
             &times;
           </button>
         </div>
@@ -225,6 +225,7 @@ export function ImportModal({
                         e.stopPropagation();
                         handleRemoveFile();
                       }}
+                      aria-label="Remove file"
                     >
                       &times;
                     </button>

@@ -125,6 +125,7 @@ export function ActivityList({ programId }: ActivityListProps) {
                       onClick={() => handleEdit(activity)}
                       className="text-blue-500 hover:text-blue-700 mr-2"
                       title="Edit"
+                      aria-label={`Edit activity ${activity.name}`}
                     >
                       <Edit2 size={14} />
                     </button>
@@ -132,6 +133,7 @@ export function ActivityList({ programId }: ActivityListProps) {
                       onClick={() => handleDelete(activity.id)}
                       className="text-red-500 hover:text-red-700"
                       title="Delete"
+                      aria-label={`Delete activity ${activity.name}`}
                     >
                       <Trash2 size={14} />
                     </button>

@@ -11,6 +11,7 @@ from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+from sqlalchemy.exc import MissingGreenlet
 
 from src.models.enums import DependencyType
 from src.schemas.activity import ActivityBriefResponse
@@ -26,7 +27,7 @@ def safe_get_relationship(obj: Any, attr: str) -> Any:
     """
     try:
         return getattr(obj, attr, None)
-    except Exception:
+    except (AttributeError, MissingGreenlet):
         return None
 
 
