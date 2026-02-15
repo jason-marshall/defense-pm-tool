@@ -19,6 +19,7 @@ from src.api.v1.endpoints import (
     overallocations,
     parallel_leveling,
     programs,
+    recommendations,
     reports,
     resource_cost,
     resource_pools,
@@ -166,3 +167,6 @@ api_router.include_router(skills.skill_requirements_router)
 
 # Week 20: Resource pools for cross-program sharing
 api_router.include_router(resource_pools.router)
+
+# v1.3.0: Automated resource recommendations
+api_router.include_router(recommendations.router)

@@ -37,6 +37,7 @@ CACHE_TTL = {
     "activity_list": timedelta(minutes=2),
     "evms_summary": timedelta(minutes=5),
     "schedule": timedelta(minutes=10),
+    "recommendation": timedelta(minutes=3),
 }
 
 
