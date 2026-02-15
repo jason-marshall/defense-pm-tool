@@ -10,10 +10,18 @@ from pydantic import BaseModel, ConfigDict, Field
 class RecommendationWeights(BaseModel):
     """Configurable weights for the recommendation scoring algorithm."""
 
-    skill_match: float = Field(default=0.50, ge=0.0, le=1.0, description="Weight for skill match score")
-    availability: float = Field(default=0.25, ge=0.0, le=1.0, description="Weight for availability score")
-    cost: float = Field(default=0.15, ge=0.0, le=1.0, description="Weight for cost efficiency score")
-    certification: float = Field(default=0.10, ge=0.0, le=1.0, description="Weight for certification bonus")
+    skill_match: float = Field(
+        default=0.50, ge=0.0, le=1.0, description="Weight for skill match score"
+    )
+    availability: float = Field(
+        default=0.25, ge=0.0, le=1.0, description="Weight for availability score"
+    )
+    cost: float = Field(
+        default=0.15, ge=0.0, le=1.0, description="Weight for cost efficiency score"
+    )
+    certification: float = Field(
+        default=0.10, ge=0.0, le=1.0, description="Weight for certification bonus"
+    )
 
 
 class RecommendationRequest(BaseModel):
@@ -23,7 +31,9 @@ class RecommendationRequest(BaseModel):
     min_score: float = Field(0.0, ge=0.0, le=1.0, description="Minimum overall score threshold")
     date_range_start: date | None = Field(None, description="Start of availability window")
     date_range_end: date | None = Field(None, description="End of availability window")
-    resource_type: str | None = Field(None, description="Filter by resource type (LABOR, EQUIPMENT)")
+    resource_type: str | None = Field(
+        None, description="Filter by resource type (LABOR, EQUIPMENT)"
+    )
     weights: RecommendationWeights | None = Field(None, description="Custom scoring weights")
 
 
