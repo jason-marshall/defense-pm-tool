@@ -10,10 +10,10 @@ from pydantic import BaseModel, ConfigDict, Field
 class RecommendationWeights(BaseModel):
     """Configurable weights for the recommendation scoring algorithm."""
 
-    skill_match: float = Field(0.50, ge=0.0, le=1.0, description="Weight for skill match score")
-    availability: float = Field(0.25, ge=0.0, le=1.0, description="Weight for availability score")
-    cost: float = Field(0.15, ge=0.0, le=1.0, description="Weight for cost efficiency score")
-    certification: float = Field(0.10, ge=0.0, le=1.0, description="Weight for certification bonus")
+    skill_match: float = Field(default=0.50, ge=0.0, le=1.0, description="Weight for skill match score")
+    availability: float = Field(default=0.25, ge=0.0, le=1.0, description="Weight for availability score")
+    cost: float = Field(default=0.15, ge=0.0, le=1.0, description="Weight for cost efficiency score")
+    certification: float = Field(default=0.10, ge=0.0, le=1.0, description="Weight for certification bonus")
 
 
 class RecommendationRequest(BaseModel):
