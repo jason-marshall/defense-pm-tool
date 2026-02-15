@@ -70,7 +70,6 @@ async def get_activity_recommendations(
     service = ResourceRecommendationService(db)
     recommendations, total_candidates, requirements_count = await service.recommend_for_activity(
         activity_id=activity.id,
-        activity_name=activity.name,
         program_id=activity.program_id,
         top_n=top_n,
         min_score=min_score,
@@ -126,7 +125,6 @@ async def get_resource_recommendations(
     service = ResourceRecommendationService(db)
     recommendations, total_evaluated = await service.recommend_activities_for_resource(
         resource_id=resource.id,
-        resource_name=resource.name,
         program_id=resource.program_id,
         top_n=top_n,
         min_score=min_score,
@@ -176,7 +174,6 @@ async def get_bulk_recommendations(
             requirements_count,
         ) = await service.recommend_for_activity(
             activity_id=activity.id,
-            activity_name=activity.name,
             program_id=activity.program_id,
             top_n=request.top_n,
             min_score=request.min_score,

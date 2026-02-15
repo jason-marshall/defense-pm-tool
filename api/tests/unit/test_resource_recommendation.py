@@ -616,7 +616,6 @@ class TestDateRangeFiltering:
 
         await service.recommend_for_activity(
             activity_id=uuid4(),
-            activity_name="Test",
             program_id=uuid4(),
             date_range_start=start,
             date_range_end=end,
@@ -647,7 +646,6 @@ class TestDateRangeFiltering:
 
         await service.recommend_for_activity(
             activity_id=uuid4(),
-            activity_name="Test",
             program_id=uuid4(),
         )
 

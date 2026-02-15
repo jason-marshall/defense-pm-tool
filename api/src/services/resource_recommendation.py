@@ -45,7 +45,7 @@ class _ScoringContext:
     resource_skills: dict[UUID, ResourceSkill]
     requirements: list[SkillRequirement]
     assignment_count: int = 0
-    weights: RecommendationWeights = field(default_factory=RecommendationWeights)
+    weights: RecommendationWeights = field(default_factory=lambda: RecommendationWeights())
 
 
 class ResourceRecommendationService:
@@ -70,7 +70,6 @@ class ResourceRecommendationService:
     async def recommend_for_activity(
         self,
         activity_id: UUID,
-        activity_name: str,
         program_id: UUID,
         *,
         top_n: int = 10,
@@ -84,7 +83,6 @@ class ResourceRecommendationService:
 
         Args:
             activity_id: Activity to find resources for
-            activity_name: Activity name for response
             program_id: Program scope for resources
             top_n: Maximum number of recommendations
             min_score: Minimum score threshold (0-1)
@@ -153,7 +151,6 @@ class ResourceRecommendationService:
     async def recommend_activities_for_resource(
         self,
         resource_id: UUID,
-        resource_name: str,
         program_id: UUID,
         *,
         top_n: int = 10,
@@ -163,7 +160,6 @@ class ResourceRecommendationService:
 
         Args:
             resource_id: Resource to find activities for
-            resource_name: Resource name for response
             program_id: Program scope for activities
             top_n: Maximum recommendations
             min_score: Minimum match score
