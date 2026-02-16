@@ -58,6 +58,7 @@ alembic/versions/*.pyc
 coverage.xml
 .coverage.*
 web/coverage/
+api/coverage.json
 
 # Ruff cache
 .ruff_cache/
