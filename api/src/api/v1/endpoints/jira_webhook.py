@@ -130,7 +130,7 @@ async def receive_jira_webhook(
 
     logger.info(
         "webhook_received",
-        event=payload.webhookEvent,
+        webhook_event=payload.webhookEvent,
         webhook_id=x_atlassian_webhook_identifier,
         issue_key=payload.issue.get("key") if payload.issue else None,
     )
@@ -144,7 +144,7 @@ async def receive_jira_webhook(
 
         logger.info(
             "webhook_processed",
-            event=payload.webhookEvent,
+            webhook_event=payload.webhookEvent,
             success=result.success,
             action=result.action_taken,
             issue_key=result.issue_key,
@@ -162,7 +162,7 @@ async def receive_jira_webhook(
     except Exception as e:
         logger.error(
             "webhook_processing_error",
-            event=payload.webhookEvent,
+            webhook_event=payload.webhookEvent,
             error=str(e),
         )
         # Return 200 to prevent Jira from retrying for unrecoverable errors
@@ -250,7 +250,7 @@ async def receive_jira_webhook_for_integration(
 
     logger.info(
         "webhook_received",
-        event=payload.webhookEvent,
+        webhook_event=payload.webhookEvent,
         integration_id=str(integration_id),
         webhook_id=x_atlassian_webhook_identifier,
         issue_key=payload.issue.get("key") if payload.issue else None,
@@ -265,7 +265,7 @@ async def receive_jira_webhook_for_integration(
 
         logger.info(
             "webhook_processed",
-            event=payload.webhookEvent,
+            webhook_event=payload.webhookEvent,
             integration_id=str(integration_id),
             success=result.success,
             action=result.action_taken,
@@ -284,7 +284,7 @@ async def receive_jira_webhook_for_integration(
     except Exception as e:
         logger.error(
             "webhook_processing_error",
-            event=payload.webhookEvent,
+            webhook_event=payload.webhookEvent,
             integration_id=str(integration_id),
             error=str(e),
         )

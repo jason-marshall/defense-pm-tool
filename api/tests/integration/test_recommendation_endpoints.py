@@ -71,16 +71,38 @@ async def rec_skill_2(
 
 
 @pytest_asyncio.fixture
+async def rec_wbs(
+    client: AsyncClient,
+    auth_headers: dict[str, str],
+    rec_program: dict,
+) -> dict:
+    """Create a WBS element for recommendation testing."""
+    resp = await client.post(
+        "/api/v1/wbs",
+        json={
+            "program_id": rec_program["id"],
+            "name": "Recommendation WP",
+            "wbs_code": "1.1",
+        },
+        headers=auth_headers,
+    )
+    assert resp.status_code == 201
+    return resp.json()
+
+
+@pytest_asyncio.fixture
 async def rec_activity(
     client: AsyncClient,
     auth_headers: dict[str, str],
     rec_program: dict,
+    rec_wbs: dict,
 ) -> dict:
     """Create an activity for recommendation testing."""
     resp = await client.post(
         "/api/v1/activities",
         json={
             "program_id": rec_program["id"],
+            "wbs_id": rec_wbs["id"],
             "name": "Design Phase",
             "code": "ACT-001",
             "duration": 10,
@@ -96,12 +118,14 @@ async def rec_activity_2(
     client: AsyncClient,
     auth_headers: dict[str, str],
     rec_program: dict,
+    rec_wbs: dict,
 ) -> dict:
     """Create a second activity."""
     resp = await client.post(
         "/api/v1/activities",
         json={
             "program_id": rec_program["id"],
+            "wbs_id": rec_wbs["id"],
             "name": "Coding Phase",
             "code": "ACT-002",
             "duration": 20,
@@ -125,13 +149,13 @@ async def rec_resource(
             "program_id": rec_program["id"],
             "name": "Alice Developer",
             "code": "DEV-001",
-            "resource_type": "LABOR",
+            "resource_type": "labor",
             "cost_rate": "100.00",
             "capacity_per_day": "8.00",
         },
         headers=auth_headers,
     )
-    assert resp.status_code == 201
+    assert resp.status_code == 201, f"Resource creation failed: {resp.text}"
     return resp.json()
 
 
@@ -148,7 +172,7 @@ async def rec_resource_2(
             "program_id": rec_program["id"],
             "name": "Bob Manager",
             "code": "MGR-001",
-            "resource_type": "LABOR",
+            "resource_type": "labor",
             "cost_rate": "150.00",
             "capacity_per_day": "8.00",
         },
@@ -296,7 +320,7 @@ class TestActivityRecommendations:
                 "program_id": rec_program["id"],
                 "name": "Crane Equipment",
                 "code": "EQP-001",
-                "resource_type": "EQUIPMENT",
+                "resource_type": "equipment",
                 "cost_rate": "200.00",
                 "capacity_per_day": "8.00",
             },
@@ -306,13 +330,13 @@ class TestActivityRecommendations:
 
         # Request only LABOR resources
         resp = await client.get(
-            f"/api/v1/recommendations/activities/{rec_activity['id']}?resource_type=LABOR",
+            f"/api/v1/recommendations/activities/{rec_activity['id']}?resource_type=labor",
             headers=auth_headers,
         )
         assert resp.status_code == 200
         data = resp.json()
         for rec in data["recommendations"]:
-            assert rec["resource_type"] == "LABOR"
+            assert rec["resource_type"] == "labor"
 
     @pytest.mark.asyncio
     async def test_recommendations_with_date_range(
